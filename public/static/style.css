@@ -570,15 +570,17 @@ body {
 
 .zone-metronome {
   height: 725px;
+  width: 400px; /* ✅ AJOUTÉ: largeur fixe */
   background-color: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0; /* ✅ Supprimé le padding pour l'iframe */
+  align-items: flex-start; /* ✅ CHANGÉ: center → flex-start */
+  justify-content: flex-start; /* ✅ CHANGÉ: center → flex-start */
+  padding: 0;
+  margin: 0; /* ✅ AJOUTÉ: pas de margin */
   overflow: hidden;
-  position: relative; /* ✅ Pour le positionnement de l'iframe */
+  position: relative;
 }
 
 .metronome-container {
@@ -596,6 +598,8 @@ body {
   border: none;
   display: block;
   border-radius: var(--radius-md);
+  margin: 0; /* ✅ AJOUTÉ: pas de margin */
+  padding: 0; /* ✅ AJOUTÉ: pas de padding */
 }
 
 .metronome-header {
