@@ -560,10 +560,10 @@ body {
   grid-column: 3;
   grid-row: 2 / 4;
   display: grid;
-  grid-template-rows: 725px auto;
+  grid-template-rows: 800px auto; /* ✅ CHANGÉ: 725px → 800px */
   gap: 8px;
-  width: 400px; /* ✅ AJOUTÉ: forcer la largeur */
-  max-width: 400px; /* ✅ AJOUTÉ */
+  width: 400px;
+  max-width: 400px;
 }
 
 /* ================================================
@@ -571,11 +571,11 @@ body {
    ================================================ */
 
 .zone-metronome {
-  height: 725px;
+  height: 800px; /* ✅ CHANGÉ: 725px → 800px */
   width: 400px;
   max-width: 400px;
   background-color: var(--color-bg-secondary);
-  border-radius: 0; /* ✅ FIX: supprimé le radius qui créait le gap */
+  border-radius: 0;
   border: 1px solid var(--color-border);
   display: block;
   padding: 0;
@@ -595,16 +595,16 @@ body {
 /* ✅ IFRAME METRONOME INTEGRATION */
 .metronome-iframe {
   width: 400px;
-  height: 725px;
-  max-width: 400px; /* ✅ AJOUTÉ */
+  height: 800px; /* ✅ CHANGÉ: 725px → 800px */
+  max-width: 400px;
   border: none;
   display: block;
-  border-radius: 0; /* ✅ CHANGÉ: radius peut créer un gap */
+  border-radius: 0;
   margin: 0;
   padding: 0;
-  position: absolute; /* ✅ CHANGÉ: relative → absolute */
-  top: 0; /* ✅ AJOUTÉ */
-  left: 0; /* ✅ AJOUTÉ */
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .metronome-header {
@@ -799,7 +799,7 @@ body {
   grid-column: 4;
   grid-row: 2 / 4;
   display: grid;
-  grid-template-rows: 140px 577px 1fr;
+  grid-template-rows: 140px 652px 1fr; /* ✅ CHANGÉ: 577px → 652px (800-140-8 = 652) */
   gap: 8px;
 }
 
@@ -815,9 +815,9 @@ body {
   justify-content: center;
 }
 
-/* Session Summary Block - 577px (725px - 140px - 8px gap = 577px) */
+/* Session Summary Block - 652px (800px - 140px - 8px gap = 652px) */
 .session-summary-block {
-  height: 577px;
+  height: 652px; /* ✅ CHANGÉ: 577px → 652px */
   background-color: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
