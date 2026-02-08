@@ -573,11 +573,11 @@ body {
 .zone-metronome {
   height: 725px;
   width: 400px;
-  max-width: 400px; /* ✅ AJOUTÉ */
+  max-width: 400px;
   background-color: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
+  border-radius: 0; /* ✅ FIX: supprimé le radius qui créait le gap */
   border: 1px solid var(--color-border);
-  display: block; /* ✅ CHANGÉ: flex → block */
+  display: block;
   padding: 0;
   margin: 0;
   overflow: hidden;
