@@ -58,16 +58,7 @@ textarea,
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    background: linear-gradient(180deg, 
-        #141414 0%, 
-        #161616 15%, 
-        #181818 30%, 
-        #1a1a1a 45%, 
-        #1b1b1b 50%, 
-        #1a1a1a 55%, 
-        #181818 70%, 
-        #161616 85%, 
-        #151515 100%);
+    background: transparent; /* ✅ TRANSPARENT: laisse passer le background du module parent */
     width: 100vw;
     height: 100vh;
     color: #ffffff;
@@ -80,12 +71,7 @@ body {
 .metronome-container {
     width: 100vw;
     height: 100vh;
-    background: linear-gradient(180deg, 
-        #141414 0%, 
-        #161616 15%, 
-        #181818 30%, 
-        #1a1a1a 45%, 
-        #1b1b1b 50%, 
+    background: transparent; /* ✅ TRANSPARENT: laisse passer le background du module parent */ 
         #1a1a1a 55%, 
         #181818 70%, 
         #161616 85%, 
