@@ -26,6 +26,8 @@ app.get('/metronome-scaled', (c) => {
             overflow: hidden;
             background: #1A1A1A;
             position: relative;
+            margin: 0;
+            padding: 0;
         }
 
         .metronome-wrapper {
@@ -46,7 +48,7 @@ app.get('/metronome-scaled', (c) => {
             height: 896px;
             border: none;
             transform-origin: top left;
-            transform: scale(0.809);
+            transform: scale(0.9662); /* ✅ FIX: 400/414 = 0.9662 pour remplir la largeur */
         }
     </style>
 </head>
