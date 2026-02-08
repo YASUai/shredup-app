@@ -45,6 +45,25 @@
 }
 
 /* ============================================
+   RÈGLE CRITIQUE: FORCER TOUS LES FIXED → ABSOLUTE
+   Les container queries ne fonctionnent pas avec position:fixed
+   ============================================ */
+
+.saas-metronome-module [style*="position: fixed"],
+.saas-metronome-module .metronome-container,
+.saas-metronome-module .bpm-display,
+.saas-metronome-module .bpm-label,
+.saas-metronome-module .play-btn,
+.saas-metronome-module .stop-btn,
+.saas-metronome-module .slider-vertical-wrapper,
+.saas-metronome-module .slider-label-min,
+.saas-metronome-module .plus-btn,
+.saas-metronome-module .minus-btn,
+.saas-metronome-module .tap-btn {
+    position: absolute !important;
+}
+
+/* ============================================
    2. CONTAINER QUERY - CONVERSIONS vw/vh → cqw/cqh
    ============================================ */
 
@@ -128,32 +147,48 @@
     
     /* ========================================
        PLAY/STOP BUTTONS
+       IMPORTANT: Changer position fixed → absolute
        ======================================== */
     
     .saas-metronome-module .play-btn {
+        position: absolute !important;            /* CRUCIAL: au lieu de fixed */
         left: 50.3cqw !important;                 /* au lieu de 50.3vw */
         top: calc(42.22cqh - 27px) !important;    /* au lieu de calc(42.22vh - 27px) */
         width: 18cqw !important;                  /* au lieu de 18vw */
     }
     
     .saas-metronome-module .stop-btn {
+        position: absolute !important;            /* CRUCIAL: au lieu de fixed */
         top: calc(55.74cqh - 34px) !important;    /* au lieu de calc(55.74vh - 34px) */
     }
     
     /* ========================================
        SLIDER VERTICAL
+       IMPORTANT: Changer position fixed → absolute
        ======================================== */
     
     .saas-metronome-module .slider-vertical-wrapper {
+        position: absolute !important;            /* CRUCIAL: au lieu de fixed */
         top: 27.8cqh !important;                  /* au lieu de 27.8vh */
         right: 2cqw !important;                   /* au lieu de 2vw */
         width: 8.8cqw !important;                 /* au lieu de 8.8vw */
         height: 58cqh !important;                 /* au lieu de 58vh */
     }
     
+    .saas-metronome-module .slider-label-min {
+        position: absolute !important;            /* au lieu de fixed */
+    }
+    
     /* ========================================
        BOUTONS PLUS/MINUS/TAP
+       IMPORTANT: Changer position fixed → absolute
        ======================================== */
+    
+    .saas-metronome-module .plus-btn,
+    .saas-metronome-module .minus-btn,
+    .saas-metronome-module .tap-btn {
+        position: absolute !important;            /* CRUCIAL: au lieu de fixed */
+    }
     
     .saas-metronome-module .plus-btn,
     .saas-metronome-module .minus-btn {
