@@ -280,30 +280,30 @@ body {
 
 .tempo-subdivide-btn,
 .tempo-reduce-btn {
-  width: 24px;  /* ✨ AUGMENTÉ: 18px → 24px */
+  width: 24px;
   height: 24px;
   border-radius: 50%;
-  background-color: #ef4444;  /* ✨ ROUGE VIFPOUR DEBUG */
-  border: 2px solid #dc2626;  /* ✨ BORDURE ROUGE FONCÉ */
-  color: white;  /* ✨ TEXTE BLANC */
-  font-weight: bold;  /* ✨ GRAS */
+  background-color: #141414;  /* ✅ CHANGÉ: #ef4444 → #141414 */
+  border: 2px solid #353535;  /* ✅ CHANGÉ: #dc2626 → #353535 */
+  color: #353535;  /* ✅ CHANGÉ: white → #353535 */
+  font-weight: bold;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;  /* ✨ AUGMENTÉ: 0.9rem → 1rem */
+  font-size: 1rem;
   line-height: 1;
   transition: all 0.2s;
-  flex-shrink: 0;  /* ✨ EMPÊCHE RÉTRÉCISSEMENT */
-  z-index: 10;  /* ✨ AU DESSUS */
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .tempo-subdivide-btn:hover,
 .tempo-reduce-btn:hover {
-  background-color: #fbbf24;  /* ✨ JAUNE VIF */
-  border-color: #f59e0b;  /* ✨ ORANGE */
-  color: #000;  /* ✨ TEXTE NOIR */
-  transform: scale(1.2);  /* ✨ GROSSIT AU HOVER */
+  background-color: #141414;
+  border-color: #ef4444;  /* ✅ Bordure rouge au hover */
+  color: #ef4444;  /* ✅ Texte rouge au hover */
+  transform: scale(1.1);
 }
 
 .tempo-subdivide-btn.max-subdivisions,
@@ -352,8 +352,8 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: var(--color-accent-red);
-  border: none;
+  background-color: #141414;  /* ✅ CHANGÉ: var(--color-accent-red) → #141414 */
+  border: 2px solid #353535;  /* ✅ AJOUTÉ: bordure #353535 */
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -367,23 +367,27 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background-color: white;
+  background-color: #353535;  /* ✅ CHANGÉ: white → #353535 */
   transition: all 0.2s;
 }
 
 .rec-button:hover {
-  background-color: var(--color-accent-red-hover);
+  background-color: #141414;
+  border-color: #ef4444;  /* ✅ Bordure rouge au hover */
   transform: scale(1.05);
 }
 
 .rec-button.recording {
   animation: pulse 1.5s infinite;
+  background-color: #141414;  /* ✅ Fond reste #141414 en mode ON */
+  border-color: #ef4444;  /* ✅ Bordure rouge en mode ON */
 }
 
 .rec-button.recording::before {
   border-radius: 2px;
   width: 10px;
   height: 10px;
+  background-color: #ef4444;  /* ✅ CHANGÉ: garde rouge en mode ON */
 }
 
 @keyframes pulse {
@@ -571,11 +575,11 @@ body {
    ================================================ */
 
 .zone-metronome {
-  height: 800px; /* ✅ CHANGÉ: 725px → 800px */
+  height: 800px;
   width: 400px;
   max-width: 400px;
-  background-color: #141414; /* ✅ HARMONISÉ: #1A1A1A → #141414 (match autres modules) */
-  border-radius: 0;
+  background-color: #141414;
+  border-radius: var(--radius-md);  /* ✅ CHANGÉ: 0 → var(--radius-md) pour harmoniser avec les autres modules */
   border: 1px solid var(--color-border);
   display: block;
   padding: 0;
@@ -595,11 +599,11 @@ body {
 /* ✅ IFRAME METRONOME INTEGRATION */
 .metronome-iframe {
   width: 400px;
-  height: 800px; /* ✅ CHANGÉ: 725px → 800px */
+  height: 800px;
   max-width: 400px;
   border: none;
   display: block;
-  border-radius: 0;
+  border-radius: var(--radius-md);  /* ✅ CHANGÉ: 0 → var(--radius-md) pour harmoniser */
   margin: 0;
   padding: 0;
   position: absolute;
