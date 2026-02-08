@@ -6,7 +6,7 @@
 :root {
   /* Dark Professional Color Palette */
   --color-bg-primary: #0a0a0a;
-  --color-bg-secondary: #1a1a1a; /* ✅ HARMONISÉ: #141414 → #1a1a1a (match métronome) */
+  --color-bg-secondary: #141414; /* ✅ RETOUR: #1a1a1a → #141414 (original) */
   --color-bg-tertiary: #1e1e1e;
   --color-bg-elevated: #252525;
   
@@ -574,7 +574,7 @@ body {
   height: 800px; /* ✅ CHANGÉ: 725px → 800px */
   width: 400px;
   max-width: 400px;
-  background-color: #1A1A1A; /* ✅ SYNCHRONISÉ avec iframe metronome */
+  background-color: #141414; /* ✅ HARMONISÉ: #1A1A1A → #141414 (match autres modules) */
   border-radius: 0;
   border: 1px solid var(--color-border);
   display: block;
