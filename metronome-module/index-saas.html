@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED-UP Metronome Module - 400×725px</title>
+    
+    <!-- Styles originaux du métronome -->
+    <link rel="stylesheet" href="styles.css?v=20260206-12">
+    
+    <!-- Container queries wrapper -->
+    <link rel="stylesheet" href="saas-wrapper.css">
+    
+    <style>
+        /* DEBUG : Visualisation du conteneur SaaS */
+        body {
+            margin: 0;
+            padding: 40px;
+            background: #ff0000; /* FOND ROUGE pour voir le débordement */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        
+        /* Message d'aide */
+        body::before {
+            content: "🎯 CONTENEUR 400×725px - Bordure verte = limite du module";
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ff00;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 10000;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- CONTENEUR ISOLÉ 400×725px -->
+    <div class="saas-metronome-module">
+        
+        <div class="metronome-container">
+            
+            <!-- TOP ZONE: BEAT LEDS -->
+            <div class="beat-indicators" id="beat-indicators-container">
+                <!-- LEDs générées dynamiquement -->
+            </div>
+
+            <!-- SELECTORS ZONE: BEAT / BAR / NOTE -->
+            <div class="header-controls">
+                <div class="control-wrapper">
+                    <div class="section-label">BEAT</div>
+                    <div class="control-group">
+                        <div class="control-value">
+                            <span>4</span>
+                            <span class="dropdown-arrow">⌄</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-wrapper">
+                    <div class="section-label">BAR</div>
+                    <div class="control-group">
+                        <div class="control-value">
+                            <span>4/4</span>
+                            <span class="dropdown-arrow">⌄</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-wrapper">
+                    <div class="section-label">NOTE</div>
+                    <div class="control-group">
+                        <div class="control-value">
+                            <span>1/4</span>
+                            <span class="dropdown-arrow">⌄</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VOLUME ZONE -->
+            <div class="volume-slider-section">
+                <div class="volume-track">
+                    <div class="volume-fill" style="width: 40%;"></div>
+                    <div class="volume-thumb" style="left: 40%;"></div>
+                </div>
+                <div class="volume-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#767676" stroke-width="1.5"/>
+                        <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 11.995C17.0039 13.3208 16.4774 14.5924 15.54 15.53" stroke="#767676" stroke-width="1.5"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- CORE ZONE: BPM + PLAY/STOP + SLIDER -->
+            <div id="core-zone">
+                
+                <!-- BPM BOX -->
+                <div class="bpm-box">
+                    <div class="bpm-display">128</div>
+                    <div class="bpm-label">BPM</div>
+                </div>
+                
+                <!-- PLAY/STOP BUTTONS -->
+                <div class="playback-controls">
+                    <button class="play-btn">
+                        <svg width="40" height="40" viewBox="0 0 24 24">
+                            <circle cx="13.5" cy="12" r="7" fill="rgba(255,255,255,0.1)" class="play-glow-circle"/>
+                            <path d="M10 8L16 12L10 16V8Z" stroke="rgba(92, 92, 92, 0.5)" fill="none" stroke-width="1.5"/>
+                        </svg>
+                    </button>
+                    <button class="stop-btn">
+                        <svg width="32" height="32" viewBox="0 0 24 24">
+                            <rect x="8" y="8" width="8" height="8" fill="none" stroke="rgba(92, 92, 92, 0.5)" stroke-width="1.5"/>
+                        </svg>
+                    </button>
+                </div>
+                
+            </div>
+
+            <!-- ADVANCED ZONE -->
+            <div id="advanced-zone">
+                
+                <!-- LEFT COLUMN: TIMER / MASKING / SESSION -->
+                <div class="advanced-left">
+                    
+                    <!-- TIMER -->
+                    <div class="timer-section">
+                        <div class="section-label">TIMER</div>
+                        <div class="timer-fields">
+                            <div class="timer-field"><span>00</span></div>
+                            <div class="time-separator">:</div>
+                            <div class="timer-field"><span>00</span></div>
+                        </div>
+                    </div>
+                    
+                    <!-- RANDOM MASKING -->
+                    <div class="masking-section">
+                        <div class="section-label">RANDOM MASKING</div>
+                        <div class="masking-field"><span>OFF</span></div>
+                    </div>
+                    
+                    <!-- SESSION DURATION -->
+                    <div class="duration-section">
+                        <div class="section-label">SESSION DURATION</div>
+                        <div class="duration-field"><span>00:00:00</span></div>
+                    </div>
+                    
+                </div>
+                
+                <!-- RIGHT COLUMN: SLIDER + BUTTONS -->
+                <div class="advanced-right">
+                    
+                    <!-- Slider vertical wrapper -->
+                    <div class="slider-vertical-wrapper">
+                        <div class="slider-label-top">250</div>
+                        <div class="slider-hud-container">
+                            <div class="hud-graduations">
+                                <!-- Graduations générées dynamiquement -->
+                            </div>
+                            <div class="slider-track-vertical">
+                                <div class="slider-fill"></div>
+                                <div class="slider-handle"></div>
+                            </div>
+                        </div>
+                        <div class="slider-label-bottom">40</div>
+                    </div>
+                    
+                    <!-- PLUS button -->
+                    <button class="tempo-btn plus-btn">+</button>
+                    
+                    <!-- MINUS button -->
+                    <button class="tempo-btn minus-btn">−</button>
+                    
+                    <!-- TAP TEMPO button -->
+                    <button class="tap-btn">
+                        <div>TAP</div>
+                        <div>TEMPO</div>
+                    </button>
+                    
+                </div>
+                
+            </div>
+            
+        </div>
+        
+    </div>
+    
+    <!-- Script original -->
+    <script src="script.js?v=20260206-11"></script>
+    
+</body>
+</html>

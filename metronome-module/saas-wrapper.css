@@ -1,0 +1,240 @@
+/* ================================================
+   SAAS MODULE WRAPPER - CONTAINER QUERIES
+   Isole l'app SHRED-UP dans un conteneur 400×725px
+   Version: v1.0 - 2026-02-08
+   ================================================ */
+
+/* ============================================
+   1. DÉFINITION DU CONTENEUR ISOLÉ 400×725px
+   ============================================ */
+
+.saas-metronome-module {
+    /* DIMENSIONS FIXES ET STRICTES */
+    width: 400px !important;
+    height: 725px !important;
+    max-width: 400px !important;
+    max-height: 725px !important;
+    min-width: 400px !important;
+    min-height: 725px !important;
+    
+    /* BORDURE DEBUG VERTE (à retirer en production) */
+    border: 5px solid #00ff00 !important;
+    
+    /* BOX SIZING STRICT */
+    box-sizing: border-box !important;
+    
+    /* CONTAINER QUERIES */
+    container-type: size;
+    container-name: metronome;
+    
+    /* ISOLATION COMPLÈTE */
+    isolation: isolate;
+    position: relative;
+    overflow: hidden;
+    
+    /* BACKGROUND DE L'APP */
+    background: #1a1a1a;
+    
+    /* RESET POUR ÉVITER HÉRITAGES */
+    font-family: 'Conthrax', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* RESET GLOBAL POUR TOUS LES ENFANTS */
+.saas-metronome-module * {
+    box-sizing: border-box;
+}
+
+/* ============================================
+   2. CONTAINER QUERY - CONVERSIONS vw/vh → cqw/cqh
+   ============================================ */
+
+@container metronome (min-width: 0px) {
+    
+    /* ========================================
+       CONTENEUR PRINCIPAL
+       ======================================== */
+    
+    .saas-metronome-module .metronome-container {
+        width: 100cqw !important;    /* au lieu de 100vw */
+        height: 100cqh !important;   /* au lieu de 100vh */
+    }
+    
+    .saas-metronome-module body {
+        width: 100cqw !important;
+        height: 100cqh !important;
+    }
+    
+    /* ========================================
+       HEADER CONTROLS (BEAT/BAR/NOTE)
+       ======================================== */
+    
+    .saas-metronome-module .header-controls {
+        padding: 1.5cqh 4cqw 0 4cqw !important;  /* au lieu de 1.5vh 4vw 0 4vw */
+        gap: 2cqw !important;                     /* au lieu de 2vw */
+        margin-bottom: 2cqh !important;           /* au lieu de 2vh */
+    }
+    
+    .saas-metronome-module .control-wrapper {
+        gap: 0.5cqh !important;                   /* au lieu de 0.5vh */
+    }
+    
+    .saas-metronome-module .section-label {
+        font-size: 2.3cqw !important;             /* au lieu de 2.3vw */
+        margin-bottom: 0.8cqh !important;         /* au lieu de 0.8vh */
+    }
+    
+    .saas-metronome-module .control-value {
+        height: 5.5cqh !important;                /* au lieu de 5.5vh */
+        padding: 0 3cqw !important;               /* au lieu de 0 3vw */
+        font-size: 3.8cqw !important;             /* au lieu de 3.8vw */
+    }
+    
+    /* ========================================
+       VOLUME SLIDER
+       ======================================== */
+    
+    .saas-metronome-module .volume-slider-section {
+        gap: 2.5cqw !important;                   /* au lieu de 2.5vw */
+        margin-bottom: 2cqh !important;           /* au lieu de 2vh */
+    }
+    
+    /* ========================================
+       BEAT INDICATORS (LEDs)
+       ======================================== */
+    
+    .saas-metronome-module .beat-led {
+        width: 4.2cqw !important;                 /* au lieu de 4.2vw */
+        height: 4.2cqw !important;                /* au lieu de 4.2vw */
+    }
+    
+    .saas-metronome-module .beat-indicators {
+        gap: 3cqw !important;                     /* au lieu de 3vw */
+        margin-bottom: 3cqh !important;           /* au lieu de 3vh */
+    }
+    
+    /* ========================================
+       BPM DISPLAY
+       ======================================== */
+    
+    .saas-metronome-module .bpm-display {
+        font-size: 16.464cqw !important;          /* au lieu de 16.464vw */
+        margin-left: 7.2cqw !important;           /* au lieu de 7.2vw */
+        margin-top: calc(4.7cqh - 47px) !important; /* au lieu de calc(4.7vh - 47px) */
+    }
+    
+    .saas-metronome-module .bpm-label {
+        font-size: 5.5cqw !important;             /* au lieu de 5.5vw */
+    }
+    
+    /* ========================================
+       PLAY/STOP BUTTONS
+       ======================================== */
+    
+    .saas-metronome-module .play-btn {
+        left: 50.3cqw !important;                 /* au lieu de 50.3vw */
+        top: calc(42.22cqh - 27px) !important;    /* au lieu de calc(42.22vh - 27px) */
+        width: 18cqw !important;                  /* au lieu de 18vw */
+    }
+    
+    .saas-metronome-module .stop-btn {
+        top: calc(55.74cqh - 34px) !important;    /* au lieu de calc(55.74vh - 34px) */
+    }
+    
+    /* ========================================
+       SLIDER VERTICAL
+       ======================================== */
+    
+    .saas-metronome-module .slider-vertical-wrapper {
+        top: 27.8cqh !important;                  /* au lieu de 27.8vh */
+        right: 2cqw !important;                   /* au lieu de 2vw */
+        width: 8.8cqw !important;                 /* au lieu de 8.8vw */
+        height: 58cqh !important;                 /* au lieu de 58vh */
+    }
+    
+    /* ========================================
+       BOUTONS PLUS/MINUS/TAP
+       ======================================== */
+    
+    .saas-metronome-module .plus-btn,
+    .saas-metronome-module .minus-btn {
+        right: calc(2cqw + 4.4cqw) !important;    /* au lieu de calc(2vw + 4.4vw) */
+    }
+    
+    .saas-metronome-module .plus-btn {
+        top: calc(72.8cqh - 51px) !important;     /* au lieu de calc(72.8vh - 51px) */
+    }
+    
+    .saas-metronome-module .minus-btn {
+        top: calc(79.94cqh - 54px) !important;    /* au lieu de calc(79.94vh - 54px) */
+    }
+    
+    .saas-metronome-module .tap-btn {
+        right: calc(2cqw + 4.4cqw) !important;    /* au lieu de calc(2vw + 4.4vw) */
+        top: calc(87.08cqh - 63px) !important;    /* au lieu de calc(87.08vh - 63px) */
+        width: 26cqw !important;                  /* au lieu de 26vw */
+        height: 11cqh !important;                 /* au lieu de 11vh */
+    }
+    
+    .saas-metronome-module .tempo-btn {
+        width: 26cqw !important;                  /* au lieu de 26vw */
+        height: 5cqh !important;                  /* au lieu de 5vh */
+    }
+    
+    /* ========================================
+       ADVANCED ZONE (TIMER/MASKING/SESSION)
+       ======================================== */
+    
+    .saas-metronome-module .advanced-left {
+        gap: 2cqh !important;                     /* au lieu de 2vh */
+    }
+    
+    .saas-metronome-module .advanced-right {
+        gap: 2cqh !important;                     /* au lieu de 2vh */
+    }
+    
+    .saas-metronome-module .timer-field span,
+    .saas-metronome-module .duration-field span {
+        font-size: 3.9cqw !important;             /* au lieu de 3.9vw */
+    }
+    
+    .saas-metronome-module .masking-field span {
+        font-size: 3.7cqw !important;             /* au lieu de 3.7vw */
+    }
+    
+    .saas-metronome-module .time-separator {
+        font-size: 4.0cqw !important;             /* au lieu de 4.0vw */
+    }
+    
+    .saas-metronome-module .timer-field,
+    .saas-metronome-module .masking-field,
+    .saas-metronome-module .duration-field {
+        height: 5cqh !important;                  /* au lieu de 5vh */
+    }
+    
+    /* ========================================
+       CORE ZONE
+       ======================================== */
+    
+    .saas-metronome-module #core-zone {
+        bottom: 80px;                             /* Reste en px car c'est un offset absolu */
+        left: 4cqw !important;                    /* au lieu de 4vw */
+        right: 4cqw !important;                   /* au lieu de 4vw */
+    }
+    
+    /* ========================================
+       ADVANCED ZONE
+       ======================================== */
+    
+    .saas-metronome-module #advanced-zone {
+        bottom: 80px;                             /* Reste en px */
+        left: 4cqw !important;                    /* au lieu de 4vw */
+        right: 4cqw !important;                   /* au lieu de 4vw */
+    }
+}
+
+/* ============================================
+   3. PRODUCTION MODE (retirer bordure debug)
+   ============================================ */
+
+/* Décommenter cette ligne en production pour retirer la bordure verte */
+/* .saas-metronome-module { border: none !important; } */

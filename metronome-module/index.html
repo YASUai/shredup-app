@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Métronome Pro</title>
+    <link rel="stylesheet" href="styles.css?v=20260206-12">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Métronome">
+    <link rel="apple-touch-icon" href="/icon-192.svg">
+    <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+</head>
+<body>
+    <div class="metronome-container">
+        
+        <!-- TOP ZONE: BEAT LEDS (40px squares) -->
+        <div class="beat-indicators" id="beat-indicators-container">
+            <!-- LEDs générées dynamiquement selon beatsPerMeasure -->
+        </div>
+
+        <!-- SELECTORS ZONE: BEAT / BAR / NOTE -->
+        <div class="header-controls">
+            <div class="control-wrapper">
+                <div class="section-label">BEAT</div>
+                <div class="control-group">
+                    <div class="control-value">
+                        <span>4</span>
+                        <span class="dropdown-arrow">⌄</span>
+                    </div>
+                </div>
+            </div>
+            <div class="control-wrapper">
+                <div class="section-label">BAR</div>
+                <div class="control-group">
+                    <div class="control-value">
+                        <span>4/4</span>
+                        <span class="dropdown-arrow">⌄</span>
+                    </div>
+                </div>
+            </div>
+            <div class="control-wrapper">
+                <div class="section-label">NOTE</div>
+                <div class="control-group">
+                    <div class="control-value">
+                        <span>1/4</span>
+                        <span class="dropdown-arrow">⌄</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VOLUME ZONE -->
+        <div class="volume-slider-section">
+            <div class="volume-track">
+                <div class="volume-fill" style="width: 40%;"></div>
+                <div class="volume-thumb" style="left: 40%;"></div>
+            </div>
+            <div class="volume-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="#767676" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 11.995C17.0039 13.3208 16.4774 14.5924 15.54 15.53" stroke="#767676" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M18.07 5.93C19.9447 7.80528 20.9979 10.3462 20.9979 13C20.9979 15.6538 19.9447 18.1947 18.07 20.07" stroke="#767676" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- CORE ZONE: BPM + PLAY/STOP + SLIDER VERTICAL -->
+        <!-- ============================================ -->
+        <div id="core-zone">
+            
+            <!-- BPM BOX (gauche) -->
+            <div class="bpm-box">
+                <div class="bpm-display">128</div>
+                <div class="bpm-label">BPM</div>
+            </div>
+            
+            <!-- PLAY/STOP BUTTONS (gauche, sous BPM) -->
+            <div class="playback-controls">
+                <button class="play-btn">
+                    <svg width="40" height="40" viewBox="0 0 24 24">
+                        <defs>
+                            <radialGradient id="playGlow" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" style="stop-color:rgb(255,255,255);stop-opacity:0.8" />
+                                <stop offset="40%" style="stop-color:rgb(240,245,255);stop-opacity:0.5" />
+                                <stop offset="70%" style="stop-color:rgb(220,235,255);stop-opacity:0.25" />
+                                <stop offset="100%" style="stop-color:rgb(200,225,255);stop-opacity:0" />
+                            </radialGradient>
+                        </defs>
+                        <!-- Glow interne derrière l'icône -->
+                        <circle cx="13.5" cy="12" r="7" fill="url(#playGlow)" class="play-glow-circle"/>
+                        <!-- Icône Play en stroke -->
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
+                <button class="stop-btn">
+                    <svg width="40" height="40" viewBox="0 0 24 24">
+                        <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- SLIDER VERTICAL + HUD (droite) -->
+            <div class="slider-vertical-wrapper">
+                <div class="slider-label-top">250</div>
+                
+                <div class="slider-hud-container">
+                    <!-- HUD Graduations (background) -->
+                    <div class="hud-graduations"></div>
+                    
+                    <!-- Track + Handle -->
+                    <div class="slider-track-vertical">
+                        <div class="slider-fill"></div>
+                        <div class="slider-handle"></div>
+                    </div>
+                </div>
+                
+                <div class="slider-label-bottom">60</div>
+                <div class="slider-label-min">20</div>
+            </div>
+            
+        </div>
+
+        <!-- ============================================ -->
+        <!-- ADVANCED ZONE: TIMER + RANDOM + SESSION + BUTTONS -->
+        <!-- ============================================ -->
+        <div id="advanced-zone">
+            
+            <!-- Colonne gauche: TIMER/RANDOM/SESSION -->
+            <div class="advanced-left">
+                
+                <!-- TIMER -->
+                <div class="timer-section">
+                    <div class="section-label">TIMER</div>
+                    <div class="timer-fields">
+                        <div class="timer-field"><span>00</span></div>
+                        <span class="time-separator">:</span>
+                        <div class="timer-field"><span>00</span></div>
+                    </div>
+                </div>
+                
+                <!-- RANDOM MASKING -->
+                <div class="masking-section">
+                    <div class="section-label">RANDOM MASKING</div>
+                    <div class="masking-field">
+                        <span>OFF</span>
+                    </div>
+                </div>
+                
+                <!-- SESSION DURATION -->
+                <div class="duration-section">
+                    <div class="section-label">SESSION DURATION</div>
+                    <div class="duration-field">
+                        <span>00</span>
+                        <span class="time-separator">:</span>
+                        <span>00</span>
+                        <span class="time-separator">:</span>
+                        <span>00</span>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Colonne droite: PLUS/MINUS/TAP -->
+            <div class="advanced-right">
+                <button class="tempo-btn plus-btn">+</button>
+                <button class="tempo-btn minus-btn">−</button>
+                <button class="tap-btn">TAP</button>
+            </div>
+            
+        </div>
+
+    </div>
+    
+    <!-- MODALES POUR SÉLECTION -->
+    <!-- Modal BEAT -->
+    <div id="beat-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>BEAT - Temps par mesure</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="option-grid" id="beat-options"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal BAR -->
+    <div id="bar-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>BAR - Signature rythmique</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="option-grid" id="bar-options"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal NOTE -->
+    <div id="note-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>NOTE - Valeur de note</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="option-list" id="note-options"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal TIMER -->
+    <div id="timer-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>TIMER - Compte à rebours</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Presets rapides -->
+                <div class="timer-presets">
+                    <button class="preset-btn" data-minutes="2" data-seconds="30">02:30</button>
+                    <button class="preset-btn" data-minutes="5" data-seconds="0">05:00</button>
+                </div>
+                
+                <!-- Inputs personnalisés -->
+                <div class="timer-inputs">
+                    <div class="timer-input-group">
+                        <label>Minutes</label>
+                        <input type="number" id="timer-minutes-input" min="0" max="59" value="0">
+                    </div>
+                    <div class="timer-input-group">
+                        <label>Secondes</label>
+                        <input type="number" id="timer-seconds-input" min="0" max="59" value="0">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn modal-btn-primary" id="timer-set-btn">Définir</button>
+                    <button class="modal-btn modal-btn-secondary" id="timer-reset-btn">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js?v=20260206-11"></script>
+    <script src="structure_fix_v6.js?v=20260205-02"></script>
+</body>
+</html>

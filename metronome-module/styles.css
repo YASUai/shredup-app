@@ -1,0 +1,1266 @@
+/* ===========================================
+   MÉTRONOME UI - STRUCTURE FIXÉE V6
+   CORE ZONE + ADVANCED ZONE SÉPARÉES
+   =========================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    /* Remove tap highlight flash on mobile */
+    -webkit-tap-highlight-color: transparent;
+    /* Remove focus outline flash */
+    outline: none;
+}
+
+/* Remove focus visible flash on all interactive elements */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus,
+div[role="button"]:focus,
+.control-value:focus,
+.timer-field:focus,
+.duration-field:focus,
+.masking-field:focus {
+    outline: none !important;
+    /* Don't override box-shadow - let neumorphic effect work */
+}
+
+/* Remove any default browser highlights */
+button,
+input,
+select,
+textarea,
+.control-value,
+.timer-field,
+.duration-field,
+.masking-field,
+.play-btn,
+.stop-btn,
+.plus-btn,
+.minus-btn,
+.tap-btn {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    outline: none;
+}
+
+@font-face {
+    font-family: 'Conthrax';
+    src: url('Conthrax-SemiBold.otf') format('opentype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: block;  /* Block rendering until font is loaded */
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background: linear-gradient(180deg, 
+        #141414 0%, 
+        #161616 15%, 
+        #181818 30%, 
+        #1a1a1a 45%, 
+        #1b1b1b 50%, 
+        #1a1a1a 55%, 
+        #181818 70%, 
+        #161616 85%, 
+        #151515 100%);
+    width: 100vw;
+    height: 100vh;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    position: fixed;
+}
+
+.metronome-container {
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(180deg, 
+        #141414 0%, 
+        #161616 15%, 
+        #181818 30%, 
+        #1a1a1a 45%, 
+        #1b1b1b 50%, 
+        #1a1a1a 55%, 
+        #181818 70%, 
+        #161616 85%, 
+        #151515 100%);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5vh 4vw 0 4vw;
+    overflow: hidden;
+}
+
+/* ===========================================
+   TOP ZONE: BEAT LEDS (40px squares with 4 glow states)
+   RÉFÉRENCE: Capture avec Rectangle, Shadow 1/2/3
+   Facteur d'adaptation: 0.4 (100px → 40px)
+   =========================================== */
+.beat-indicators {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2vw;
+    margin-bottom: 2vh;
+    padding: 2vh 2vw;
+}
+
+.beat-led {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LED Square - 40px (adapté de 100px avec facteur 0.4)
+   Référence: Width 100, Height 100, Radius 8, Fill #FFF
+   OPTIMISATIONS: GPU acceleration + smooth rendering
+   ═══════════════════════════════════════════════════════════════════ */
+.led-square {
+    width: 40px;
+    height: 40px;
+    background: #FFFFFF;
+    border-radius: 3.2px;  /* 8px × 0.4 = 3.2px → arrondi à 3px visuellement */
+    box-shadow: none;
+    opacity: 0.3;  /* État neutre semi-transparent */
+    transform: scale(1);
+    
+    /* GPU acceleration pour animations ultra-fluides */
+    will-change: box-shadow, opacity, transform;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    
+    /* Transition multi-propriétés avec courbes avancées */
+    transition: 
+        box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
+        transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);  /* ease-out-back */
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉTATS DE BASE (sans animation)
+   ═══════════════════════════════════════════════════════════════════ */
+.led-square {
+    /* État par défaut = RECTANGLE (full white, no glow) */
+    background: #FFFFFF;
+    box-shadow: none;
+    opacity: 1;
+    transform: scale(1);
+}
+
+.led-square.state-off {
+    /* État OFF quand métronome arrêté */
+    background: #2f2f2f;
+    box-shadow: none;
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ANIMATIONS KEYFRAMES - PEAK ULTRA COURT (0.2ms) puis FADE OUT
+   Une seule animation pour tout le cycle du beat
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Beat lifecycle Shadow 2 : Rectangle → Peak (0.2ms) → Rectangle */
+@keyframes beat-shadow2-lifecycle {
+    0% {
+        /* Rectangle : full white, no glow */
+        background: #FFFFFF;
+        box-shadow: none;
+        opacity: 1;
+        transform: scale(1);
+    }
+    2% {
+        /* Fade IN rapide vers Peak MAX */
+        background: #FFFFFF;
+        box-shadow: 0 0 12.8px 3.2px rgba(255, 255, 255, 1), 0 0 20px 6px rgba(255, 255, 255, 0.5);
+        opacity: 1;
+        transform: scale(1.02);
+    }
+    2.04% {
+        /* Peak MAX maintenu 0.2ms (0.04% d'un beat de 500ms = 0.2ms) */
+        background: #FFFFFF;
+        box-shadow: 0 0 12.8px 3.2px rgba(255, 255, 255, 1), 0 0 20px 6px rgba(255, 255, 255, 0.5);
+        opacity: 1;
+        transform: scale(1.02);
+    }
+    100% {
+        /* Fade OUT progressif vers Rectangle */
+        background: #FFFFFF;
+        box-shadow: none;
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Beat lifecycle Shadow 3 : Rectangle → Peak (0.2ms) → Rectangle */
+@keyframes beat-shadow3-lifecycle {
+    0% {
+        /* Rectangle : full white, no glow */
+        background: #FFFFFF;
+        box-shadow: none;
+        opacity: 1;
+        transform: scale(1);
+    }
+    2% {
+        /* Fade IN rapide vers Peak MAX */
+        background: #FFFFFF;
+        box-shadow: 
+            0 0 12.8px 3.2px rgba(255, 255, 255, 1),
+            0 0 20px 6px rgba(255, 255, 255, 0.75),
+            0 0 51.2px 12.8px rgba(255, 255, 255, 1),
+            0 0 80px 20px rgba(255, 255, 255, 0.6);
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    2.04% {
+        /* Peak MAX maintenu 0.2ms (0.04% d'un beat de 500ms = 0.2ms) */
+        background: #FFFFFF;
+        box-shadow: 
+            0 0 12.8px 3.2px rgba(255, 255, 255, 1),
+            0 0 20px 6px rgba(255, 255, 255, 0.75),
+            0 0 51.2px 12.8px rgba(255, 255, 255, 1),
+            0 0 80px 20px rgba(255, 255, 255, 0.6);
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    100% {
+        /* Fade OUT progressif vers Rectangle */
+        background: #FFFFFF;
+        box-shadow: none;
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CLASSES D'ANIMATION - LIFECYCLE COMPLET DU BEAT
+   ═══════════════════════════════════════════════════════════════════ */
+
+.led-square.beat-active-shadow2 {
+    animation: beat-shadow2-lifecycle var(--beat-duration, 500ms) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    /* Lifecycle complet : Fade IN (2%) → Peak (0.04%) → Fade OUT (98%) */
+}
+
+.led-square.beat-active-shadow3 {
+    animation: beat-shadow3-lifecycle var(--beat-duration, 500ms) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    /* Lifecycle complet : Fade IN (2%) → Peak (0.04%) → Fade OUT (98%) */
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PULSATIONS CONTINUES (après fade-in terminé)
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes led-breathe {
+    0%, 100% {
+        box-shadow: 0 0 12.8px 3.2px rgba(255, 255, 255, 1), 0 0 20px 6px rgba(255, 255, 255, 0.4);
+        transform: scale(1.02);
+    }
+    50% {
+        box-shadow: 0 0 13.5px 3.5px rgba(255, 255, 255, 1), 0 0 22px 7px rgba(255, 255, 255, 0.5);
+        transform: scale(1.025);
+    }
+}
+
+@keyframes led-beat1-pulse {
+    0%, 100% {
+        box-shadow: 
+            0 0 12.8px 3.2px rgba(255, 255, 255, 1),
+            0 0 20px 6px rgba(255, 255, 255, 0.7),
+            0 0 51.2px 12.8px rgba(255, 255, 255, 1),
+            0 0 80px 20px rgba(255, 255, 255, 0.5);
+        transform: scale(1.05);
+    }
+    40% {
+        box-shadow: 
+            0 0 13.5px 3.5px rgba(255, 255, 255, 1),
+            0 0 22px 7px rgba(255, 255, 255, 0.75),
+            0 0 54px 14px rgba(255, 255, 255, 1),
+            0 0 85px 22px rgba(255, 255, 255, 0.55);
+        transform: scale(1.06);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÉTATS FINAUX (après animation)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.led-square.state-rectangle {
+    /* Rectangle : full white, no glow */
+    background: #FFFFFF;
+    box-shadow: none;
+    opacity: 1;
+    transform: scale(1);
+}
+
+.led-square.state-shadow2 {
+    /* Shadow 2 avec pulsation subtile */
+    background: #FFFFFF;
+    box-shadow: 0 0 12.8px 3.2px rgba(255, 255, 255, 1), 0 0 20px 6px rgba(255, 255, 255, 0.5);
+    opacity: 1;
+    transform: scale(1.02);
+    animation: led-breathe 1200ms cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.led-square.state-shadow3 {
+    /* Shadow 3 avec bloom pulsant */
+    background: #FFFFFF;
+    box-shadow: 
+        0 0 12.8px 3.2px rgba(255, 255, 255, 1),
+        0 0 20px 6px rgba(255, 255, 255, 0.75),
+        0 0 51.2px 12.8px rgba(255, 255, 255, 1),
+        0 0 80px 20px rgba(255, 255, 255, 0.6);
+    opacity: 1;
+    transform: scale(1.05);
+    animation: led-beat1-pulse 1000ms cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
+/* LED Label */
+.led-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: rgba(120, 120, 120, 0.6);
+    text-align: center;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .led-square {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+@media (max-width: 400px) {
+    .led-square {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .led-label {
+        font-size: 8px;
+    }
+}
+
+/* ===========================================
+   SELECTORS ZONE: BEAT / BAR / NOTE
+   =========================================== */
+.header-controls {
+    display: flex;
+    justify-content: space-between;
+    gap: 2.5vw;
+    margin-bottom: 2vh;
+}
+
+.control-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vh;
+}
+
+.section-label {
+    font-size: 2.3vw;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: rgba(92, 92, 92, 0.5);
+    text-transform: uppercase;
+    margin-bottom: 0.8vh;
+}
+
+.control-group {
+    width: 100%;
+    height: 5.5vh;
+    min-height: 42px;
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;  /* Reduced from 12px to 6px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3vw;
+    cursor: pointer;
+    transition: box-shadow 0.0005s ease;  /* Ultra-fast return: 0.5ms */
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);  /* Standardized: external shadow */
+}
+
+.control-value span {
+    font-size: 3.8vw;
+    color: rgba(92, 92, 92, 0.5);
+    font-weight: 500;
+}
+
+.dropdown-arrow {
+    position: absolute;
+    bottom: 6px;
+    right: 10px;
+}
+
+/* ===========================================
+   VOLUME ZONE
+   =========================================== */
+.volume-slider-section {
+    display: flex;
+    align-items: center;
+    gap: 2.5vw;
+    margin-bottom: 2vh;
+}
+
+.volume-track {
+    flex: 1;
+    height: 5px;
+    background: linear-gradient(to right,
+        #1a1a1a 0%, #252525 10%, #323232 20%, #424242 30%,
+        #555555 40%, #6b6b6b 50%, #838383 60%, #9d9d9d 70%,
+        #b8b8b8 80%, #d4d4d4 88%, #ececec 94%, #ffffff 100%
+    );
+    border-radius: 2.5px;
+    position: relative;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.volume-fill,
+.volume-thumb {
+    display: none;
+}
+
+.volume-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+}
+
+.volume-icon svg {
+    width: 4.2vw;
+    height: 4.2vw;
+    min-width: 18px;
+    min-height: 18px;
+}
+
+/* ===========================================
+   CORE ZONE: BPM + PLAY/STOP + SLIDER
+   =========================================== */
+#core-zone {
+    display: flex;
+    align-items: flex-start;
+    gap: 3vw;
+    margin-bottom: 3vh;
+    position: relative;
+}
+
+/* BPM BOX (gauche) */
+.bpm-box {
+    flex: 1.3;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.bpm-display {
+    font-family: 'Conthrax', sans-serif;
+    font-size: 16.464vw;  /* Taille verrouillée */
+    color: rgba(80, 80, 80, 0.5);
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    font-weight: 600;
+    transform-origin: top left;
+    margin-left: 7.2vw;   /* Ajusté pour H:13.9% */
+    margin-top: calc(4.7vh - 47px);    /* Remonté de 27px + 20px = 47px au total */
+}
+
+.bpm-label {
+    font-family: 'Conthrax', sans-serif;
+    font-size: 5.5vw;
+    font-weight: 600;
+    color: rgba(80, 80, 80, 0.28);
+    letter-spacing: 0.1em;
+    position: fixed;  /* Changed to fixed */
+    left: 50.3vw;     /* H:50.3% */
+    top: calc(42.22vh - 27px);     /* Remonté de 27px */
+    text-transform: uppercase;
+}
+
+/* PLAY/STOP BUTTONS */
+.playback-controls {
+    position: relative;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.play-btn,
+.stop-btn {
+    position: fixed;
+    width: 18vw;
+    max-width: 90px;
+    aspect-ratio: 1;
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;  /* Reduced from 12px to 6px */
+    color: rgba(92, 92, 92, 0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: box-shadow 0.0005s ease;  /* Ultra-fast return: 0.5ms */
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);  /* Reduced by 5% */
+    pointer-events: auto;
+}
+
+.play-btn {
+    top: calc(55.74vh - 34px);  /* 47px - 13px = 34px (redescendu de 13px) */
+    left: 13.3vw;  /* Ajusté pour H:14.4% */
+}
+
+.stop-btn {
+    top: calc(55.74vh - 34px);  /* 47px - 13px = 34px (redescendu de 13px) */
+    left: 35.0vw;  /* Maintient l'écart avec PLAY */
+}
+
+.play-btn svg,
+.stop-btn svg {
+    width: 6.5vw;
+    height: 6.5vw;
+    transition: all 0.3s ease;
+}
+
+.play-btn svg .play-glow-circle {
+    opacity: 0;  /* Caché par défaut */
+    transition: opacity 0.3s ease;
+}
+
+.play-btn svg path,
+.stop-btn svg path,
+.stop-btn svg rect {
+    fill: rgba(80, 80, 80, 0.5);
+}
+
+/* PLAY BUTTON - ACTIVE STATE (ON) */
+/* Icône complètement remplie de blanc avec glow externe */
+.play-btn.active {
+    box-shadow: 1px 1px 0.2px rgba(0, 0, 0, 0.56);  /* Subtle pressed effect (1px offset, minimal blur) */
+}
+
+.play-btn.active svg .play-glow-circle {
+    opacity: 1;
+}
+
+.play-btn.active svg path {
+    fill: #ffffff !important;  /* Remplissage blanc pur */
+    stroke: none;  /* Pas de contour */
+    filter: 
+        /* Halo très subtil, presque imperceptible */
+        drop-shadow(0 0 1px rgba(255, 255, 255, 0.4))
+        drop-shadow(0 0 3px rgba(220, 235, 250, 0.15))
+        drop-shadow(0 0 6px rgba(200, 225, 245, 0.08));
+}
+
+/* STOP BUTTON - ACTIVE STATE (FLASH) */
+/* Même effet que PLAY mais temporaire (flash 150ms) */
+.stop-btn.active svg rect {
+    fill: #ffffff !important;  /* Remplissage blanc pur */
+    stroke: none;  /* Pas de contour */
+    filter: 
+        /* Halo très subtil, presque imperceptible */
+        drop-shadow(0 0 1px rgba(255, 255, 255, 0.4))
+        drop-shadow(0 0 3px rgba(220, 235, 250, 0.15))
+        drop-shadow(0 0 6px rgba(200, 225, 245, 0.08));
+}
+
+/* SLIDER VERTICAL + HUD (droite) */
+.slider-vertical-wrapper {
+    position: fixed;
+    top: 27.8vh;  /* Vertical position - LOCKED */
+    right: 2vw;  /* Same as buttons for perfect alignment */
+    width: 8.8vw;
+    height: 58vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    z-index: 1;
+}
+
+.slider-label-top,
+.slider-label-bottom {
+    font-family: 'Conthrax', sans-serif;
+    font-size: 11px;
+    color: rgba(110, 110, 110, 0.55);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    position: absolute;
+    right: 2px;
+    z-index: 5;
+}
+
+.slider-label-top {
+    top: 0;
+}
+
+.slider-label-bottom {
+    bottom: -25px;
+    z-index: 10;
+}
+
+/* Nouveau label "20" en bas du slider - position fixed pour garantir visibilité */
+.slider-label-min {
+    font-family: 'Conthrax', sans-serif;
+    font-size: 11px;
+    color: rgba(110, 110, 110, 0.55);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    position: fixed;
+    bottom: 10vh;  /* Visible sous le HUD */
+    right: 9.5vw;
+    z-index: 20;
+}
+
+/* HUD + Track Container */
+.slider-hud-container {
+    position: absolute;
+    top: 3%;
+    bottom: 3%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* HUD Graduations */
+.hud-graduations {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.hud-grad {
+    position: absolute;
+    background: rgba(100, 100, 100, 0.6);
+    border-radius: 0.5px;
+    transform: translateY(-50%);
+}
+
+.hud-grad-major {
+    background: rgba(120, 120, 120, 0.75);
+}
+
+.hud-grad-minor {
+    background: rgba(90, 90, 90, 0.5);
+}
+
+/* HUD lines on LEFT side */
+.hud-grad-left {
+    right: calc(50% + 14px);
+}
+
+/* HUD lines on RIGHT side */
+.hud-grad-right {
+    left: calc(50% + 14px);
+}
+
+/* Track Vertical - Semi-transparent to show HUD */
+.slider-track-vertical {
+    position: relative;
+    width: 24px;
+    height: 100%;
+    background: linear-gradient(to top,
+        rgba(26, 26, 26, 0.3) 0%, rgba(37, 37, 37, 0.3) 10%, rgba(50, 50, 50, 0.3) 20%, rgba(66, 66, 66, 0.3) 30%,
+        rgba(85, 85, 85, 0.3) 40%, rgba(107, 107, 107, 0.3) 50%, rgba(131, 131, 131, 0.3) 60%, rgba(157, 157, 157, 0.3) 70%,
+        rgba(184, 184, 184, 0.3) 80%, rgba(212, 212, 212, 0.3) 88%, rgba(236, 236, 236, 0.3) 94%, rgba(255, 255, 255, 0.3) 100%
+    );
+    border-radius: 6px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    z-index: 2;
+}
+
+.slider-fill,
+.slider-handle {
+    display: none;
+}
+
+/* ===========================================
+   ADVANCED ZONE: TIMER + RANDOM + SESSION + BUTTONS
+   =========================================== */
+#advanced-zone {
+    display: flex;
+    gap: 3vw;
+    position: absolute;
+    bottom: 80px;  /* Remonté de 24px à 80px pour éviter le menu Android */
+    left: 4vw;
+    right: 4vw;
+}
+
+/* Colonne gauche */
+.advanced-left {
+    flex: 1.3;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2vh;
+}
+
+/* TIMER */
+.timer-section {
+    width: 100%;
+}
+
+.timer-fields {
+    display: flex;
+    align-items: center;
+    gap: 2.5vw;
+}
+
+.timer-field {
+    flex: 1;
+    height: 5vh;
+    min-height: 38px;
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;  /* Reduced from 12px to 6px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);  /* Standardized: external shadow */
+    transition: box-shadow 0.0005s ease;  /* Ultra-fast return: 0.5ms */
+}
+
+.timer-field span {
+    font-size: 3.9vw;
+    color: rgba(92, 92, 92, 0.5);
+    font-weight: 400;
+}
+
+.time-separator {
+    font-size: 4vw;
+    color: rgba(92, 92, 92, 0.5);
+    font-weight: 300;
+}
+
+/* RANDOM MASKING */
+.masking-section {
+    width: 100%;
+}
+
+.masking-field {
+    width: 100%;
+    height: 5vh;
+    min-height: 38px;
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;  /* Reduced from 12px to 6px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);  /* Standardized: external shadow */
+    position: relative;
+    transition: box-shadow 0.15s ease;  /* Smooth transition */
+}
+
+/* Active state: reduced shadow for pressed effect */
+.masking-field.active {
+    box-shadow: 1px 1px 0.2px rgba(0, 0, 0, 0.56);  /* Same as PLAY button active */
+}
+
+/* Texte blanc statique quand MASKING actif */
+.masking-field.active span {
+    color: rgba(255, 255, 255, 1) !important;
+}
+
+.masking-field span {
+    font-size: 3.7vw;
+    color: rgba(92, 92, 92, 0.5);
+    font-weight: 400;
+}
+
+/* Red LED indicator - visible only when active */
+.masking-field::after {
+    content: '';
+    position: absolute;
+    right: 4vw;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 80, 80, 0.95);
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(255, 80, 80, 0.9);
+    opacity: 0;  /* Hidden by default - LED OFF */
+    transition: opacity 0.3s ease;
+}
+
+.masking-field.active::after {
+    opacity: 1;  /* Visible when active */
+}
+
+/* SESSION DURATION */
+.duration-section {
+    width: 100%;
+}
+
+.duration-field {
+    width: 100%;
+    height: 5vh;
+    min-height: 38px;
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;  /* Reduced from 12px to 6px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5vw;
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);  /* Standardized: external shadow */
+    transition: box-shadow 0.0005s ease;  /* Ultra-fast return: 0.5ms */
+}
+
+.duration-field span {
+    font-size: 3.9vw;
+    color: rgba(92, 92, 92, 0.5);
+    font-weight: 400;
+}
+
+/* Colonne droite: BUTTONS */
+.advanced-right {
+    flex: 0.7;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;  /* Changé de space-between à flex-start */
+    align-items: center;
+    gap: 2vh;
+}
+
+.tempo-btn {
+    width: 26vw;
+    max-width: 100px;
+    height: 5vh;
+    min-height: 38px;
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;  /* Reduced from 12px to 6px */
+    color: rgba(92, 92, 92, 0.5);
+    font-size: 5vw;
+    font-weight: 300;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);  /* Reduced by 5% */
+    transition: box-shadow 0.0005s ease, color 0s ease;  /* Ultra-fast + color instantané */
+}
+
+.tap-btn {
+    width: 26vw;
+    max-width: 100px;
+    height: 11vh;
+    min-height: 75px;
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;  /* Reduced from 12px to 6px */
+    color: rgba(92, 92, 92, 0.5);
+    font-size: 3.8vw;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);  /* Reduced by 5% */
+    transition: box-shadow 0.0005s ease, color 0s ease;  /* Transition instantanée pour color */
+    
+    /* LATENCE 0MS : Empêcher sélection de texte et délai tap mobile */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Position individuelle des boutons PLUS/MINUS/TAP */
+.plus-btn {
+    position: fixed;
+    top: calc(72.8vh - 51px);  /* 54px - 3px = 51px (redescendu de 3px supplémentaires) */
+    right: calc(2vw + 4.4vw);  /* Center aligned with slider center (2vw + half of 8.8vw) */
+    transform: translateX(50%);  /* Center button on its right edge */
+    z-index: 10;
+}
+
+.minus-btn {
+    position: fixed;
+    top: calc(79.94vh - 54px);  /* 60px - 6px = 54px (redescendu de 6px) */
+    right: calc(2vw + 4.4vw);  /* Center aligned with slider center (2vw + half of 8.8vw) */
+    transform: translateX(50%);  /* Center button on its right edge */
+    z-index: 10;
+}
+
+.tap-btn {
+    position: fixed;
+    top: calc(87.08vh - 63px);  /* 60px + 3px = 63px (remonté de 3px supplémentaires) */
+    right: calc(2vw + 4.4vw);  /* Center aligned with slider center (2vw + half of 8.8vw) */
+    transform: translateX(50%);  /* Center button on its right edge */
+    z-index: 10;
+}
+
+/* ===========================================
+   NEUMORPHIC PRESSED EFFECT - ALL BUTTONS
+   =========================================== */
+
+/* Apply pressed effect on click to all interactive buttons */
+/* Excludes PLAY and MASKING which have persistent active states */
+.stop-btn:active,
+.plus-btn:active,
+.minus-btn:active,
+.tap-btn:active,
+.control-group:active,  /* Changed from .control-value:active */
+.timer-field:active,
+.duration-field:active {
+    box-shadow: 1px 1px 0.2px rgba(0, 0, 0, 0.56) !important;
+    transition: box-shadow 0s !important;  /* Instant press effect */
+}
+
+/* Texte blanc pur au click pour tous les boutons texte */
+.tap-btn:active,
+.control-group:active span,
+.timer-field:active span,
+.duration-field:active span {
+    color: rgba(255, 255, 255, 1) !important;
+}
+
+/* TAP BUTTON: Feedback visuel avec classe JS (latence 0ms) */
+.tap-btn.tapping {
+    color: rgba(255, 255, 255, 1) !important;
+    box-shadow: 1px 1px 0.2px rgba(0, 0, 0, 0.56) !important;
+    transition: none !important;  /* Désactiver toute transition pour feedback instantané */
+}
+
+/* ⚡ Feedback PLUS/MINUS avec classe .clicking (même logique que TAP) */
+.plus-btn.clicking,
+.minus-btn.clicking {
+    color: rgba(255, 255, 255, 1) !important;  /* TEXTE blanc pur (+ et −) */
+    box-shadow: 1px 1px 0.2px rgba(0, 0, 0, 0.56) !important;
+    transition: none !important;  /* Feedback instantané */
+}
+
+/* SVG blanc pur pour STOP/PLUS/MINUS (utilisent fill au lieu de color) */
+.stop-btn:active svg path,
+.stop-btn:active svg rect,
+.plus-btn:active svg path,
+.plus-btn:active svg line,
+.minus-btn:active svg path,
+.minus-btn:active svg line {
+    fill: rgba(255, 255, 255, 1) !important;
+    stroke: rgba(255, 255, 255, 1) !important;
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+
+/* Mobile: Adjusted positioning to center buttons on slider */
+@media (max-width: 768px) {
+    .slider-vertical-wrapper {
+        right: 12vw !important;
+        transform: none !important;
+    }
+    
+    .plus-btn,
+    .minus-btn,
+    .tap-btn {
+        right: calc(16.4vw - 50px) !important;  /* 12vw + 4.4vw - 50px to align centers */
+        transform: none !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .metronome-container {
+        padding: 1vh 3vw 0 3vw;
+    }
+}
+
+@media (min-width: 413px) {
+    .control-value span {
+        font-size: 15px;
+    }
+    
+    .bpm-display {
+        font-size: 64px;
+    }
+    
+    .bpm-label {
+        font-size: 22px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* MODALES DE SÉLECTION */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    animation: fadeIn 0.2s ease;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 
+        1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56),
+        0 0 20px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Courier New', monospace;
+}
+
+.modal-close {
+    font-size: 32px;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: color 0.2s ease;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: rgba(255, 255, 255, 1);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+/* Option grid pour BEAT et BAR */
+.option-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.option-item {
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    padding: 15px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);
+}
+
+.option-item:hover {
+    color: rgba(255, 255, 255, 1);
+    transform: translateY(-2px);
+    box-shadow: 
+        1px 1px 0.2px rgba(0, 0, 0, 0.56),
+        0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.option-item.selected {
+    background: linear-gradient(145deg, #2a2a2a 0%, #2f2f2f 100%);
+    color: rgba(255, 255, 255, 1);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.3),
+        0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Option list pour NOTE */
+.option-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.option-list .option-item {
+    padding: 20px;
+    font-size: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.option-item .note-name {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Timer inputs */
+/* Timer presets */
+.timer-presets {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.preset-btn {
+    flex: 1;
+    padding: 14px;
+    background: linear-gradient(145deg, #2a2a28 0%, #252523 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 18px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);
+}
+
+.preset-btn:hover {
+    background: linear-gradient(145deg, #323230 0%, #2d2d2b 100%);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 
+        1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56),
+        0 0 12px rgba(255, 255, 255, 0.1);
+}
+
+.preset-btn:active {
+    transform: translateY(0);
+    background: linear-gradient(145deg, #1f1f1e 0%, #1a1a19 100%);
+    color: rgba(255, 255, 255, 1) !important;  /* Texte blanc pur au click */
+}
+
+.timer-inputs {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.timer-input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.timer-input-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+}
+
+.timer-input-group input {
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 24px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);
+}
+
+.timer-input-group input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56),
+        0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+/* Modal actions */
+.modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: 'Courier New', monospace;
+}
+
+.modal-btn-primary {
+    background: linear-gradient(145deg, #2a2a2a 0%, #2f2f2f 100%);
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);
+}
+
+.modal-btn-primary:hover {
+    box-shadow: 1px 1px 0.2px rgba(0, 0, 0, 0.56);
+}
+
+.modal-btn-secondary {
+    background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+    color: rgba(255, 255, 255, 0.7);
+    box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);
+}
+
+.modal-btn-secondary:hover {
+    color: rgba(255, 255, 255, 1);
+    box-shadow: 1px 1px 0.2px rgba(0, 0, 0, 0.56);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
