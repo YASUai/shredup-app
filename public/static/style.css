@@ -562,6 +562,8 @@ body {
   display: grid;
   grid-template-rows: 725px auto;
   gap: 8px;
+  width: 400px; /* ✅ AJOUTÉ: forcer la largeur */
+  max-width: 400px; /* ✅ AJOUTÉ */
 }
 
 /* ================================================
@@ -570,15 +572,14 @@ body {
 
 .zone-metronome {
   height: 725px;
-  width: 400px; /* ✅ AJOUTÉ: largeur fixe */
+  width: 400px;
+  max-width: 400px; /* ✅ AJOUTÉ */
   background-color: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  display: flex;
-  align-items: flex-start; /* ✅ CHANGÉ: center → flex-start */
-  justify-content: flex-start; /* ✅ CHANGÉ: center → flex-start */
+  display: block; /* ✅ CHANGÉ: flex → block */
   padding: 0;
-  margin: 0; /* ✅ AJOUTÉ: pas de margin */
+  margin: 0;
   overflow: hidden;
   position: relative;
 }
@@ -595,11 +596,15 @@ body {
 .metronome-iframe {
   width: 400px;
   height: 725px;
+  max-width: 400px; /* ✅ AJOUTÉ */
   border: none;
   display: block;
-  border-radius: var(--radius-md);
-  margin: 0; /* ✅ AJOUTÉ: pas de margin */
-  padding: 0; /* ✅ AJOUTÉ: pas de padding */
+  border-radius: 0; /* ✅ CHANGÉ: radius peut créer un gap */
+  margin: 0;
+  padding: 0;
+  position: absolute; /* ✅ CHANGÉ: relative → absolute */
+  top: 0; /* ✅ AJOUTÉ */
+  left: 0; /* ✅ AJOUTÉ */
 }
 
 .metronome-header {
