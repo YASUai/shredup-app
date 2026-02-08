@@ -71,11 +71,7 @@ body {
 .metronome-container {
     width: 100vw;
     height: 100vh;
-    /* ✅ SUPPRIMÉ: plus de background, celui du module parent sera visible */ 
-        #1a1a1a 55%, 
-        #181818 70%, 
-        #161616 85%, 
-        #151515 100%);
+    /* ✅ SUPPRIMÉ: plus de background, celui du module parent sera visible */
     position: relative;
     display: flex;
     flex-direction: column;
