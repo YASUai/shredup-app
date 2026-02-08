@@ -5,6 +5,80 @@ const app = new Hono()
 
 app.use(renderer)
 
+// Route pour le métronome scaled
+app.get('/metronome-scaled', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED-UP Metronome Scaled</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 400px;
+            height: 725px;
+            overflow: hidden;
+            background: #1A1A1A;
+            position: relative;
+        }
+
+        .metronome-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 400px;
+            height: 725px;
+            overflow: hidden;
+            background: #1A1A1A;
+        }
+
+        .metronome-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 414px;
+            height: 896px;
+            border: none;
+            transform-origin: top left;
+            transform: scale(0.809);
+        }
+    </style>
+</head>
+<body>
+    <div class="metronome-wrapper">
+        <iframe 
+            src="https://7777-idisowycqqgdrvtdl8cr9-8f57ffe2.sandbox.novita.ai/" 
+            class="metronome-iframe"
+            title="SHRED-UP Metronome"
+            scrolling="no"
+            allow="autoplay"
+        ></iframe>
+    </div>
+
+    <script>
+        window.addEventListener('message', (event) => {
+            const metronomeIframe = document.querySelector('.metronome-iframe');
+            if (metronomeIframe && metronomeIframe.contentWindow) {
+                metronomeIframe.contentWindow.postMessage(event.data, '*');
+            }
+        });
+
+        window.addEventListener('message', (event) => {
+            if (window.parent !== window) {
+                window.parent.postMessage(event.data, '*');
+            }
+        });
+    </script>
+</body>
+</html>`)
+})
+
 app.get('/', (c) => {
   return c.render(
     <div class="app-container">
@@ -80,48 +154,13 @@ app.get('/', (c) => {
       <div class="zone-metronome-tuner">
         {/* METRONOME - Top */}
         <div class="zone-metronome">
-          <div class="metronome-container">
-            {/* Beat Indicators */}
-            <div class="metronome-header">
-              <div class="metronome-beats">
-                <div class="beat-indicator active"></div>
-                <div class="beat-indicator"></div>
-                <div class="beat-indicator"></div>
-                <div class="beat-indicator"></div>
-              </div>
-              <div class="beat-label">BEAT 1 / BEAT 2 / BEAT 3 / BEAT 4</div>
-            </div>
-
-            {/* BPM Display */}
-            <div class="metronome-display">
-              <div class="bpm-value">114</div>
-              <div class="bpm-label">BPM</div>
-            </div>
-
-            {/* Controls */}
-            <div class="metronome-controls">
-              <button class="control-button">▶</button>
-              <button class="control-button">■</button>
-            </div>
-
-            {/* BPM Slider */}
-            <div class="bpm-slider-container">
-              <input 
-                type="range" 
-                class="slider-input" 
-                min="40" 
-                max="240" 
-                value="114" 
-                orient="vertical"
-              />
-            </div>
-
-            {/* Timer */}
-            <div class="metronome-timer">
-              <div class="block-title">TIMER</div>
-              <div class="timer-value">00:00</div>
-            </div>
-          </div>
+          <iframe 
+            src="/metronome-scaled" 
+            class="metronome-iframe"
+            title="SHRED-UP Metronome"
+            scrolling="no"
+            allow="autoplay"
+          ></iframe>
         </div>
 
         {/* TUNER - Bottom */}

@@ -576,8 +576,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-lg);
+  padding: 0; /* ✅ Supprimé le padding pour l'iframe */
   overflow: hidden;
+  position: relative; /* ✅ Pour le positionnement de l'iframe */
 }
 
 .metronome-container {
@@ -586,6 +587,15 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+}
+
+/* ✅ IFRAME METRONOME INTEGRATION */
+.metronome-iframe {
+  width: 400px;
+  height: 725px;
+  border: none;
+  display: block;
+  border-radius: var(--radius-md);
 }
 
 .metronome-header {

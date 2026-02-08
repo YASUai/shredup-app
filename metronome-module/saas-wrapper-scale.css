@@ -1,0 +1,100 @@
+/* ================================================
+   SAAS MODULE WRAPPER - TRANSFORM SCALE APPROACH
+   Mise à l'échelle du métronome original dans 400×725px
+   Version: v2.0 - 2026-02-08
+   ================================================ */
+
+/* ============================================
+   1. DÉFINITION DU CONTENEUR ISOLÉ 400×725px
+   ============================================ */
+
+.saas-metronome-module {
+    /* DIMENSIONS FIXES ET STRICTES */
+    width: 400px !important;
+    height: 725px !important;
+    max-width: 400px !important;
+    max-height: 725px !important;
+    min-width: 400px !important;
+    min-height: 725px !important;
+    
+    /* BORDURE DEBUG VERTE (à retirer en production) */
+    border: 5px solid #00ff00 !important;
+    
+    /* BOX SIZING STRICT */
+    box-sizing: border-box !important;
+    
+    /* ISOLATION COMPLÈTE */
+    isolation: isolate;
+    position: relative;
+    overflow: hidden;
+    
+    /* BACKGROUND DE L'APP */
+    background: #1a1a1a;
+    
+    /* RESET POUR ÉVITER HÉRITAGES */
+    font-family: 'Conthrax', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ============================================
+   2. METRONOME CONTAINER - TRANSFORM SCALE
+   ============================================ */
+
+/* Le métronome original utilise 100vw × 100vh
+   On simule un viewport mobile : 375px × 812px
+   
+   Calcul du scale pour 400×725px :
+   - Largeur : 400 / 375 ≈ 1.067 (plus large que mobile)
+   - Hauteur : 725 / 812 ≈ 0.893 (plus court que mobile)
+   
+   On prend le scale le plus petit : 0.893
+   Mais ajustons à 1.0 pour voir si ça rentre bien
+*/
+
+.saas-metronome-module .metronome-container {
+    /* Dimensions originales (simulant viewport mobile) */
+    width: 400px;
+    height: 725px;
+    
+    /* Transform origin en haut à gauche */
+    transform-origin: top left;
+    
+    /* Scale 1:1 pour commencer (on ajustera si besoin) */
+    transform: scale(1.0) !important;
+    
+    /* Position absolute pour le placement */
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    
+    /* Overflow hidden pour ne pas déborder */
+    overflow: hidden;
+}
+
+/* ============================================
+   3. RESET DES POSITION FIXED (POUR ISOLATION)
+   ============================================ */
+
+/* Tous les éléments en position:fixed deviennent absolute
+   pour rester dans le conteneur transformé */
+.saas-metronome-module .metronome-container * {
+    /* Ne pas toucher au CSS original, juste override fixed */
+}
+
+.saas-metronome-module .bpm-display,
+.saas-metronome-module .bpm-label,
+.saas-metronome-module .play-btn,
+.saas-metronome-module .stop-btn,
+.saas-metronome-module .slider-vertical-wrapper,
+.saas-metronome-module .plus-btn,
+.saas-metronome-module .minus-btn,
+.saas-metronome-module .tap-btn {
+    /* Les positions fixed sont converties en absolute par le contexte du transform */
+    /* Pas besoin de override ! Le transform crée un nouveau contexte de positionnement */
+}
+
+/* ============================================
+   4. PRODUCTION MODE (retirer bordure debug)
+   ============================================ */
+
+/* Décommenter cette ligne en production pour retirer la bordure verte */
+/* .saas-metronome-module { border: none !important; } */

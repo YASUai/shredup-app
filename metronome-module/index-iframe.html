@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=400, height=725, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SHRED-UP Metronome</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Métronome">
+    
+    <!-- CSS ORIGINAL SANS MODIFICATION -->
+    <link rel="stylesheet" href="styles.css?v=20260206-12">
+    
+    <style>
+        /* Override viewport dimensions pour simuler un mobile 400×725 */
+        html {
+            width: 400px;
+            height: 725px;
+            overflow: hidden;
+        }
+        
+        body {
+            width: 400px;
+            height: 725px;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #1A1A1A;
+        }
+        
+        /* Forcer le conteneur principal à 400×725 */
+        .container {
+            width: 400px !important;
+            height: 725px !important;
+            max-width: 400px !important;
+            max-height: 725px !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- BEAT INDICATORS (LEDs) -->
+    <div id="beat-indicators" class="beat-indicators-container"></div>
+
+    <!-- EN-TÊTE AVEC CONTRÔLES DE BEAT, BAR ET NOTE -->
+    <div class="header-row">
+        <div class="control-container beat-control" id="beatControl">
+            <span class="section-label">BEAT</span>
+            <div class="control-value">
+                <span id="beatValue">4</span>
+                <div class="dropdown-arrows">
+                    <button class="arrow-btn up" id="beatUp" aria-label="Augmenter le nombre de beats">▲</button>
+                    <button class="arrow-btn down" id="beatDown" aria-label="Diminuer le nombre de beats">▼</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-container bar-control" id="barControl">
+            <span class="section-label">BAR</span>
+            <div class="control-value">
+                <span id="barValue">4/4</span>
+                <div class="dropdown-arrows">
+                    <button class="arrow-btn up" id="barUp" aria-label="Augmenter la signature rythmique">▲</button>
+                    <button class="arrow-btn down" id="barDown" aria-label="Diminuer la signature rythmique">▼</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-container note-control" id="noteControl">
+            <span class="section-label">NOTE</span>
+            <div class="control-value">
+                <span id="noteValue">1/4</span>
+                <div class="dropdown-arrows">
+                    <button class="arrow-btn up" id="noteUp" aria-label="Augmenter la subdivision">▲</button>
+                    <button class="arrow-btn down" id="noteDown" aria-label="Diminuer la subdivision">▼</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ZONE CORE : BPM Display, Boutons Play/Stop, Volume -->
+    <div class="core-zone">
+        <!-- BPM Display -->
+        <div class="bpm-box">
+            <span id="bpmValue">128</span>
+            <span class="bpm-label">BPM</span>
+        </div>
+
+        <!-- Bouton Play -->
+        <button class="play-btn" id="playBtn" aria-label="Démarrer le métronome">
+            <div class="play-glow-circle"></div>
+            <span>PLAY</span>
+        </button>
+
+        <!-- Bouton Stop (sous le bouton Play) -->
+        <button class="stop-btn" id="stopBtn" aria-label="Arrêter le métronome">
+            <span>STOP</span>
+        </button>
+
+        <!-- Zone Volume avec slider horizontal -->
+        <div class="volume-zone">
+            <div class="volume-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 11.995C17.0039 13.3208 16.4774 14.5924 15.54 15.53" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="volume-slider">
+                <div class="volume-track">
+                    <div class="volume-fill" id="volumeFill" style="width: 40%;"></div>
+                    <div class="volume-thumb" id="volumeThumb" style="left: 40%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ZONE AVANCÉE : TIMER + MASKING + SESSION DURATION + SLIDER VERTICAL + BOUTONS -->
+    <div class="advanced-zone">
+        <!-- Colonne Gauche : TIMER, RANDOM MASKING, SESSION DURATION -->
+        <div class="advanced-left">
+            <!-- TIMER -->
+            <div class="control-container timer-container">
+                <span class="section-label">TIMER</span>
+                <div class="timer-field" id="timerField">
+                    <span id="timerMinutes">00</span>
+                    <span class="time-separator">:</span>
+                    <span id="timerSeconds">00</span>
+                </div>
+            </div>
+
+            <!-- RANDOM MASKING -->
+            <div class="control-container masking-container">
+                <span class="section-label">RANDOM MASKING</span>
+                <div class="masking-field">
+                    <span id="maskingValue">OFF</span>
+                </div>
+            </div>
+
+            <!-- SESSION DURATION -->
+            <div class="control-container duration-container">
+                <span class="section-label">SESSION DURATION</span>
+                <div class="duration-field">
+                    <span id="durationHours">00</span>
+                    <span class="time-separator">:</span>
+                    <span id="durationMinutes">00</span>
+                    <span class="time-separator">:</span>
+                    <span id="durationSeconds">00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne Droite : SLIDER VERTICAL + BOUTONS + / - / TAP -->
+        <div class="advanced-right">
+            <!-- Slider vertical -->
+            <div class="slider-vertical-wrapper">
+                <!-- Label supérieur "250" -->
+                <span class="slider-top-label">250</span>
+
+                <!-- Conteneur du slider vertical -->
+                <div class="slider-vertical-container">
+                    <input 
+                        type="range" 
+                        id="bpmSlider" 
+                        class="slider-vertical" 
+                        min="40" 
+                        max="250" 
+                        value="128" 
+                        step="1"
+                        orient="vertical"
+                        aria-label="Réglage du BPM avec slider vertical"
+                    >
+                </div>
+
+                <!-- Label inférieur "60" -->
+                <span class="slider-bottom-label">60</span>
+            </div>
+
+            <!-- Boutons + / - / TAP (à droite du slider) -->
+            <div class="tempo-controls">
+                <button class="plus-btn" id="plusBtn" aria-label="Augmenter le BPM de 1">
+                    <span>+</span>
+                </button>
+
+                <button class="minus-btn" id="minusBtn" aria-label="Diminuer le BPM de 1">
+                    <span>−</span>
+                </button>
+
+                <button class="tap-btn" id="tapBtn" aria-label="Tap tempo pour définir le BPM">
+                    <span>TAP</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALES (BEAT, BAR, NOTE, TIMER) -->
+    <!-- Modal BEAT -->
+    <div class="modal-overlay" id="beatModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>SELECT BEAT</h2>
+                <button class="modal-close" data-modal="beatModal" aria-label="Fermer">×</button>
+            </div>
+            <div class="modal-options" id="beatOptions">
+                <!-- Options générées dynamiquement par JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal BAR -->
+    <div class="modal-overlay" id="barModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>SELECT BAR</h2>
+                <button class="modal-close" data-modal="barModal" aria-label="Fermer">×</button>
+            </div>
+            <div class="modal-options" id="barOptions">
+                <!-- Options générées dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal NOTE -->
+    <div class="modal-overlay" id="noteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>SELECT NOTE</h2>
+                <button class="modal-close" data-modal="noteModal" aria-label="Fermer">×</button>
+            </div>
+            <div class="modal-options" id="noteOptions">
+                <!-- Options générées dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal TIMER -->
+    <div class="modal-overlay" id="timerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>SET TIMER</h2>
+                <button class="modal-close" data-modal="timerModal" aria-label="Fermer">×</button>
+            </div>
+            <div class="timer-presets">
+                <button class="preset-btn" data-minutes="2" data-seconds="30">02:30</button>
+                <button class="preset-btn" data-minutes="5" data-seconds="0">05:00</button>
+            </div>
+            <div class="timer-inputs">
+                <input type="number" id="timerMinutesInput" min="0" max="59" placeholder="MM" aria-label="Minutes">
+                <span>:</span>
+                <input type="number" id="timerSecondsInput" min="0" max="59" placeholder="SS" aria-label="Secondes">
+            </div>
+            <div class="timer-actions">
+                <button class="timer-set-btn" id="timerSetBtn">SET</button>
+                <button class="timer-reset-btn" id="timerResetBtn">RESET</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="script.js?v=20260206-11"></script>
+    <script src="structure_fix_v6.js?v=20260205-02"></script>
+</body>
+</html>

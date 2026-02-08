@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED-UP - Metronome Module (400×725px)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .saas-container {
+            position: relative;
+            width: 400px;
+            height: 725px;
+            border: 2px solid #00ff00; /* Bordure verte pour debug */
+            overflow: hidden;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .saas-container.production {
+            border: none; /* Retirer la bordure en production */
+        }
+
+        .metronome-iframe {
+            width: 400px;
+            height: 725px;
+            border: none;
+            display: block;
+            overflow: hidden;
+        }
+
+        .debug-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff00;
+            padding: 10px;
+            border: 1px solid #00ff00;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 10000;
+        }
+
+        .debug-info.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Debug Info -->
+    <div class="debug-info" id="debugInfo">
+        <div>📐 Container: 400×725px</div>
+        <div>🖼️ iframe: 400×725px</div>
+        <div>🎯 Mode: DEBUG</div>
+        <div>🟢 Bordure verte visible</div>
+        <div style="margin-top: 10px; cursor: pointer;" onclick="toggleProduction()">
+            👉 Cliquez pour passer en mode PRODUCTION
+        </div>
+    </div>
+
+    <!-- Container SaaS avec iframe -->
+    <div class="saas-container" id="saasContainer">
+        <iframe 
+            src="index-iframe.html" 
+            class="metronome-iframe"
+            id="metronomeIframe"
+            title="SHRED-UP Metronome"
+            scrolling="no"
+            allow="autoplay"
+        ></iframe>
+    </div>
+
+    <script>
+        function toggleProduction() {
+            const container = document.getElementById('saasContainer');
+            const debugInfo = document.getElementById('debugInfo');
+            
+            container.classList.toggle('production');
+            
+            if (container.classList.contains('production')) {
+                debugInfo.innerHTML = `
+                    <div>📐 Container: 400×725px</div>
+                    <div>🖼️ iframe: 400×725px</div>
+                    <div>🎯 Mode: PRODUCTION</div>
+                    <div>✅ Bordure retirée</div>
+                    <div style="margin-top: 10px; cursor: pointer;" onclick="toggleProduction()">
+                        👉 Cliquez pour revenir en mode DEBUG
+                    </div>
+                `;
+            } else {
+                debugInfo.innerHTML = `
+                    <div>📐 Container: 400×725px</div>
+                    <div>🖼️ iframe: 400×725px</div>
+                    <div>🎯 Mode: DEBUG</div>
+                    <div>🟢 Bordure verte visible</div>
+                    <div style="margin-top: 10px; cursor: pointer;" onclick="toggleProduction()">
+                        👉 Cliquez pour passer en mode PRODUCTION
+                    </div>
+                `;
+            }
+        }
+
+        // Communication iframe (optionnel)
+        window.addEventListener('message', (event) => {
+            // Vérifier l'origine pour la sécurité
+            if (event.origin !== window.location.origin) return;
+            
+            console.log('Message reçu de l\'iframe:', event.data);
+            
+            // Exemples de messages possibles :
+            // - { type: 'bpm', value: 128 }
+            // - { type: 'playing', value: true }
+            // - { type: 'timer', value: '02:30' }
+        });
+
+        // Envoyer des messages à l'iframe (exemple)
+        function sendMessageToMetronome(type, value) {
+            const iframe = document.getElementById('metronomeIframe');
+            iframe.contentWindow.postMessage({ type, value }, window.location.origin);
+        }
+
+        // Exemple d'utilisation :
+        // sendMessageToMetronome('setBPM', 140);
+        // sendMessageToMetronome('play', true);
+    </script>
+</body>
+</html>
