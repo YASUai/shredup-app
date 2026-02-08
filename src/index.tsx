@@ -24,24 +24,22 @@ app.get('/metronome-scaled', (c) => {
             width: 400px;
             height: 800px;
             overflow: hidden;
-            background: #1A1A1A;
+            background: #1A1A1A; /* ✅ Background qui remplit tout */
             position: relative;
             margin: 0;
             padding: 0;
-        }
-
-        .metronome-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 400px;
-            height: 800px;
-            overflow: hidden;
-            background: #1A1A1A;
-            /* ✅ OPTION B VALIDÉE: Métronome centré réduit de 10% */
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+
+        .metronome-wrapper {
+            width: 100%; /* ✅ Remplir tout le body */
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1A1A1A; /* ✅ Background uniforme */
         }
 
         .metronome-iframe {
