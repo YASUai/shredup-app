@@ -22,7 +22,7 @@ app.get('/metronome-scaled', (c) => {
 
         body {
             width: 400px;
-            height: 725px;
+            height: 800px; /* ✅ CHANGÉ: 725px → 800px */
             overflow: hidden;
             background: #1A1A1A;
             position: relative;
@@ -35,7 +35,7 @@ app.get('/metronome-scaled', (c) => {
             top: 0;
             left: 0;
             width: 400px;
-            height: 725px;
+            height: 800px; /* ✅ CHANGÉ: 725px → 800px */
             overflow: hidden;
             background: #1A1A1A;
         }
@@ -48,7 +48,7 @@ app.get('/metronome-scaled', (c) => {
             height: 896px;
             border: none;
             transform-origin: top left;
-            transform: scale(0.9662); /* ✅ FIX: 400/414 = 0.9662 pour remplir la largeur */
+            transform: scale(0.9662); /* ✅ CONSERVÉ: scale pour largeur 400px */
         }
     </style>
 </head>
