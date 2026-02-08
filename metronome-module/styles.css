@@ -58,7 +58,7 @@ textarea,
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    background: transparent; /* ✅ TRANSPARENT: laisse passer le background du module parent */
+    /* ✅ SUPPRIMÉ: plus de background, celui du module parent sera visible */
     width: 100vw;
     height: 100vh;
     color: #ffffff;
@@ -71,7 +71,7 @@ body {
 .metronome-container {
     width: 100vw;
     height: 100vh;
-    background: transparent; /* ✅ TRANSPARENT: laisse passer le background du module parent */ 
+    /* ✅ SUPPRIMÉ: plus de background, celui du module parent sera visible */ 
         #1a1a1a 55%, 
         #181818 70%, 
         #161616 85%, 

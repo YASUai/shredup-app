@@ -24,7 +24,7 @@ app.get('/metronome-scaled', (c) => {
             width: 400px;
             height: 800px;
             overflow: hidden;
-            background: transparent; /* ✅ TRANSPARENT: laisse passer le background du parent */
+            /* ✅ SUPPRIMÉ: plus de background, celui du module parent sera visible */
             position: relative;
             margin: 0;
             padding: 0;
@@ -34,12 +34,12 @@ app.get('/metronome-scaled', (c) => {
         }
 
         .metronome-wrapper {
-            width: 100%; /* ✅ Remplir tout le body */
+            width: 100%;
             height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: transparent; /* ✅ TRANSPARENT: laisse passer le background du parent */
+            /* ✅ SUPPRIMÉ: plus de background, celui du module parent sera visible */
         }
 
         .metronome-iframe {
