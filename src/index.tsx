@@ -5,7 +5,7 @@ const app = new Hono()
 
 app.use(renderer)
 
-// Route pour le métronome scaled
+// Route pour le métronome scaled (-10% centré - VALIDÉ)
 app.get('/metronome-scaled', (c) => {
   return c.html(`<!DOCTYPE html>
 <html lang="fr">
@@ -22,7 +22,7 @@ app.get('/metronome-scaled', (c) => {
 
         body {
             width: 400px;
-            height: 800px; /* ✅ CHANGÉ: 725px → 800px */
+            height: 800px;
             overflow: hidden;
             background: #1A1A1A;
             position: relative;
@@ -35,20 +35,22 @@ app.get('/metronome-scaled', (c) => {
             top: 0;
             left: 0;
             width: 400px;
-            height: 800px; /* ✅ CHANGÉ: 725px → 800px */
+            height: 800px;
             overflow: hidden;
             background: #1A1A1A;
+            /* ✅ OPTION B VALIDÉE: Métronome centré réduit de 10% */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .metronome-iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 414px;
             height: 896px;
             border: none;
-            transform-origin: top left;
-            transform: scale(0.9662); /* ✅ CONSERVÉ: scale pour largeur 400px */
+            transform-origin: center center;
+            /* ✅ SCALE RÉDUIT DE 10%: 0.9662 × 0.9 = 0.86958 */
+            transform: scale(0.86958);
         }
     </style>
 </head>
@@ -58,6 +60,84 @@ app.get('/metronome-scaled', (c) => {
             src="https://7777-idisowycqqgdrvtdl8cr9-8f57ffe2.sandbox.novita.ai/" 
             class="metronome-iframe"
             title="SHRED-UP Metronome"
+            scrolling="no"
+            allow="autoplay"
+        ></iframe>
+    </div>
+
+    <script>
+        window.addEventListener('message', (event) => {
+            const metronomeIframe = document.querySelector('.metronome-iframe');
+            if (metronomeIframe && metronomeIframe.contentWindow) {
+                metronomeIframe.contentWindow.postMessage(event.data, '*');
+            }
+        });
+
+        window.addEventListener('message', (event) => {
+            if (window.parent !== window) {
+                window.parent.postMessage(event.data, '*');
+            }
+        });
+    </script>
+</body>
+</html>`)
+})
+
+// 🧪 TEST - Route pour le métronome scaled réduit de 10% (Option B - Centré)
+app.get('/metronome-scaled-test', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED-UP Metronome Scaled TEST (-10%)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 400px;
+            height: 800px;
+            overflow: hidden;
+            background: #1A1A1A;
+            position: relative;
+            margin: 0;
+            padding: 0;
+        }
+
+        .metronome-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 400px;
+            height: 800px;
+            overflow: hidden;
+            background: #1A1A1A;
+            /* 🎯 OPTION B: Centrer le métronome */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .metronome-iframe {
+            width: 414px;
+            height: 896px;
+            border: none;
+            transform-origin: center center; /* ✅ CHANGÉ: top left → center center */
+            /* 🎯 SCALE RÉDUIT DE 10%: 0.9662 × 0.9 = 0.86958 */
+            transform: scale(0.86958);
+        }
+    </style>
+</head>
+<body>
+    <div class="metronome-wrapper">
+        <iframe 
+            src="https://7777-idisowycqqgdrvtdl8cr9-8f57ffe2.sandbox.novita.ai/" 
+            class="metronome-iframe"
+            title="SHRED-UP Metronome (Test -10%)"
             scrolling="no"
             allow="autoplay"
         ></iframe>
