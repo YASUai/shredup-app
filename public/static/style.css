@@ -6,7 +6,7 @@
 :root {
   /* Dark Professional Color Palette */
   --color-bg-primary: #0a0a0a;
-  --color-bg-secondary: #141414;
+  --color-bg-secondary: #1a1a1a; /* ✅ HARMONISÉ: #141414 → #1a1a1a (match métronome) */
   --color-bg-tertiary: #1e1e1e;
   --color-bg-elevated: #252525;
   
