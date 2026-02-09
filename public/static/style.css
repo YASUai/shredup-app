@@ -803,7 +803,7 @@ body {
   grid-column: 4;
   grid-row: 2 / 4;
   display: grid;
-  grid-template-rows: 140px 652px 1fr; /* ✅ CHANGÉ: 577px → 652px (800-140-8 = 652) */
+  grid-template-rows: 140px 592px 1fr; /* ✅ CHANGÉ: 652px → 592px (740-140-8 = 592) pour s'aligner avec métronome 740px */
   gap: 8px;
 }
 
