@@ -564,7 +564,7 @@ body {
   grid-column: 3;
   grid-row: 2 / 4;
   display: grid;
-  grid-template-rows: 700px auto; /* ✅ CHANGÉ: 800px → 700px */
+  grid-template-rows: 800px auto; /* ✅ CHANGÉ: 725px → 800px */
   gap: 8px;
   width: 400px;
   max-width: 400px;
@@ -575,7 +575,7 @@ body {
    ================================================ */
 
 .zone-metronome {
-  height: 700px;
+  height: 800px;
   width: 400px;
   max-width: 400px;
   background-color: #141414;
