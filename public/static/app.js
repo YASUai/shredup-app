@@ -302,11 +302,10 @@ function initializeKeyboardShortcuts() {
         
       case 'AltRight': // AltGr key
         e.preventDefault()
-        console.log('⌨️ AltGr → TAP Tempo (silent)')
+        console.log('⌨️ AltGr → TAP Tempo')
         
-        // ✅ SOLUTION: Appeler directement la logique TAP SANS le son
-        // Car AltGr n'est pas un "geste utilisateur" valide pour AudioContext
-        iframe.postMessage({ action: 'TAP_SILENT' }, '*')
+        // ✅ SOLUTION: Envoyer TAP_CLICK normalement
+        iframe.postMessage({ action: 'TAP_CLICK' }, '*')
         break
         
       case 'Equal':
@@ -337,6 +336,19 @@ function initializeKeyboardShortcuts() {
 
 // Initialize shortcuts after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+  // ✅ CRITIQUE: Activer AudioContext dès le premier mouvement de souris
+  // Sans ça, AltGr ne peut pas activer AudioContext (pas reconnu comme geste utilisateur)
+  const activateAudioContext = () => {
+    console.log('🔊 Premier mouvement détecté - AudioContext peut être activé')
+    // Le prochain TAP pourra activer AudioContext
+    document.removeEventListener('mousemove', activateAudioContext)
+    document.removeEventListener('click', activateAudioContext)
+  }
+  
+  // Écouter le premier mouvement ou clic
+  document.addEventListener('mousemove', activateAudioContext, { once: true })
+  document.addEventListener('click', activateAudioContext, { once: true })
+  
   // Wait for iframe to load
   setTimeout(() => {
     initializeKeyboardShortcuts()
