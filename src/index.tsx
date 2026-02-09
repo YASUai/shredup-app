@@ -24,31 +24,26 @@ app.get('/metronome-scaled', (c) => {
             width: 400px;
             height: 800px;
             overflow: hidden;
-            /* ✅ SUPPRIMÉ: plus de background, celui du module parent sera visible */
             position: relative;
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: #141414; /* Backup background */
         }
 
         .metronome-wrapper {
             width: 100%;
             height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            /* ✅ SUPPRIMÉ: plus de background, celui du module parent sera visible */
+            position: relative;
+            overflow: hidden;
+            background: #141414; /* Backup background */
         }
 
         .metronome-iframe {
-            width: 414px;
-            height: 896px;
+            /* ✅ EXACTEMENT la taille du conteneur - pas de scale ! */
+            width: 100%;
+            height: 100%;
             border: none;
-            transform-origin: center center;
-            /* ✅ SCALE RÉDUIT DE 10%: 0.9662 × 0.9 = 0.86958 */
-            transform: scale(0.86958);
+            display: block;
         }
     </style>
 </head>
@@ -100,7 +95,7 @@ app.get('/metronome-scaled-test', (c) => {
             width: 400px;
             height: 800px;
             overflow: hidden;
-            background: #1A1A1A;
+            background: #141414;
             position: relative;
             margin: 0;
             padding: 0;
@@ -110,23 +105,18 @@ app.get('/metronome-scaled-test', (c) => {
             position: absolute;
             top: 0;
             left: 0;
-            width: 400px;
-            height: 800px;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            background: #1A1A1A;
-            /* 🎯 OPTION B: Centrer le métronome */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: #141414;
         }
 
         .metronome-iframe {
-            width: 414px;
-            height: 896px;
+            /* ✅ EXACTEMENT la taille du conteneur - pas de scale ! */
+            width: 100%;
+            height: 100%;
             border: none;
-            transform-origin: center center; /* ✅ CHANGÉ: top left → center center */
-            /* 🎯 SCALE RÉDUIT DE 10%: 0.9662 × 0.9 = 0.86958 */
-            transform: scale(0.86958);
+            display: block;
         }
     </style>
 </head>
