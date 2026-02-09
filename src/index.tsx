@@ -22,7 +22,7 @@ app.get('/metronome-scaled', (c) => {
 
         body {
             width: 400px;
-            height: 800px;
+            height: 700px;
             overflow: hidden;
             position: relative;
             margin: 0;
@@ -93,7 +93,7 @@ app.get('/metronome-scaled-test', (c) => {
 
         body {
             width: 400px;
-            height: 800px;
+            height: 700px;
             overflow: hidden;
             background: #141414;
             position: relative;
