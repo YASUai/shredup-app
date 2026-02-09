@@ -300,8 +300,7 @@ function initializeKeyboardShortcuts() {
         iframe.postMessage({ action: 'TOGGLE_PLAY' }, '*')
         break
         
-      case 'ControlLeft':
-      case 'ControlRight':
+      case 'AltRight': // AltGr key
         e.preventDefault()
         const now = Date.now()
         tapTimes.push(now)
@@ -326,7 +325,7 @@ function initializeKeyboardShortcuts() {
           // Clamp to 20-250
           bpm = Math.max(20, Math.min(250, bpm))
           
-          console.log('⌨️ CTRL → TAP Tempo:', bpm, 'BPM')
+          console.log('⌨️ AltGr → TAP Tempo:', bpm, 'BPM')
           iframe.postMessage({ action: 'SET_BPM', bpm }, '*')
         }
         break
