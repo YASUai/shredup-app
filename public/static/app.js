@@ -302,11 +302,11 @@ function initializeKeyboardShortcuts() {
         
       case 'AltRight': // AltGr key
         e.preventDefault()
-        console.log('⌨️ AltGr → Simulate TAP button click')
+        console.log('⌨️ AltGr → TAP Tempo (silent)')
         
-        // ✅ SOLUTION: Simuler un clic sur le bouton TAP du métronome
-        // Cela déclenche playUIClick() + handleTapLogic() avec le son
-        iframe.postMessage({ action: 'TAP_CLICK' }, '*')
+        // ✅ SOLUTION: Appeler directement la logique TAP SANS le son
+        // Car AltGr n'est pas un "geste utilisateur" valide pour AudioContext
+        iframe.postMessage({ action: 'TAP_SILENT' }, '*')
         break
         
       case 'Equal':

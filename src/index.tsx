@@ -59,15 +59,16 @@ app.get('/metronome-scaled', (c) => {
     </div>
 
     <script>
-        // ✅ UN SEUL listener avec logique conditionnelle
+        // ✅ UN SEUL listener - SANS await, juste forward
         window.addEventListener('message', (event) => {
             console.log('[PROXY] Message reçu:', event.data);
             
             const metronomeIframe = document.querySelector('.metronome-iframe');
             
             // Si le message vient du parent (SHRED UP) → forward vers iframe métronome
-            if (event.source === window.parent && metronomeIframe && metronomeIframe.contentWindow) {
+            if (event.source === window.parent && metronomeIframe?.contentWindow) {
                 console.log('[PROXY] Forward vers métronome:', event.data);
+                // ✅ CRITIQUE: Pas de await ici, juste forward immédiatement
                 metronomeIframe.contentWindow.postMessage(event.data, '*');
             }
             // Si le message vient de l'iframe métronome → forward vers parent
@@ -137,15 +138,16 @@ app.get('/metronome-scaled-test', (c) => {
     </div>
 
     <script>
-        // ✅ UN SEUL listener avec logique conditionnelle
+        // ✅ UN SEUL listener - SANS await, juste forward
         window.addEventListener('message', (event) => {
             console.log('[PROXY] Message reçu:', event.data);
             
             const metronomeIframe = document.querySelector('.metronome-iframe');
             
             // Si le message vient du parent (SHRED UP) → forward vers iframe métronome
-            if (event.source === window.parent && metronomeIframe && metronomeIframe.contentWindow) {
+            if (event.source === window.parent && metronomeIframe?.contentWindow) {
                 console.log('[PROXY] Forward vers métronome:', event.data);
+                // ✅ CRITIQUE: Pas de await ici, juste forward immédiatement
                 metronomeIframe.contentWindow.postMessage(event.data, '*');
             }
             // Si le message vient de l'iframe métronome → forward vers parent
