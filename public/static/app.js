@@ -302,32 +302,11 @@ function initializeKeyboardShortcuts() {
         
       case 'AltRight': // AltGr key
         e.preventDefault()
-        const now = Date.now()
-        tapTimes.push(now)
+        console.log('⌨️ AltGr → Simulate TAP button click')
         
-        // Keep only last 4 taps
-        if (tapTimes.length > 4) tapTimes.shift()
-        
-        // Reset if more than 2s since last tap
-        if (tapTimes.length > 1 && (now - tapTimes[tapTimes.length - 2]) > 2000) {
-          tapTimes = [now]
-        }
-        
-        // Calculate BPM from taps
-        if (tapTimes.length >= 2) {
-          const intervals = []
-          for (let i = 1; i < tapTimes.length; i++) {
-            intervals.push(tapTimes[i] - tapTimes[i-1])
-          }
-          const avgInterval = intervals.reduce((a,b) => a+b, 0) / intervals.length
-          let bpm = Math.round(60000 / avgInterval)
-          
-          // Clamp to 20-250
-          bpm = Math.max(20, Math.min(250, bpm))
-          
-          console.log('⌨️ AltGr → TAP Tempo:', bpm, 'BPM')
-          iframe.postMessage({ action: 'SET_BPM', bpm }, '*')
-        }
+        // ✅ SOLUTION: Simuler un clic sur le bouton TAP du métronome
+        // Cela déclenche playUIClick() + handleTapLogic() avec le son
+        iframe.postMessage({ action: 'TAP_CLICK' }, '*')
         break
         
       case 'Equal':
