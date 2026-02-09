@@ -266,3 +266,101 @@ function initializeDateTime() {
   
   console.log('✅ Date/Time initialized')
 }
+
+/**
+ * Initialize Keyboard Shortcuts
+ * Sends postMessage to metronome iframe
+ */
+function initializeKeyboardShortcuts() {
+  const metronomeIframe = document.querySelector('.metronome-iframe')
+  
+  if (!metronomeIframe) {
+    console.warn('⚠️ Metronome iframe not found')
+    return
+  }
+  
+  console.log('✅ Keyboard shortcuts initialized')
+  
+  // Track TAP tempo
+  let tapTimes = []
+  
+  document.addEventListener('keydown', (e) => {
+    // Ignore if typing in input/textarea
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      return
+    }
+    
+    const iframe = metronomeIframe.contentWindow
+    if (!iframe) return
+    
+    switch(e.code) {
+      case 'Space':
+        e.preventDefault()
+        console.log('⌨️ SPACE → Toggle Play/Stop')
+        iframe.postMessage({ action: 'TOGGLE_PLAY' }, '*')
+        break
+        
+      case 'ControlLeft':
+      case 'ControlRight':
+        e.preventDefault()
+        const now = Date.now()
+        tapTimes.push(now)
+        
+        // Keep only last 4 taps
+        if (tapTimes.length > 4) tapTimes.shift()
+        
+        // Reset if more than 2s since last tap
+        if (tapTimes.length > 1 && (now - tapTimes[tapTimes.length - 2]) > 2000) {
+          tapTimes = [now]
+        }
+        
+        // Calculate BPM from taps
+        if (tapTimes.length >= 2) {
+          const intervals = []
+          for (let i = 1; i < tapTimes.length; i++) {
+            intervals.push(tapTimes[i] - tapTimes[i-1])
+          }
+          const avgInterval = intervals.reduce((a,b) => a+b, 0) / intervals.length
+          let bpm = Math.round(60000 / avgInterval)
+          
+          // Clamp to 20-250
+          bpm = Math.max(20, Math.min(250, bpm))
+          
+          console.log('⌨️ CTRL → TAP Tempo:', bpm, 'BPM')
+          iframe.postMessage({ action: 'SET_BPM', bpm }, '*')
+        }
+        break
+        
+      case 'Equal':
+      case 'NumpadAdd':
+      case 'ArrowUp':
+        e.preventDefault()
+        console.log('⌨️ + → BPM +1')
+        iframe.postMessage({ action: 'BPM_UP' }, '*')
+        break
+        
+      case 'Minus':
+      case 'NumpadSubtract':
+      case 'ArrowDown':
+        e.preventDefault()
+        console.log('⌨️ - → BPM -1')
+        iframe.postMessage({ action: 'BPM_DOWN' }, '*')
+        break
+        
+      case 'NumpadMultiply':
+        e.preventDefault()
+        console.log('⌨️ * → Toggle REC')
+        const firstRecBtn = document.querySelector('.rec-button')
+        if (firstRecBtn) firstRecBtn.click()
+        break
+    }
+  })
+}
+
+// Initialize shortcuts after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  // Wait for iframe to load
+  setTimeout(() => {
+    initializeKeyboardShortcuts()
+  }, 1000)
+})
