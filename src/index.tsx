@@ -59,15 +59,20 @@ app.get('/metronome-scaled', (c) => {
     </div>
 
     <script>
+        // ✅ UN SEUL listener avec logique conditionnelle
         window.addEventListener('message', (event) => {
+            console.log('[PROXY] Message reçu:', event.data);
+            
             const metronomeIframe = document.querySelector('.metronome-iframe');
-            if (metronomeIframe && metronomeIframe.contentWindow) {
+            
+            // Si le message vient du parent (SHRED UP) → forward vers iframe métronome
+            if (event.source === window.parent && metronomeIframe && metronomeIframe.contentWindow) {
+                console.log('[PROXY] Forward vers métronome:', event.data);
                 metronomeIframe.contentWindow.postMessage(event.data, '*');
             }
-        });
-
-        window.addEventListener('message', (event) => {
-            if (window.parent !== window) {
+            // Si le message vient de l'iframe métronome → forward vers parent
+            else if (event.source === metronomeIframe?.contentWindow && window.parent !== window) {
+                console.log('[PROXY] Forward vers parent:', event.data);
                 window.parent.postMessage(event.data, '*');
             }
         });
@@ -132,15 +137,20 @@ app.get('/metronome-scaled-test', (c) => {
     </div>
 
     <script>
+        // ✅ UN SEUL listener avec logique conditionnelle
         window.addEventListener('message', (event) => {
+            console.log('[PROXY] Message reçu:', event.data);
+            
             const metronomeIframe = document.querySelector('.metronome-iframe');
-            if (metronomeIframe && metronomeIframe.contentWindow) {
+            
+            // Si le message vient du parent (SHRED UP) → forward vers iframe métronome
+            if (event.source === window.parent && metronomeIframe && metronomeIframe.contentWindow) {
+                console.log('[PROXY] Forward vers métronome:', event.data);
                 metronomeIframe.contentWindow.postMessage(event.data, '*');
             }
-        });
-
-        window.addEventListener('message', (event) => {
-            if (window.parent !== window) {
+            // Si le message vient de l'iframe métronome → forward vers parent
+            else if (event.source === metronomeIframe?.contentWindow && window.parent !== window) {
+                console.log('[PROXY] Forward vers parent:', event.data);
                 window.parent.postMessage(event.data, '*');
             }
         });
