@@ -819,9 +819,9 @@ body {
   justify-content: center;
 }
 
-/* Session Summary Block - 652px (800px - 140px - 8px gap = 652px) */
+/* Session Summary Block - 592px (740px - 140px - 8px gap = 592px) */
 .session-summary-block {
-  height: 652px; /* ✅ CHANGÉ: 577px → 652px */
+  height: 592px; /* ✅ CHANGÉ: 652px → 592px pour s'aligner avec métronome 740px */
   background-color: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
