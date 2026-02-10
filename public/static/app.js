@@ -300,12 +300,16 @@ function initializeKeyboardShortcuts() {
         iframe.postMessage({ action: 'TOGGLE_PLAY' }, '*')
         break
         
-      case 'AltRight': // AltGr key
+      case 'ArrowLeft': // Left Arrow key for TAP
         e.preventDefault()
-        console.log('⌨️ AltGr → TAP Tempo')
+        console.log('⌨️ ← → TAP Tempo')
         
-        // ✅ SOLUTION: Envoyer TAP_CLICK normalement
+        // ✅ SOLUTION: Envoyer TAP_CLICK
         iframe.postMessage({ action: 'TAP_CLICK' }, '*')
+        break
+        
+      case 'AltRight': // AltGr key (désactivé)
+        // AltGr n'est plus utilisé pour TAP
         break
         
       case 'Equal':
