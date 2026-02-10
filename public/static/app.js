@@ -285,23 +285,29 @@ function initializeKeyboardShortcuts() {
   // 🔒 SOLUTION 1: Capturer les événements au niveau WINDOW (pas document)
   // Ça permet de capturer même si le focus est dans l'iframe
   window.addEventListener('keydown', (e) => {
-    // Ignore if typing in input/textarea ONLY in SHRED UP (not in iframe)
     const target = e.target
-    const isInIframe = target.ownerDocument !== document
     
-    if (!isInIframe && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-      return
+    // ✅ CORRECTION: Ignorer SEULEMENT si on tape dans un input/textarea de SHRED UP
+    // Ne PAS vérifier isInIframe - on veut TOUJOURS capturer les raccourcis
+    if (target && target.ownerDocument === document) {
+      // On est dans SHRED UP (pas iframe)
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        // User est en train de taper → ignorer les raccourcis
+        return
+      }
     }
     
     const iframe = metronomeIframe.contentWindow
     if (!iframe) return
     
-    // 🔒 TRAITER TOUS LES RACCOURCIS MÊME SI FOCUS DANS IFRAME
+    // 🔒 TRAITER TOUS LES RACCOURCIS - TOUJOURS preventDefault pour bloquer l'iframe
     let handled = false
     
     switch(e.code) {
       case 'Space':
         e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
         console.log('⌨️ SPACE → Toggle Play/Stop (LOCKED)')
         iframe.postMessage({ action: 'TOGGLE_PLAY' }, '*')
         handled = true
@@ -309,6 +315,8 @@ function initializeKeyboardShortcuts() {
         
       case 'ArrowLeft': // Left Arrow key for TAP
         e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
         console.log('⌨️ ← → TAP Tempo (LOCKED)')
         iframe.postMessage({ action: 'TAP_CLICK' }, '*')
         handled = true
@@ -318,6 +326,8 @@ function initializeKeyboardShortcuts() {
       case 'NumpadAdd':
       case 'ArrowUp':
         e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
         console.log('⌨️ + → BPM +1 (LOCKED)')
         iframe.postMessage({ action: 'BPM_UP' }, '*')
         handled = true
@@ -327,6 +337,8 @@ function initializeKeyboardShortcuts() {
       case 'NumpadSubtract':
       case 'ArrowDown':
         e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
         console.log('⌨️ - → BPM -1 (LOCKED)')
         iframe.postMessage({ action: 'BPM_DOWN' }, '*')
         handled = true
@@ -334,6 +346,8 @@ function initializeKeyboardShortcuts() {
         
       case 'NumpadMultiply':
         e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
         console.log('⌨️ * → Toggle REC (LOCKED)')
         const firstRecBtn = document.querySelector('.rec-button')
         if (firstRecBtn) firstRecBtn.click()
