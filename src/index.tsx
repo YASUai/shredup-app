@@ -77,6 +77,58 @@ app.get('/metronome-scaled', (c) => {
                 window.parent.postMessage(event.data, '*');
             }
         });
+
+        // 🔒 NOUVEAU: Capturer les événements clavier DANS LE PROXY
+        // Et les forward vers l'iframe métronome via postMessage
+        window.addEventListener('keydown', (e) => {
+            const metronomeIframe = document.querySelector('.metronome-iframe');
+            if (!metronomeIframe?.contentWindow) return;
+
+            let action = null;
+
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    action = 'TOGGLE_PLAY';
+                    console.log('[PROXY] ⌨️ SPACE → TOGGLE_PLAY');
+                    break;
+                    
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    action = 'TAP_CLICK';
+                    console.log('[PROXY] ⌨️ ArrowLeft → TAP_CLICK');
+                    break;
+                    
+                case 'Equal':
+                case 'NumpadAdd':
+                case 'ArrowUp':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    action = 'BPM_UP';
+                    console.log('[PROXY] ⌨️ +/↑ → BPM_UP');
+                    break;
+                    
+                case 'Minus':
+                case 'NumpadSubtract':
+                case 'ArrowDown':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    action = 'BPM_DOWN';
+                    console.log('[PROXY] ⌨️ -/↓ → BPM_DOWN');
+                    break;
+            }
+
+            // Forward l'action vers le métronome
+            if (action) {
+                metronomeIframe.contentWindow.postMessage({ action }, '*');
+            }
+        }, true); // useCapture = true
     </script>
 </body>
 </html>`)
@@ -156,6 +208,58 @@ app.get('/metronome-scaled-test', (c) => {
                 window.parent.postMessage(event.data, '*');
             }
         });
+
+        // 🔒 NOUVEAU: Capturer les événements clavier DANS LE PROXY
+        // Et les forward vers l'iframe métronome via postMessage
+        window.addEventListener('keydown', (e) => {
+            const metronomeIframe = document.querySelector('.metronome-iframe');
+            if (!metronomeIframe?.contentWindow) return;
+
+            let action = null;
+
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    action = 'TOGGLE_PLAY';
+                    console.log('[PROXY] ⌨️ SPACE → TOGGLE_PLAY');
+                    break;
+                    
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    action = 'TAP_CLICK';
+                    console.log('[PROXY] ⌨️ ArrowLeft → TAP_CLICK');
+                    break;
+                    
+                case 'Equal':
+                case 'NumpadAdd':
+                case 'ArrowUp':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    action = 'BPM_UP';
+                    console.log('[PROXY] ⌨️ +/↑ → BPM_UP');
+                    break;
+                    
+                case 'Minus':
+                case 'NumpadSubtract':
+                case 'ArrowDown':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    action = 'BPM_DOWN';
+                    console.log('[PROXY] ⌨️ -/↓ → BPM_DOWN');
+                    break;
+            }
+
+            // Forward l'action vers le métronome
+            if (action) {
+                metronomeIframe.contentWindow.postMessage({ action }, '*');
+            }
+        }, true); // useCapture = true
     </script>
 </body>
 </html>`)
