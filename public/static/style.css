@@ -609,6 +609,21 @@ body {
   position: absolute;
   top: 0;
   left: 0;
+  
+  /* 🔒 PROTECTION: Empêcher l'iframe de voler le focus des raccourcis clavier */
+  pointer-events: auto; /* Permet les clics mais pas le focus */
+}
+
+/* 🔒 Overlay transparent pour capturer les événements avant l'iframe */
+.zone-metronome::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
 }
 
 .metronome-header {

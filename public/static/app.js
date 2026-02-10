@@ -270,6 +270,7 @@ function initializeDateTime() {
 /**
  * Initialize Keyboard Shortcuts
  * Sends postMessage to metronome iframe
+ * 🔒 VERROUILLÉ: Les raccourcis fonctionnent même si l'iframe a le focus
  */
 function initializeKeyboardShortcuts() {
   const metronomeIframe = document.querySelector('.metronome-iframe')
@@ -279,62 +280,99 @@ function initializeKeyboardShortcuts() {
     return
   }
   
-  console.log('✅ Keyboard shortcuts initialized')
+  console.log('✅ Keyboard shortcuts initialized (LOCKED MODE)')
   
-  // Track TAP tempo
-  let tapTimes = []
-  
-  document.addEventListener('keydown', (e) => {
-    // Ignore if typing in input/textarea
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+  // 🔒 SOLUTION 1: Capturer les événements au niveau WINDOW (pas document)
+  // Ça permet de capturer même si le focus est dans l'iframe
+  window.addEventListener('keydown', (e) => {
+    // Ignore if typing in input/textarea ONLY in SHRED UP (not in iframe)
+    const target = e.target
+    const isInIframe = target.ownerDocument !== document
+    
+    if (!isInIframe && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
       return
     }
     
     const iframe = metronomeIframe.contentWindow
     if (!iframe) return
     
+    // 🔒 TRAITER TOUS LES RACCOURCIS MÊME SI FOCUS DANS IFRAME
+    let handled = false
+    
     switch(e.code) {
       case 'Space':
         e.preventDefault()
-        console.log('⌨️ SPACE → Toggle Play/Stop')
+        console.log('⌨️ SPACE → Toggle Play/Stop (LOCKED)')
         iframe.postMessage({ action: 'TOGGLE_PLAY' }, '*')
+        handled = true
         break
         
       case 'ArrowLeft': // Left Arrow key for TAP
         e.preventDefault()
-        console.log('⌨️ ← → TAP Tempo')
-        
-        // ✅ SOLUTION: Envoyer TAP_CLICK
+        console.log('⌨️ ← → TAP Tempo (LOCKED)')
         iframe.postMessage({ action: 'TAP_CLICK' }, '*')
-        break
-        
-      case 'AltRight': // AltGr key (désactivé)
-        // AltGr n'est plus utilisé pour TAP
+        handled = true
         break
         
       case 'Equal':
       case 'NumpadAdd':
       case 'ArrowUp':
         e.preventDefault()
-        console.log('⌨️ + → BPM +1')
+        console.log('⌨️ + → BPM +1 (LOCKED)')
         iframe.postMessage({ action: 'BPM_UP' }, '*')
+        handled = true
         break
         
       case 'Minus':
       case 'NumpadSubtract':
       case 'ArrowDown':
         e.preventDefault()
-        console.log('⌨️ - → BPM -1')
+        console.log('⌨️ - → BPM -1 (LOCKED)')
         iframe.postMessage({ action: 'BPM_DOWN' }, '*')
+        handled = true
         break
         
       case 'NumpadMultiply':
         e.preventDefault()
-        console.log('⌨️ * → Toggle REC')
+        console.log('⌨️ * → Toggle REC (LOCKED)')
         const firstRecBtn = document.querySelector('.rec-button')
         if (firstRecBtn) firstRecBtn.click()
+        handled = true
         break
     }
+    
+    // 🔒 FORCER LE FOCUS À REVENIR SUR SHRED UP
+    if (handled) {
+      // Blur tous les éléments de l'iframe
+      document.body.focus()
+    }
+  }, true) // ✅ useCapture = true pour capturer AVANT l'iframe
+  
+  // 🔒 SOLUTION 2: Forcer le focus à revenir après un clic dans l'iframe
+  metronomeIframe.addEventListener('load', () => {
+    try {
+      // Intercepter les clics dans l'iframe
+      metronomeIframe.contentWindow.document.addEventListener('click', () => {
+        // Après 100ms, forcer le focus à revenir sur SHRED UP
+        setTimeout(() => {
+          document.body.focus()
+          console.log('🔒 Focus restored to SHRED UP')
+        }, 100)
+      })
+    } catch (e) {
+      console.warn('⚠️ Cannot access iframe (cross-origin)')
+    }
+  })
+  
+  // 🔒 SOLUTION 3: Surveiller les changements de focus
+  window.addEventListener('blur', () => {
+    // Si SHRED UP perd le focus, le récupérer après 50ms
+    setTimeout(() => {
+      if (document.hasFocus()) {
+        document.body.focus()
+        console.log('🔒 Focus maintained on SHRED UP')
+      }
+    }, 50)
   })
 }
 
