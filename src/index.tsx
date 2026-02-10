@@ -80,48 +80,61 @@ app.get('/metronome-scaled', (c) => {
 
         // 🔒 NOUVEAU: Capturer les événements clavier DANS LE PROXY
         // Et les forward vers l'iframe métronome via postMessage
+        // ⚠️ NE PAS bloquer ArrowUp/ArrowDown car ils sont utilisés dans les inputs !
         window.addEventListener('keydown', (e) => {
             const metronomeIframe = document.querySelector('.metronome-iframe');
             if (!metronomeIframe?.contentWindow) return;
 
             let action = null;
+            let shouldPreventDefault = false;
 
             switch(e.code) {
                 case 'Space':
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    // ✅ Bloquer SPACE (pas utilisé dans inputs)
+                    shouldPreventDefault = true;
                     action = 'TOGGLE_PLAY';
                     console.log('[PROXY] ⌨️ SPACE → TOGGLE_PLAY');
                     break;
                     
                 case 'ArrowLeft':
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    // ✅ Bloquer ArrowLeft (pas utilisé dans inputs numériques)
+                    shouldPreventDefault = true;
                     action = 'TAP_CLICK';
                     console.log('[PROXY] ⌨️ ArrowLeft → TAP_CLICK');
                     break;
                     
                 case 'Equal':
                 case 'NumpadAdd':
-                case 'ArrowUp':
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    // ✅ Bloquer + (pas utilisé dans inputs)
+                    shouldPreventDefault = true;
                     action = 'BPM_UP';
-                    console.log('[PROXY] ⌨️ +/↑ → BPM_UP');
+                    console.log('[PROXY] ⌨️ + → BPM_UP');
                     break;
                     
                 case 'Minus':
                 case 'NumpadSubtract':
-                case 'ArrowDown':
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    // ✅ Bloquer - (pas utilisé dans inputs)
+                    shouldPreventDefault = true;
                     action = 'BPM_DOWN';
-                    console.log('[PROXY] ⌨️ -/↓ → BPM_DOWN');
+                    console.log('[PROXY] ⌨️ - → BPM_DOWN');
                     break;
+                    
+                case 'ArrowUp':
+                case 'ArrowDown':
+                    // ⚠️ NE PAS bloquer ArrowUp/ArrowDown !
+                    // Ils sont utilisés pour naviguer dans les inputs numériques
+                    // On envoie quand même le message, mais le métronome décidera
+                    action = (e.code === 'ArrowUp') ? 'BPM_UP' : 'BPM_DOWN';
+                    console.log('[PROXY] ⌨️ Arrow (passthrough) → ' + action);
+                    // shouldPreventDefault reste false
+                    break;
+            }
+
+            // Bloquer l'événement SEULEMENT si shouldPreventDefault = true
+            if (shouldPreventDefault) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
             }
 
             // Forward l'action vers le métronome
@@ -211,48 +224,61 @@ app.get('/metronome-scaled-test', (c) => {
 
         // 🔒 NOUVEAU: Capturer les événements clavier DANS LE PROXY
         // Et les forward vers l'iframe métronome via postMessage
+        // ⚠️ NE PAS bloquer ArrowUp/ArrowDown car ils sont utilisés dans les inputs !
         window.addEventListener('keydown', (e) => {
             const metronomeIframe = document.querySelector('.metronome-iframe');
             if (!metronomeIframe?.contentWindow) return;
 
             let action = null;
+            let shouldPreventDefault = false;
 
             switch(e.code) {
                 case 'Space':
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    // ✅ Bloquer SPACE (pas utilisé dans inputs)
+                    shouldPreventDefault = true;
                     action = 'TOGGLE_PLAY';
                     console.log('[PROXY] ⌨️ SPACE → TOGGLE_PLAY');
                     break;
                     
                 case 'ArrowLeft':
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    // ✅ Bloquer ArrowLeft (pas utilisé dans inputs numériques)
+                    shouldPreventDefault = true;
                     action = 'TAP_CLICK';
                     console.log('[PROXY] ⌨️ ArrowLeft → TAP_CLICK');
                     break;
                     
                 case 'Equal':
                 case 'NumpadAdd':
-                case 'ArrowUp':
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    // ✅ Bloquer + (pas utilisé dans inputs)
+                    shouldPreventDefault = true;
                     action = 'BPM_UP';
-                    console.log('[PROXY] ⌨️ +/↑ → BPM_UP');
+                    console.log('[PROXY] ⌨️ + → BPM_UP');
                     break;
                     
                 case 'Minus':
                 case 'NumpadSubtract':
-                case 'ArrowDown':
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    // ✅ Bloquer - (pas utilisé dans inputs)
+                    shouldPreventDefault = true;
                     action = 'BPM_DOWN';
-                    console.log('[PROXY] ⌨️ -/↓ → BPM_DOWN');
+                    console.log('[PROXY] ⌨️ - → BPM_DOWN');
                     break;
+                    
+                case 'ArrowUp':
+                case 'ArrowDown':
+                    // ⚠️ NE PAS bloquer ArrowUp/ArrowDown !
+                    // Ils sont utilisés pour naviguer dans les inputs numériques
+                    // On envoie quand même le message, mais le métronome décidera
+                    action = (e.code === 'ArrowUp') ? 'BPM_UP' : 'BPM_DOWN';
+                    console.log('[PROXY] ⌨️ Arrow (passthrough) → ' + action);
+                    // shouldPreventDefault reste false
+                    break;
+            }
+
+            // Bloquer l'événement SEULEMENT si shouldPreventDefault = true
+            if (shouldPreventDefault) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
             }
 
             // Forward l'action vers le métronome
