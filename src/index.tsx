@@ -1264,39 +1264,131 @@ app.get('/pitch-test', (c) => {
             }
 
             const expected = window.validationStats.expectedFreq;
-            const detections = window.validationStats.detections;
+            const allDetections = window.validationStats.detections;
+            const sessionStart = window.validationStats.startTime;
             
-            // Calculate statistics
-            const frequencies = detections.map(d => d.frequency);
-            const confidences = detections.map(d => d.confidence);
+            // ============================================================
+            // RAW STATISTICS (All detections)
+            // ============================================================
+            const rawFrequencies = allDetections.map(d => d.frequency);
+            const rawConfidences = allDetections.map(d => d.confidence);
             
-            const avgFreq = frequencies.reduce((a, b) => a + b, 0) / frequencies.length;
-            const stdDev = Math.sqrt(
-                frequencies.map(f => Math.pow(f - avgFreq, 2))
-                    .reduce((a, b) => a + b, 0) / frequencies.length
+            const rawAvgFreq = rawFrequencies.reduce((a, b) => a + b, 0) / rawFrequencies.length;
+            const rawStdDev = Math.sqrt(
+                rawFrequencies.map(f => Math.pow(f - rawAvgFreq, 2))
+                    .reduce((a, b) => a + b, 0) / rawFrequencies.length
             );
-            const avgConf = confidences.reduce((a, b) => a + b, 0) / confidences.length;
+            const rawAvgConf = rawConfidences.reduce((a, b) => a + b, 0) / rawConfidences.length;
             
-            const absError = avgFreq - expected;
-            const relError = (absError / expected) * 100;
+            const rawAbsError = rawAvgFreq - expected;
+            const rawRelError = (rawAbsError / expected) * 100;
             
-            // Count octave errors
-            const octaveErrors = detections.filter(d => window.isOctaveError(d.frequency, expected)).length;
-            const octaveErrorRate = (octaveErrors / detections.length) * 100;
+            const rawOctaveErrors = allDetections.filter(d => window.isOctaveError(d.frequency, expected)).length;
+            const rawOctaveErrorRate = (rawOctaveErrors / allDetections.length) * 100;
             
-            // Log summary
+            // ============================================================
+            // FILTERED STATISTICS (Stable phase)
+            // ============================================================
+            
+            // Filter 1: Ignore first 200ms (warm-up)
+            const warmupThreshold = 200; // ms
+            const filteredByTime = allDetections.filter(d => {
+                const elapsed = d.timestamp - sessionStart;
+                return elapsed >= warmupThreshold;
+            });
+            
+            // Filter 2: Confidence >= 0.5
+            const filteredByConfidence = filteredByTime.filter(d => d.confidence >= 0.5);
+            
+            // Filter 3: Exclude outliers > 20% error
+            const outlierThreshold = 0.20; // 20%
+            const filteredByOutlier = filteredByConfidence.filter(d => {
+                const error = Math.abs(d.frequency - expected) / expected;
+                return error <= outlierThreshold;
+            });
+            
+            // Filter 4: Trimmed mean (exclude top/bottom 5%)
+            const trimPercent = 0.05; // 5%
+            const sorted = [...filteredByOutlier].sort((a, b) => a.frequency - b.frequency);
+            const trimCount = Math.floor(sorted.length * trimPercent);
+            const trimmedDetections = sorted.slice(trimCount, sorted.length - trimCount);
+            
+            // Calculate filtered statistics
+            let stableAvgFreq = 0;
+            let stableStdDev = 0;
+            let stableAvgConf = 0;
+            let stableAbsError = 0;
+            let stableRelError = 0;
+            let stableOctaveErrors = 0;
+            let stableOctaveErrorRate = 0;
+            
+            if (trimmedDetections.length > 0) {
+                const stableFrequencies = trimmedDetections.map(d => d.frequency);
+                const stableConfidences = trimmedDetections.map(d => d.confidence);
+                
+                stableAvgFreq = stableFrequencies.reduce((a, b) => a + b, 0) / stableFrequencies.length;
+                stableStdDev = Math.sqrt(
+                    stableFrequencies.map(f => Math.pow(f - stableAvgFreq, 2))
+                        .reduce((a, b) => a + b, 0) / stableFrequencies.length
+                );
+                stableAvgConf = stableConfidences.reduce((a, b) => a + b, 0) / stableConfidences.length;
+                
+                stableAbsError = stableAvgFreq - expected;
+                stableRelError = (stableAbsError / expected) * 100;
+                
+                stableOctaveErrors = trimmedDetections.filter(d => window.isOctaveError(d.frequency, expected)).length;
+                stableOctaveErrorRate = (stableOctaveErrors / trimmedDetections.length) * 100;
+            }
+            
+            const sessionDuration = ((Date.now() - sessionStart) / 1000).toFixed(1);
+            const warmupCount = allDetections.length - filteredByTime.length;
+            const lowConfCount = filteredByTime.length - filteredByConfidence.length;
+            const outlierCount = filteredByConfidence.length - filteredByOutlier.length;
+            const trimmedCount = filteredByOutlier.length - trimmedDetections.length;
+            
+            // ============================================================
+            // LOG SUMMARY (Dual metrics)
+            // ============================================================
+            
             console.log('%c════════════════════════════════════════', 'color: #FF9800');
             console.log('%c[VALIDATION SUMMARY]', 'color: #FF9800; font-weight: bold; font-size: 14px');
             console.log('%c════════════════════════════════════════', 'color: #FF9800');
             console.log('Expected:          ' + expected.toFixed(2) + ' Hz');
-            console.log('Detected Avg:      ' + avgFreq.toFixed(2) + ' Hz');
-            console.log('Abs Error:         ' + (absError >= 0 ? '+' : '') + absError.toFixed(2) + ' Hz');
-            console.log('Rel Error:         ' + (relError >= 0 ? '+' : '') + relError.toFixed(2) + '%');
-            console.log('Std Dev:           ' + stdDev.toFixed(2) + ' Hz');
-            console.log('Octave Errors:     ' + octaveErrors + '/' + detections.length + ' (' + octaveErrorRate.toFixed(1) + '%)');
-            console.log('Avg Confidence:    ' + avgConf.toFixed(3));
-            console.log('Sample Count:      ' + detections.length + ' windows');
-            console.log('Duration:          ' + ((Date.now() - window.validationStats.startTime) / 1000).toFixed(1) + 's');
+            console.log('Session Duration:  ' + sessionDuration + 's');
+            console.log('');
+            
+            // RAW METRICS (biased)
+            console.log('%c─── RAW AVERAGE (All samples) ───', 'color: #888');
+            console.log('Detected Avg:      ' + rawAvgFreq.toFixed(2) + ' Hz');
+            console.log('Abs Error:         ' + (rawAbsError >= 0 ? '+' : '') + rawAbsError.toFixed(2) + ' Hz');
+            console.log('Rel Error:         ' + (rawRelError >= 0 ? '+' : '') + rawRelError.toFixed(2) + '%');
+            console.log('Std Dev:           ' + rawStdDev.toFixed(2) + ' Hz');
+            console.log('Octave Errors:     ' + rawOctaveErrors + '/' + allDetections.length + ' (' + rawOctaveErrorRate.toFixed(1) + '%)');
+            console.log('Avg Confidence:    ' + rawAvgConf.toFixed(3));
+            console.log('');
+            
+            // STABLE METRICS (filtered)
+            if (trimmedDetections.length > 0) {
+                console.log('%c─── STABLE AVERAGE (Filtered) ───', 'color: #4CAF50; font-weight: bold');
+                console.log('Detected Avg:      ' + stableAvgFreq.toFixed(2) + ' Hz');
+                console.log('Abs Error:         ' + (stableAbsError >= 0 ? '+' : '') + stableAbsError.toFixed(2) + ' Hz');
+                console.log('Rel Error:         ' + (stableRelError >= 0 ? '+' : '') + stableRelError.toFixed(2) + '%');
+                console.log('Std Dev:           ' + stableStdDev.toFixed(2) + ' Hz');
+                console.log('Octave Errors:     ' + stableOctaveErrors + '/' + trimmedDetections.length + ' (' + stableOctaveErrorRate.toFixed(1) + '%)');
+                console.log('Avg Confidence:    ' + stableAvgConf.toFixed(3));
+                console.log('');
+                
+                // Filter breakdown
+                console.log('%c─── Filter Breakdown ───', 'color: #2196F3');
+                console.log('Warm-up (< 200ms):  ' + warmupCount + ' samples discarded');
+                console.log('Low confidence:     ' + lowConfCount + ' samples discarded');
+                console.log('Outliers (> 20%):   ' + outlierCount + ' samples discarded');
+                console.log('Trimmed (±5%):      ' + trimmedCount + ' samples discarded');
+                console.log('Stable samples:     ' + trimmedDetections.length + ' / ' + allDetections.length + ' (' + ((trimmedDetections.length / allDetections.length) * 100).toFixed(1) + '%)');
+            } else {
+                console.log('%c[WARNING] No stable samples after filtering', 'color: #f44336; font-weight: bold');
+            }
+            
             console.log('%c════════════════════════════════════════', 'color: #FF9800');
         }
 
