@@ -29,11 +29,17 @@ class OctaveConsistencyStabilizer {
         this.MIN_CONFIDENCE = 0.5;             // Minimum confidence threshold
         this.CLUSTER_TOLERANCE = 0.10;         // ±10% for frequency clustering
         this.CONFIDENCE_PENALTY = 0.9;         // Confidence penalty for snapped detections
+        this.DOMINANT_SHIFT_THRESHOLD = 0.15;  // ±15% for cluster change detection
+        this.DOMINANT_SHIFT_CONFIRM_FRAMES = 3; // Frames required to confirm dominant shift
         
         // Temporal state
         this.recentDetections = [];            // Circular buffer: [{frequency, confidence, timestamp}]
         this.dominantFundamental = null;       // Current dominant fundamental (Hz)
         this.dominantConfidence = 0;           // Confidence of dominant fundamental
+        
+        // Dominant Lock Mechanism
+        this.dominantShiftCounter = 0;         // Counter for consecutive shift attempts
+        this.pendingDominantCandidate = null;  // Candidate for new dominant
         
         // Statistics
         this.totalSnapEvents = 0;              // Total snap-back events in session
@@ -46,12 +52,15 @@ class OctaveConsistencyStabilizer {
         console.log('[OCTAVE-STABILIZER] Harmonic ratios: 2×, 3×, 4×, 5×, 6×');
         console.log('[OCTAVE-STABILIZER] Ratio tolerance: ±5%');
         console.log('[OCTAVE-STABILIZER] Cluster tolerance: ±10%');
+        console.log('[OCTAVE-STABILIZER] Dominant Lock: ±15% shift threshold, 3 frames confirmation');
     }
     
     init() {
         this.recentDetections = [];
         this.dominantFundamental = null;
         this.dominantConfidence = 0;
+        this.dominantShiftCounter = 0;
+        this.pendingDominantCandidate = null;
         this.totalSnapEvents = 0;
         this.frameCount = 0;
         this.isInitialized = true;
@@ -254,26 +263,77 @@ class OctaveConsistencyStabilizer {
             const newDominant = weightedSum / totalWeight;
             const oldDominant = this.dominantFundamental;
             
-            // Step 5: OCTAVE VALIDATION - Check if new dominant is octave of old dominant
+            // Step 5: DOMINANT LOCK MECHANISM - Prevent drift via cluster shift confirmation
             if (oldDominant && newDominant) {
-                const ratio = newDominant / oldDominant;
-                const octaveRatios = [2, 4, 0.5, 0.25]; // 2×, 4×, 1/2×, 1/4× octave relationships
+                // Check if new candidate is far from current dominant (potential cluster change)
+                const clusterShiftRatio = Math.abs(newDominant - oldDominant) / oldDominant;
                 
-                for (const octaveRatio of octaveRatios) {
-                    const ratioError = Math.abs(ratio - octaveRatio) / octaveRatio;
+                if (clusterShiftRatio > this.DOMINANT_SHIFT_THRESHOLD) {
+                    // Far from current dominant: potential cluster shift
                     
-                    if (ratioError < 0.05) {
-                        // New dominant is an octave of old dominant
-                        // KEEP OLD DOMINANT (presumed fundamental)
-                        console.log(`[OCTAVE-STABILIZER] Octave shift rejected: ${newDominant.toFixed(1)} Hz is ${octaveRatio}× of ${oldDominant.toFixed(1)} Hz → Keep old dominant`);
-                        return; // Exit early, keep old dominant
+                    // Check if this candidate is consistent with pending candidate
+                    const isPendingConsistent = this.pendingDominantCandidate !== null &&
+                                               Math.abs(newDominant - this.pendingDominantCandidate) / this.pendingDominantCandidate < 0.10;
+                    
+                    if (isPendingConsistent) {
+                        // Same candidate appearing consecutively
+                        this.dominantShiftCounter++;
+                    } else {
+                        // New candidate, reset counter
+                        this.pendingDominantCandidate = newDominant;
+                        this.dominantShiftCounter = 1;
                     }
+                    
+                    // Only accept shift if confirmed over multiple frames
+                    if (this.dominantShiftCounter >= this.DOMINANT_SHIFT_CONFIRM_FRAMES) {
+                        // OCTAVE VALIDATION before accepting shift
+                        const ratio = newDominant / oldDominant;
+                        const octaveRatios = [2, 4, 0.5, 0.25]; // 2×, 4×, 1/2×, 1/4× octave relationships
+                        
+                        let isOctaveShift = false;
+                        for (const octaveRatio of octaveRatios) {
+                            const ratioError = Math.abs(ratio - octaveRatio) / octaveRatio;
+                            
+                            if (ratioError < 0.05) {
+                                // New dominant is an octave of old dominant
+                                // REJECT SHIFT (presumed fundamental)
+                                console.log(`[OCTAVE-STABILIZER] Dominant shift rejected (octave): ${newDominant.toFixed(1)} Hz is ${octaveRatio}× of ${oldDominant.toFixed(1)} Hz → Keep old dominant`);
+                                isOctaveShift = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!isOctaveShift) {
+                            // Accept confirmed non-octave shift
+                            console.log(`[OCTAVE-STABILIZER] Dominant shift confirmed: ${oldDominant.toFixed(1)} Hz → ${newDominant.toFixed(1)} Hz (${this.dominantShiftCounter} frames)`);
+                            this.dominantFundamental = newDominant;
+                            this.dominantConfidence = totalWeight / dominantCluster.frequencies.length;
+                            this.dominantShiftCounter = 0;
+                            this.pendingDominantCandidate = null;
+                        } else {
+                            // Octave shift rejected, reset counter
+                            this.dominantShiftCounter = 0;
+                            this.pendingDominantCandidate = null;
+                        }
+                    } else {
+                        // Shift not yet confirmed, keep old dominant
+                        // (dominantFundamental unchanged)
+                    }
+                    return; // Exit early, dominant handled by lock mechanism
+                } else {
+                    // Close to current dominant: normal update, reset shift counter
+                    this.dominantShiftCounter = 0;
+                    this.pendingDominantCandidate = null;
+                    this.dominantFundamental = newDominant;
+                    this.dominantConfidence = totalWeight / dominantCluster.frequencies.length;
                 }
+            } else {
+                // No old dominant: accept new dominant immediately (first establishment)
+                this.dominantFundamental = newDominant;
+                this.dominantConfidence = totalWeight / dominantCluster.frequencies.length;
+                this.dominantShiftCounter = 0;
+                this.pendingDominantCandidate = null;
             }
-            
-            // Not an octave relationship (or no old dominant), accept new dominant
-            this.dominantFundamental = newDominant;
-            this.dominantConfidence = totalWeight / dominantCluster.frequencies.length;
         } else {
             // Not enough consensus, clear dominant
             this.dominantFundamental = null;
@@ -288,6 +348,8 @@ class OctaveConsistencyStabilizer {
         this.recentDetections = [];
         this.dominantFundamental = null;
         this.dominantConfidence = 0;
+        this.dominantShiftCounter = 0;
+        this.pendingDominantCandidate = null;
         console.log('[OCTAVE-STABILIZER] State reset');
     }
     
