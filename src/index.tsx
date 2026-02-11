@@ -1181,9 +1181,28 @@ app.get('/pitch-test', (c) => {
             <button onclick="logStatus()">Log Status</button>
         </div>
 
+        <div class="info-box" style="border-left-color: #FF9800;">
+            <h3>🎸 Musical Validation Mode</h3>
+            <p style="margin-bottom: 10px;">
+                <strong>Expected Frequency (Hz):</strong><br>
+                <input type="number" id="expectedFreq" placeholder="e.g. 82.41 for E2" 
+                    style="background: #0a0a0a; color: white; border: 1px solid #444; padding: 8px; 
+                    border-radius: 4px; width: 200px; font-size: 14px; margin-top: 5px;">
+            </p>
+            <p style="font-size: 11px; color: #888; margin-top: 10px;">
+                Standard tuning: E2=82.41, A2=110.00, D3=146.83, G3=196.00, B3=246.94, E4=329.63
+            </p>
+            <p style="font-size: 11px; color: #888; margin-top: 5px;">
+                <button onclick="resetValidation()" style="background: #555; padding: 6px 12px; font-size: 12px;">
+                    Reset Statistics
+                </button>
+            </p>
+        </div>
+
         <div class="console-hint">
             <p>💡 Open Console (F12) to see pitch detection logs</p>
             <p>Format: [PITCH] Frame X | 440.0 Hz | Conf: 0.92 | Proc: 4.3ms</p>
+            <p style="margin-top: 8px; color: #FF9800;">Validation: [VALIDATION] Expected X Hz | Detected Y Hz | Error Z Hz (+W%)</p>
         </div>
     </div>
 
@@ -1198,6 +1217,90 @@ app.get('/pitch-test', (c) => {
     <script src="/static/audio-engine/audio-engine-phase3.js"></script>
 
     <script>
+        // ============================================================
+        // VALIDATION MODE - MUSICAL ACCURACY MEASUREMENT
+        // ============================================================
+        
+        // GLOBAL: Expose to pitch detection module
+        window.validationStats = {
+            detections: [],
+            expectedFreq: null,
+            startTime: null
+        };
+
+        function resetValidation() {
+            window.validationStats = {
+                detections: [],
+                expectedFreq: null,
+                startTime: null
+            };
+            console.log('%c[VALIDATION] Statistics reset', 'color: #FF9800; font-weight: bold');
+        }
+
+        window.isOctaveError = function(detected, expected) {
+            if (!detected || !expected) return false;
+            
+            const ratio = detected / expected;
+            
+            // Check if detected is 2×, 4×, 0.5×, 0.25× of expected (within 5% tolerance)
+            const octaveRatios = [0.25, 0.5, 2.0, 4.0];
+            
+            for (const octaveRatio of octaveRatios) {
+                if (Math.abs(ratio - octaveRatio) / octaveRatio < 0.05) {
+                    return true;
+                }
+            }
+            
+            return false;
+        };
+
+        function logValidationSummary() {
+            if (window.validationStats.detections.length === 0) {
+                console.log('[VALIDATION] No detections recorded');
+                return;
+            }
+
+            const expected = window.validationStats.expectedFreq;
+            const detections = window.validationStats.detections;
+            
+            // Calculate statistics
+            const frequencies = detections.map(d => d.frequency);
+            const confidences = detections.map(d => d.confidence);
+            
+            const avgFreq = frequencies.reduce((a, b) => a + b, 0) / frequencies.length;
+            const stdDev = Math.sqrt(
+                frequencies.map(f => Math.pow(f - avgFreq, 2))
+                    .reduce((a, b) => a + b, 0) / frequencies.length
+            );
+            const avgConf = confidences.reduce((a, b) => a + b, 0) / confidences.length;
+            
+            const absError = avgFreq - expected;
+            const relError = (absError / expected) * 100;
+            
+            // Count octave errors
+            const octaveErrors = detections.filter(d => window.isOctaveError(d.frequency, expected)).length;
+            const octaveErrorRate = (octaveErrors / detections.length) * 100;
+            
+            // Log summary
+            console.log('%c════════════════════════════════════════', 'color: #FF9800');
+            console.log('%c[VALIDATION SUMMARY]', 'color: #FF9800; font-weight: bold; font-size: 14px');
+            console.log('%c════════════════════════════════════════', 'color: #FF9800');
+            console.log('Expected:          ' + expected.toFixed(2) + ' Hz');
+            console.log('Detected Avg:      ' + avgFreq.toFixed(2) + ' Hz');
+            console.log('Abs Error:         ' + (absError >= 0 ? '+' : '') + absError.toFixed(2) + ' Hz');
+            console.log('Rel Error:         ' + (relError >= 0 ? '+' : '') + relError.toFixed(2) + '%');
+            console.log('Std Dev:           ' + stdDev.toFixed(2) + ' Hz');
+            console.log('Octave Errors:     ' + octaveErrors + '/' + detections.length + ' (' + octaveErrorRate.toFixed(1) + '%)');
+            console.log('Avg Confidence:    ' + avgConf.toFixed(3));
+            console.log('Sample Count:      ' + detections.length + ' windows');
+            console.log('Duration:          ' + ((Date.now() - window.validationStats.startTime) / 1000).toFixed(1) + 's');
+            console.log('%c════════════════════════════════════════', 'color: #FF9800');
+        }
+
+        // ============================================================
+        // AUDIO ENGINE INTERFACE
+        // ============================================================
+
         async function initAudioEngine() {
             console.log('Initializing Audio Engine (Phase 3)...');
             document.getElementById('initBtn').disabled = true;
@@ -1216,6 +1319,21 @@ app.get('/pitch-test', (c) => {
         async function startAudioEngine() {
             console.log('Starting Audio Engine...');
             document.getElementById('startBtn').disabled = true;
+            
+            // Read expected frequency for validation
+            const expectedInput = document.getElementById('expectedFreq');
+            const expectedFreq = parseFloat(expectedInput.value);
+            
+            if (expectedFreq && expectedFreq > 0) {
+                window.validationStats.expectedFreq = expectedFreq;
+                window.validationStats.detections = [];
+                window.validationStats.startTime = Date.now();
+                console.log('%c[VALIDATION] Mode ACTIVE | Expected: ' + expectedFreq.toFixed(2) + ' Hz', 
+                    'color: #FF9800; font-weight: bold');
+            } else {
+                console.log('%c[VALIDATION] Mode INACTIVE (no expected frequency set)', 
+                    'color: #888');
+            }
             
             const success = await audioEngine.start();
             
@@ -1237,6 +1355,11 @@ app.get('/pitch-test', (c) => {
                 document.getElementById('stopBtn').disabled = true;
                 document.getElementById('startBtn').disabled = false;
                 document.getElementById('startBtn').textContent = 'Start Pitch Detection';
+                
+                // Log validation summary if active
+                if (window.validationStats.expectedFreq && window.validationStats.detections.length > 0) {
+                    logValidationSummary();
+                }
             }
         }
 
@@ -1249,6 +1372,8 @@ app.get('/pitch-test', (c) => {
             'font-size: 16px; font-weight: bold; color: #4CAF50');
         console.log('%cFrequency + Confidence Only - No Musical Mapping', 
             'font-size: 12px; color: #888');
+        console.log('%c🎯 Validation Mode Available', 
+            'font-size: 12px; color: #FF9800');
         console.log('──────────────────────────────────');
     </script>
 </body>

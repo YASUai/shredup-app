@@ -156,6 +156,29 @@ class PitchDetection {
                 logger.info('PITCH-DETECTION', `Frame ${frameNumber} | ${frequency.toFixed(1)} Hz | Conf: ${confidence.toFixed(2)} | Proc: ${processingTime.toFixed(1)}ms`);
             }
 
+            // VALIDATION MODE: Log validation data if window.validationStats exists
+            if (typeof window !== 'undefined' && window.validationStats && window.validationStats.expectedFreq) {
+                const expected = window.validationStats.expectedFreq;
+                
+                if (frequency && confidence >= 0.5) {
+                    // Record detection for statistics
+                    window.validationStats.detections.push({
+                        frequency: frequency,
+                        confidence: confidence,
+                        timestamp: timestamp,
+                        frameNumber: frameNumber
+                    });
+                    
+                    // Calculate validation metrics
+                    const absError = frequency - expected;
+                    const relError = (absError / expected) * 100;
+                    const isOctave = window.isOctaveError ? window.isOctaveError(frequency, expected) : false;
+                    
+                    // Log validation line (every detection)
+                    console.log(`[VALIDATION] Expected ${expected.toFixed(2)} Hz | Detected ${frequency.toFixed(2)} Hz | Error ${absError >= 0 ? '+' : ''}${absError.toFixed(2)} Hz (${relError >= 0 ? '+' : ''}${relError.toFixed(2)}%) ${isOctave ? '⚠️ OCTAVE' : ''}`);
+                }
+            }
+
             return result;
 
         } catch (error) {
