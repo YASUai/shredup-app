@@ -1297,13 +1297,13 @@ app.get('/pitch-test', (c) => {
             
             // TIER B: STABLE ONLY (State Machine Filter)
             // - Only frames published during STABLE state
-            // - Already filtered by state machine (conf ≥ 0.75, variation < 3%)
-            // - Additional filters: warm-up exclusion, confidence ≥ 0.75
+            // - Already filtered by state machine (dominant established, variation < 3%, 5 frames required)
+            // - Additional filter: warm-up exclusion only (NO confidence filter)
             
             const warmupThreshold = 200; // ms
             const stableOnly = allDetections.filter(d => {
                 const elapsed = d.timestamp - sessionStart;
-                return elapsed >= warmupThreshold && d.confidence >= 0.75;
+                return elapsed >= warmupThreshold;  // Only warm-up filter, NO confidence filter
             });
             
             // TIER C: CLEAN STABLE (High-Confidence Filter)
