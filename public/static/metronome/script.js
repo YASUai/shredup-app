@@ -1696,6 +1696,73 @@ function updateBeatIndicators() {
 // ============================================================================
 // KEYBOARD SHORTCUTS VIA POSTMESSAGE (Communication from parent window)
 // ============================================================================
+// 🔒 LISTENER CLAVIER NATIF DANS LE MÉTRONOME (pour fonctionner même avec focus dans iframe)
+document.addEventListener('keydown', (e) => {
+    // ❌ NE PAS capturer si on tape dans un input/textarea (sauf ArrowLeft pour TAP)
+    const target = e.target;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        if (e.code !== 'ArrowLeft') {
+            return; // Laisser ArrowUp/ArrowDown modifier les valeurs des inputs
+        }
+    }
+
+    let action = null;
+
+    switch(e.code) {
+        case 'Space':
+            e.preventDefault();
+            action = 'TOGGLE_PLAY';
+            console.log('⌨️ [METRONOME] SPACE → TOGGLE_PLAY');
+            break;
+            
+        case 'ArrowLeft':
+            e.preventDefault();
+            action = 'TAP_CLICK';
+            console.log('⌨️ [METRONOME] ArrowLeft → TAP_CLICK');
+            break;
+            
+        case 'Equal':
+        case 'NumpadAdd':
+            e.preventDefault();
+            action = 'BPM_UP';
+            console.log('⌨️ [METRONOME] + → BPM_UP');
+            break;
+            
+        case 'Minus':
+        case 'NumpadSubtract':
+            e.preventDefault();
+            action = 'BPM_DOWN';
+            console.log('⌨️ [METRONOME] - → BPM_DOWN');
+            break;
+            
+        case 'ArrowUp':
+            // Ne bloquer que si PAS dans un input
+            if (target.tagName !== 'INPUT') {
+                e.preventDefault();
+                action = 'BPM_UP';
+                console.log('⌨️ [METRONOME] ArrowUp → BPM_UP');
+            }
+            break;
+            
+        case 'ArrowDown':
+            // Ne bloquer que si PAS dans un input
+            if (target.tagName !== 'INPUT') {
+                e.preventDefault();
+                action = 'BPM_DOWN';
+                console.log('⌨️ [METRONOME] ArrowDown → BPM_DOWN');
+            }
+            break;
+    }
+
+    if (action) {
+        // Simuler un postMessage pour réutiliser le handler existant
+        window.dispatchEvent(new MessageEvent('message', {
+            data: { action },
+            source: window
+        }));
+    }
+}, true); // useCapture = true pour capturer avant les inputs
+
 window.addEventListener('message', (event) => {
     const { action, bpm: newBpm } = event.data;
     
