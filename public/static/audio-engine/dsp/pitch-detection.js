@@ -218,14 +218,25 @@ class PitchDetection {
             
             // LOW FREQUENCY SPECIALIST (<70 Hz correction)
             // Post-processing for harmonic detection/correction
-            // Activated for f <= 420 Hz (covers harmonics 2×-6× of fundamentals < 70 Hz)
+            // STRICT GUARD: Only activate if detected frequency suggests low fundamental
+            // If YIN detects > 75 Hz directly, it's a valid mid/high frequency → skip correction
+            // If YIN detects < 75 Hz, may be A1 (~55 Hz) → allow correction
+            // If YIN detects harmonics (250-420 Hz) of low fundamental → allow correction
             if (this.lowFreqSpecialist && frequency && confidence >= 0.5 && frequency <= 420) {
-                const correctedResult = this.lowFreqSpecialist.correctFrequency(frequency, confidence, buffer, windowSize, timestamp);
-                
-                if (correctedResult.corrected) {
-                    logger.info('PITCH-DETECTION', `[LF-SPECIALIST] ${frequency.toFixed(1)} Hz → ${correctedResult.frequency.toFixed(1)} Hz | Reason: ${correctedResult.reason}`);
-                    frequency = correctedResult.frequency;
-                    confidence = correctedResult.confidence;
+                // GUARD: Skip correction if frequency > 75 Hz (valid mid-range fundamental)
+                // This protects E2 (82 Hz), E4 (330 Hz), and all higher frequencies
+                if (frequency > 75) {
+                    // Frequency is in valid mid/high range, no correction needed
+                    // E2 (82 Hz), E4 (330 Hz) will not be processed
+                } else {
+                    // Frequency < 75 Hz: likely A1 (~55 Hz) or its sub-octave
+                    const correctedResult = this.lowFreqSpecialist.correctFrequency(frequency, confidence, buffer, windowSize, timestamp);
+                    
+                    if (correctedResult.corrected) {
+                        logger.info('PITCH-DETECTION', `[LF-SPECIALIST] ${frequency.toFixed(1)} Hz → ${correctedResult.frequency.toFixed(1)} Hz | Reason: ${correctedResult.reason}`);
+                        frequency = correctedResult.frequency;
+                        confidence = correctedResult.confidence;
+                    }
                 }
             }
 
