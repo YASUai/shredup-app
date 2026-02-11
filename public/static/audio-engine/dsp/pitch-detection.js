@@ -195,19 +195,19 @@ class PitchDetection {
         const maxLag = Math.floor(this.SAMPLE_RATE / this.MIN_FREQUENCY);
 
         let maxValue = -Infinity;
-        let maxLag = 0;
+        let peakLag = 0;
 
         for (let lag = minLag; lag < maxLag && lag < this.WINDOW_SIZE; lag++) {
             const value = this.autocorr[lag * 2]; // Real part only
             if (value > maxValue) {
                 maxValue = value;
-                maxLag = lag;
+                peakLag = lag;
             }
         }
 
         // 5. Convert lag to frequency
-        if (maxLag > 0 && maxValue > 0) {
-            const frequency = this.SAMPLE_RATE / maxLag;
+        if (peakLag > 0 && maxValue > 0) {
+            const frequency = this.SAMPLE_RATE / peakLag;
             
             // Validate frequency range
             if (frequency >= this.MIN_FREQUENCY && frequency <= this.MAX_FREQUENCY) {
