@@ -1132,4 +1132,127 @@ function generateExercises() {
   ))
 }
 
+// 🎸 Route TEST: Phase 3 - Pitch Detection
+app.get('/pitch-test', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED UP - Pitch Detection Test (Phase 3)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; color: white; font-family: 'Courier New', monospace; padding: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { font-size: 24px; margin-bottom: 10px; color: #4CAF50; }
+        .phase-tag { background: #1a1a1a; padding: 5px 15px; border-radius: 4px; font-size: 12px; margin-bottom: 30px; color: #888; }
+        .controls { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        button { background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; margin-right: 10px; margin-bottom: 10px; }
+        button:hover { background: #45a049; }
+        button:disabled { background: #333; cursor: not-allowed; }
+        button.stop { background: #f44336; }
+        button.stop:hover { background: #da190b; }
+        .info-box { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196F3; }
+        .info-box h3 { font-size: 14px; margin-bottom: 10px; color: #2196F3; }
+        .info-box p { font-size: 12px; line-height: 1.6; color: #aaa; }
+        .console-hint { background: #1a1a1a; padding: 15px; border-radius: 8px; border-left: 4px solid #FF9800; margin-top: 20px; }
+        .console-hint p { font-size: 12px; color: #FF9800; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎸 SHRED UP - Pitch Detection Test</h1>
+        <div class="phase-tag">Phase 3 - Pitch Detection Only</div>
+
+        <div class="info-box">
+            <h3>📋 Phase 3 Scope</h3>
+            <p>
+                <strong>Implemented:</strong> FFT-based autocorrelation pitch detection<br>
+                <strong>Window:</strong> 2048 samples (42.67ms), 50% overlap<br>
+                <strong>Output:</strong> Frequency (Hz) + Confidence (0-1) only<br>
+                <strong>NOT implemented:</strong> Note names, cents, UI display, scoring
+            </p>
+        </div>
+
+        <div class="controls">
+            <button id="initBtn" onclick="initAudioEngine()">Initialize Audio Engine</button>
+            <button id="startBtn" onclick="startAudioEngine()" disabled>Start Pitch Detection</button>
+            <button id="stopBtn" class="stop" onclick="stopAudioEngine()" disabled>Stop Pitch Detection</button>
+            <button onclick="logStatus()">Log Status</button>
+        </div>
+
+        <div class="console-hint">
+            <p>💡 Open Console (F12) to see pitch detection logs</p>
+            <p>Format: [PITCH] Frame X | 440.0 Hz | Conf: 0.92 | Proc: 4.3ms</p>
+        </div>
+    </div>
+
+    <!-- Load all audio engine modules -->
+    <script src="/static/audio-engine/debug-logger.js"></script>
+    <script src="/static/audio-engine/metronome-adapter.js"></script>
+    <script src="/static/audio-engine/frame-buffer.js"></script>
+    <script src="/static/audio-engine/audio-capture.js"></script>
+    <script src="/static/audio-engine/timing-sync.js"></script>
+    <script src="/static/audio-engine/dsp/fft.js"></script>
+    <script src="/static/audio-engine/dsp/pitch-detection.js"></script>
+    <script src="/static/audio-engine/audio-engine-phase3.js"></script>
+
+    <script>
+        async function initAudioEngine() {
+            console.log('Initializing Audio Engine (Phase 3)...');
+            document.getElementById('initBtn').disabled = true;
+            
+            const success = await audioEngine.init();
+            
+            if (success) {
+                document.getElementById('initBtn').textContent = 'Initialized ✓';
+                document.getElementById('startBtn').disabled = false;
+            } else {
+                document.getElementById('initBtn').disabled = false;
+                alert('Initialization failed. Check console for errors.');
+            }
+        }
+
+        async function startAudioEngine() {
+            console.log('Starting Audio Engine...');
+            document.getElementById('startBtn').disabled = true;
+            
+            const success = await audioEngine.start();
+            
+            if (success) {
+                document.getElementById('startBtn').textContent = 'Running ✓';
+                document.getElementById('stopBtn').disabled = false;
+            } else {
+                document.getElementById('startBtn').disabled = false;
+                alert('Start failed. Check console for errors.');
+            }
+        }
+
+        function stopAudioEngine() {
+            console.log('Stopping Audio Engine...');
+            
+            const success = audioEngine.stop();
+            
+            if (success) {
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('startBtn').textContent = 'Start Pitch Detection';
+            }
+        }
+
+        function logStatus() {
+            audioEngine.logStatus();
+        }
+
+        // Log initial message
+        console.log('%c🎸 SHRED UP - Pitch Detection Test (Phase 3)', 
+            'font-size: 16px; font-weight: bold; color: #4CAF50');
+        console.log('%cFrequency + Confidence Only - No Musical Mapping', 
+            'font-size: 12px; color: #888');
+        console.log('──────────────────────────────────');
+    </script>
+</body>
+</html>`)
+})
+
 export default app
