@@ -5,6 +5,311 @@ const app = new Hono()
 
 app.use(renderer)
 
+// 🧪 Route pour le métronome LOCAL (intégré same-origin)
+// Redirige vers le fichier statique
+app.get('/metronome-local', (c) => {
+  return c.redirect('/static/metronome/index.html')
+})
+
+// 🧪 Route TEST : SHRED UP avec Métronome LOCAL (same-origin)
+app.get('/test-local', (c) => {
+  return c.render(
+    <div class="app-container">
+      {/* TOP BANNER - Full Width */}
+      <div class="zone-banner">
+        <div class="brand-logo">SHRED UP - TEST LOCAL METRONOME 🧪</div>
+      </div>
+
+      {/* LEFT SIDEBAR - Distinct Stacked Blocks */}
+      <div class="zone-left">
+        {/* Profile Block */}
+        <div class="left-block">
+          <div class="block-title">PROFILE<br />(name/lvl/picture)</div>
+          <div class="profile-info">
+            <div class="profile-avatar">👤</div>
+            <div class="profile-name">Musician</div>
+            <div class="profile-level">Level 1</div>
+          </div>
+        </div>
+
+        {/* Menu Block */}
+        <div class="left-block">
+          <div class="block-title">MENU</div>
+          <ul class="menu-list">
+            <li class="menu-item">ACCOUNT</li>
+            <li class="menu-item">LOGS</li>
+            <li class="menu-item">DISTANCE TO LVL</li>
+          </ul>
+        </div>
+
+        {/* Progression Graph Block */}
+        <div class="left-block">
+          <div class="block-title">PROGRESSION<br />GRAPH</div>
+          <div class="graph-placeholder">
+            Graph visualization
+          </div>
+        </div>
+      </div>
+
+      {/* FOCUS POINTS - Distinct Block ABOVE Exercise List */}
+      <div class="zone-focus">
+        <div class="focus-title">FOCUS POINTS</div>
+        <div class="focus-description">
+          🧪 TEST VERSION : Métronome LOCAL intégré (same-origin)
+        </div>
+      </div>
+
+      {/* PRACTICE ZONE - Exercise List (Main Workspace) */}
+      <div class="zone-practice">
+        {/* Column Headers */}
+        <div class="exercise-header">
+          <div class="header-cell">REC</div>
+          <div class="header-cell">EXERCISE</div>
+          <div class="header-cell">SUB<br />RYTH</div>
+          <div class="header-cell header-tempo">
+            TEMPO ATTEINTS
+            <button class="tempo-reduce-btn">−</button>
+            <button class="tempo-subdivide-btn">+</button>
+          </div>
+          <div class="header-cell">TEMPO<br />GOAL</div>
+          <div class="header-cell">TEMPS<br />PASSÉ</div>
+          <div class="header-cell">DONE</div>
+        </div>
+        
+        {/* Exercise List */}
+        <div class="exercise-list">
+          {generateExercises()}
+        </div>
+      </div>
+
+      {/* METRONOME + TUNER COLUMN - Stacked Vertically */}
+      <div class="zone-metronome-tuner">
+        {/* METRONOME - Top - 🧪 VERSION LOCAL */}
+        <div class="zone-metronome">
+          <iframe 
+            src="/static/metronome/index.html" 
+            class="metronome-iframe"
+            title="SHRED-UP Metronome LOCAL"
+            scrolling="no"
+            allow="autoplay"
+          ></iframe>
+        </div>
+
+        {/* TUNER - Bottom */}
+        <div class="zone-tuner">
+          <div class="tuner-container">
+            <div class="block-title">TUNER</div>
+            <div class="tuner-display">A4</div>
+            <div class="tuner-indicator">
+              <div class="tuner-needle"></div>
+            </div>
+            <div class="tuner-frequency">440 Hz</div>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN - Date/Time + Session Summary + Notepad */}
+      <div class="zone-right-top">
+        {/* Date/Time Block - 725px */}
+        <div class="datetime-container">
+          <div class="datetime-block">
+            <div class="datetime-time" id="current-time">00:00:00</div>
+            <div class="datetime-info">
+              <div class="datetime-day" id="current-day">Monday</div>
+              <div class="datetime-session">Session <span id="session-number">1</span></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Session Summary Block - 725px */}
+        <div class="right-block session-summary-block">
+          <div class="block-title">SESSION<br />SUMMARY</div>
+          <div class="summary-placeholder">
+            🧪 TEST VERSION LOCALE - Same Origin
+          </div>
+        </div>
+
+        {/* Notepad Block - Flexible */}
+        <div class="right-block notepad-block">
+          <div class="block-title">NOTEPAD</div>
+          <textarea 
+            class="notepad-textarea" 
+            placeholder="Take notes after your session..."
+          ></textarea>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+// 🧪 Route TEST SIDE-BY-SIDE : Métronome Local vs External
+app.get('/metronome-compare', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMPARE : Métronome Local vs External</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .compare-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: start;
+        }
+
+        .metronome-box {
+            width: 400px;
+            position: relative;
+        }
+
+        .metronome-box h2 {
+            background: #1a1a1a;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            font-size: 18px;
+        }
+
+        .metronome-box.local h2 {
+            background: #1a4d1a;
+        }
+
+        .metronome-box.external h2 {
+            background: #4d1a1a;
+        }
+
+        iframe {
+            width: 400px;
+            height: 800px;
+            border: none;
+            display: block;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .instructions {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 820px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 COMPARAISON : Métronome Local vs External</h1>
+    
+    <div class="instructions">
+        <h3>📋 INSTRUCTIONS DE TEST :</h3>
+        <ul>
+            <li><strong>GAUCHE (LOCAL) :</strong> Métronome intégré dans SHRED UP (same-origin)</li>
+            <li><strong>DROITE (EXTERNAL) :</strong> Métronome externe via port 7777 (cross-origin)</li>
+            <li><strong>À VÉRIFIER :</strong>
+                <ul>
+                    <li>✅ Apparence visuelle identique ?</li>
+                    <li>✅ Bouton Play/Stop fonctionne ?</li>
+                    <li>✅ TAP Tempo via ArrowLeft fonctionne ?</li>
+                    <li>✅ Modales BEAT/BAR/NOTE s'ouvrent ?</li>
+                    <li>✅ Inputs fonctionnent dans les modales ?</li>
+                    <li>✅ Slider BPM fonctionne ?</li>
+                    <li>✅ Raccourcis clavier : SPACE / ← / + / - / ↑ / ↓</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="compare-container">
+        <div class="metronome-box local">
+            <h2>🟢 LOCAL (Same-Origin)</h2>
+            <iframe 
+                src="/metronome-local" 
+                title="Métronome Local"
+                scrolling="no"
+                allow="autoplay"
+            ></iframe>
+        </div>
+
+        <div class="metronome-box external">
+            <h2>🔴 EXTERNAL (Port 7777)</h2>
+            <iframe 
+                src="/metronome-scaled" 
+                title="Métronome External"
+                scrolling="no"
+                allow="autoplay"
+            ></iframe>
+        </div>
+    </div>
+</body>
+</html>`)
+})
+
+// 🧪 Route pour le métronome LOCAL (intégré same-origin)
+app.get('/metronome-local', async (c) => {
+  const html = await Bun.file('public/static/metronome-backup/index.html').text()
+  return c.html(html)
+})
+
+// Route pour servir les assets du métronome local
+app.get('/metronome-local/:filename', async (c) => {
+  const filename = c.req.param('filename')
+  const filePath = `public/static/metronome-backup/${filename}`
+  
+  try {
+    const file = Bun.file(filePath)
+    
+    // Déterminer le Content-Type
+    let contentType = 'text/plain'
+    if (filename.endsWith('.js')) contentType = 'application/javascript'
+    else if (filename.endsWith('.css')) contentType = 'text/css'
+    else if (filename.endsWith('.mp3')) contentType = 'audio/mpeg'
+    else if (filename.endsWith('.json')) contentType = 'application/json'
+    else if (filename.endsWith('.svg')) contentType = 'image/svg+xml'
+    
+    return new Response(file, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'no-cache'
+      }
+    })
+  } catch (error) {
+    return c.text('File not found', 404)
+  }
+})
+
 // Route pour le métronome scaled (-10% centré - VALIDÉ)
 app.get('/metronome-scaled', (c) => {
   return c.html(`<!DOCTYPE html>
