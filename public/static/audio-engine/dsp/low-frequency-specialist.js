@@ -74,12 +74,15 @@ class LowFrequencySpecialist {
         // Common issue: A1 (55 Hz) detected as ~230-280 Hz (4×-5× harmonics) or ~330 Hz (6× harmonic)
         
         // Test for common harmonic relationships
+        // PRIORITY ORDER: 6× → 5× → 4× → 3× → 2× (descending)
+        // Rationale: YIN at low frequencies tends to detect higher multiples first
+        // Prioritizing higher ratios reduces false 5× when it's actually 6×
         const possibleFundamentals = [
-            { harmonic: 2, fundamental: frequency / 2 },
-            { harmonic: 3, fundamental: frequency / 3 },
-            { harmonic: 4, fundamental: frequency / 4 },
+            { harmonic: 6, fundamental: frequency / 6 },
             { harmonic: 5, fundamental: frequency / 5 },
-            { harmonic: 6, fundamental: frequency / 6 }
+            { harmonic: 4, fundamental: frequency / 4 },
+            { harmonic: 3, fundamental: frequency / 3 },
+            { harmonic: 2, fundamental: frequency / 2 }
         ];
         
         for (const test of possibleFundamentals) {
