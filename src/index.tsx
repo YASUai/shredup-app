@@ -1214,6 +1214,7 @@ app.get('/pitch-test', (c) => {
     <script src="/static/audio-engine/frame-buffer.js"></script>
     <script src="/static/audio-engine/timing-sync.js"></script>
     <script src="/static/audio-engine/dsp/spectral-analyzer.js"></script>
+    <script src="/static/audio-engine/dsp/low-frequency-specialist.js"></script>
     <script src="/static/audio-engine/dsp/pitch-detection.js"></script>
     <script src="/static/audio-engine/audio-engine-phase3.js"></script>
 

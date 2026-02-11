@@ -29,6 +29,9 @@ class PitchDetection {
         this.windowBuffer = new Float32Array(this.WINDOW_SIZE);
         this.hannWindow = new Float32Array(this.WINDOW_SIZE);
         
+        // Low Frequency Specialist (post-detection layer for < 70 Hz)
+        this.lowFreqSpecialist = null;
+        
         // Extended buffers (4096 for A1)
         this.windowBufferExtended = new Float32Array(this.WINDOW_SIZE_EXTENDED);
         this.hannWindowExtended = new Float32Array(this.WINDOW_SIZE_EXTENDED);
@@ -75,21 +78,21 @@ class PitchDetection {
                 this.hannWindowExtended[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (this.WINDOW_SIZE_EXTENDED - 1)));
             }
             
-            // Initialize Spectral Analyzer
-            if (typeof spectralAnalyzer !== 'undefined') {
-                this.spectralAnalyzer = spectralAnalyzer;
-                this.spectralAnalyzer.init();
-                logger.info('PITCH-DETECTION', 'Spectral Analyzer: ACTIVE (40-80 Hz detection)');
-                logger.info('PITCH-DETECTION', 'Dual-Pass: 2048 (baseline) | 4096 (A1 mode)');
+            // Initialize Low Frequency Specialist
+            if (typeof LowFrequencySpecialist !== 'undefined') {
+                this.lowFreqSpecialist = new LowFrequencySpecialist();
+                this.lowFreqSpecialist.init();
+                logger.info('PITCH-DETECTION', 'Low Frequency Specialist: ACTIVE (<70 Hz correction)');
+                logger.info('PITCH-DETECTION', 'Mode: Structural harmonic analysis + median smoothing');
             } else {
-                logger.warn('PITCH-DETECTION', 'Spectral Analyzer: NOT LOADED (2048 only)');
+                logger.warn('PITCH-DETECTION', 'Low Frequency Specialist: NOT LOADED (baseline only)');
             }
             
             this.isInitialized = true;
             
-            logger.success('PITCH-DETECTION', `Initialized (window: ${this.WINDOW_SIZE}/${this.WINDOW_SIZE_EXTENDED}, hop: ${this.HOP_SIZE})`);
+            logger.success('PITCH-DETECTION', `Initialized (window: ${this.WINDOW_SIZE}, hop: ${this.HOP_SIZE})`);
             logger.info('PITCH-DETECTION', `Frequency range: ${this.MIN_FREQUENCY}-${this.MAX_FREQUENCY} Hz`);
-            logger.info('PITCH-DETECTION', `Expected latency: ~55ms (2048) | ~100ms (4096 conditional)`);
+            logger.info('PITCH-DETECTION', `Expected latency: ~55ms (2048 baseline)`);
             
             return true;
         } catch (error) {
@@ -210,8 +213,20 @@ class PitchDetection {
 
             // YIN pitch detection (with appropriate window size)
             const yinResult = this.detectPitchYIN(buffer, windowSize);
-            const frequency = yinResult.frequency;
-            const confidence = yinResult.confidence;
+            let frequency = yinResult.frequency;
+            let confidence = yinResult.confidence;
+            
+            // LOW FREQUENCY SPECIALIST (<70 Hz correction)
+            // Post-processing for harmonic detection/correction
+            if (this.lowFreqSpecialist && frequency && confidence >= 0.5 && frequency < 70) {
+                const correctedResult = this.lowFreqSpecialist.correctFrequency(frequency, confidence, buffer, windowSize, timestamp);
+                
+                if (correctedResult.corrected) {
+                    logger.info('PITCH-DETECTION', `[LF-SPECIALIST] ${frequency.toFixed(1)} Hz → ${correctedResult.frequency.toFixed(1)} Hz | Reason: ${correctedResult.reason}`);
+                    frequency = correctedResult.frequency;
+                    confidence = correctedResult.confidence;
+                }
+            }
 
             const processingTime = performance.now() - startTime;
 
