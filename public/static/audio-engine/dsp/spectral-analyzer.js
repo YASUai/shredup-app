@@ -18,7 +18,7 @@
 class SpectralAnalyzer {
     constructor(sampleRate = 48000) {
         this.SAMPLE_RATE = sampleRate;
-        this.FFT_SIZE = 64;  // Lightweight FFT for energy detection only
+        this.FFT_SIZE = 2048;  // Full resolution FFT for accurate 40-80 Hz detection
         
         // Target frequency range for A1 detection
         this.LOW_FREQ_MIN = 40;   // Hz - below A1 (55 Hz)
@@ -28,7 +28,6 @@ class SpectralAnalyzer {
         this.ENERGY_THRESHOLD = 0.15;  // 15% of total energy in low band
         
         // Pre-allocated buffers
-        this.fftBuffer = new Float32Array(this.FFT_SIZE);
         this.spectrum = new Float32Array(this.FFT_SIZE / 2);
         
         this.isInitialized = false;
@@ -51,36 +50,32 @@ class SpectralAnalyzer {
      * Analyze signal energy in low frequency band
      * 
      * @param {Float32Array} signal - Audio signal (2048 samples)
-     * @returns {Object} - { needsExtendedWindow: boolean, lowFreqEnergy: number, totalEnergy: number }
+     * @returns {Object} - { needsExtendedWindow: boolean, lowFreqEnergy: number, totalEnergy: number, energyRatio: number }
      */
     analyze(signal) {
         if (!this.isInitialized) {
-            return { needsExtendedWindow: false, lowFreqEnergy: 0, totalEnergy: 0 };
+            return { needsExtendedWindow: false, lowFreqEnergy: 0, totalEnergy: 0, energyRatio: 0 };
         }
         
-        // Downsample signal to FFT_SIZE (64 samples)
-        // Simple decimation: take every Nth sample
-        const decimationFactor = Math.floor(signal.length / this.FFT_SIZE);
+        // Compute power spectrum (full 2048-point FFT)
+        this.computeSpectrum(signal);
         
-        for (let i = 0; i < this.FFT_SIZE; i++) {
-            this.fftBuffer[i] = signal[i * decimationFactor];
-        }
+        // Calculate frequency bin resolution
+        const binResolution = this.SAMPLE_RATE / this.FFT_SIZE;  // 48000 / 2048 = 23.4 Hz per bin
         
-        // Compute power spectrum (magnitude squared)
-        this.computeSpectrum();
-        
-        // Calculate energy in low frequency band (40-80 Hz)
-        const binResolution = this.SAMPLE_RATE / this.FFT_SIZE;  // Hz per bin
-        const lowFreqBinStart = Math.floor(this.LOW_FREQ_MIN / binResolution);
-        const lowFreqBinEnd = Math.ceil(this.LOW_FREQ_MAX / binResolution);
+        // Calculate bin indices for 40-80 Hz range
+        const lowFreqBinStart = Math.floor(this.LOW_FREQ_MIN / binResolution);  // 40 / 23.4 ≈ bin 1
+        const lowFreqBinEnd = Math.ceil(this.LOW_FREQ_MAX / binResolution);      // 80 / 23.4 ≈ bin 3
         
         let lowFreqEnergy = 0;
         let totalEnergy = 0;
         
+        // Sum energy across all bins
         for (let i = 0; i < this.spectrum.length; i++) {
             const energy = this.spectrum[i];
             totalEnergy += energy;
             
+            // Check if bin is in target range
             if (i >= lowFreqBinStart && i <= lowFreqBinEnd) {
                 lowFreqEnergy += energy;
             }
@@ -92,6 +87,9 @@ class SpectralAnalyzer {
         // Decision: need extended window if low freq energy is significant
         const needsExtendedWindow = energyRatio > this.ENERGY_THRESHOLD;
         
+        // DEBUG LOG: Always log energy analysis for A1 debugging
+        console.log(`[SPECTRAL] Bins ${lowFreqBinStart}-${lowFreqBinEnd} (${this.LOW_FREQ_MIN}-${this.LOW_FREQ_MAX} Hz) | Energy: ${(energyRatio * 100).toFixed(2)}% | Threshold: ${(this.ENERGY_THRESHOLD * 100).toFixed(0)}% | Activate 4096: ${needsExtendedWindow}`);
+        
         return {
             needsExtendedWindow: needsExtendedWindow,
             lowFreqEnergy: lowFreqEnergy,
@@ -101,26 +99,27 @@ class SpectralAnalyzer {
     }
     
     /**
-     * Compute power spectrum using simple DFT (for 64 bins, fast enough)
+     * Compute power spectrum using DFT (2048 points)
      * 
-     * Note: We use simple DFT instead of full FFT because:
-     * - FFT_SIZE = 64 (very small)
-     * - DFT complexity: O(N²) = 64² = 4096 operations (~0.1 ms)
-     * - No need for FFT library overhead
+     * Note: We use simple DFT for clarity. For production, could optimize with FFT.
+     * Complexity: O(N²) = 2048² = ~4M operations
+     * Expected time: ~2-3 ms (acceptable for conditional activation)
+     * 
+     * @param {Float32Array} signal - Input signal (2048 samples)
      */
-    computeSpectrum() {
+    computeSpectrum(signal) {
         const N = this.FFT_SIZE;
         const halfN = N / 2;
         
-        // Compute DFT for positive frequencies only
+        // Compute DFT for positive frequencies only (DC to Nyquist)
         for (let k = 0; k < halfN; k++) {
             let realSum = 0;
             let imagSum = 0;
             
             for (let n = 0; n < N; n++) {
                 const angle = -2 * Math.PI * k * n / N;
-                realSum += this.fftBuffer[n] * Math.cos(angle);
-                imagSum += this.fftBuffer[n] * Math.sin(angle);
+                realSum += signal[n] * Math.cos(angle);
+                imagSum += signal[n] * Math.sin(angle);
             }
             
             // Power = |X[k]|² = real² + imag²
