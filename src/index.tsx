@@ -1165,9 +1165,9 @@ app.get('/pitch-test', (c) => {
         <div class="phase-tag">Phase 3 - Pitch Detection Only</div>
 
         <div class="info-box">
-            <h3>📋 Phase 3 Scope (MPM Algorithm)</h3>
+            <h3>📋 Phase 3 Scope (YIN Algorithm)</h3>
             <p>
-                <strong>Implemented:</strong> McLeod Pitch Method (MPM) using NSDF<br>
+                <strong>Implemented:</strong> YIN fundamental frequency estimator (CMND)<br>
                 <strong>Window:</strong> 2048 samples (42.67ms), 50% overlap<br>
                 <strong>Output:</strong> Frequency (Hz) + Confidence (0-1) only<br>
                 <strong>NOT implemented:</strong> Note names, cents, UI display, scoring

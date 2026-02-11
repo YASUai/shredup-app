@@ -1,8 +1,8 @@
 /**
  * SHRED UP - Pitch Detection Module
- * Phase 3 - Pitch Detection Only (MPM Algorithm)
+ * Phase 3 - Pitch Detection Only (YIN Algorithm)
  * 
- * McLeod Pitch Method (MPM) using NSDF (Normalized Square Difference Function)
+ * YIN fundamental frequency estimator
  * Input: 2048-sample windows (50% overlap)
  * Output: Frequency (Hz) + Confidence (0-1)
  * 
@@ -10,7 +10,8 @@
  * NO metronome synchronization
  * Pure frequency detection only
  * 
- * Reference: "A Smarter Way to Find Pitch" by Philip McLeod & Geoff Wyvill (2005)
+ * Reference: "YIN, a fundamental frequency estimator for speech and music"
+ *            de Cheveigné & Kawahara (2002)
  */
 
 class PitchDetection {
@@ -27,10 +28,9 @@ class PitchDetection {
         this.windowBuffer = new Float32Array(this.WINDOW_SIZE);
         this.hannWindow = new Float32Array(this.WINDOW_SIZE);
         
-        // MPM-specific buffers
-        this.nsdf = new Float32Array(this.WINDOW_SIZE); // NSDF values
-        this.acf = new Float32Array(this.WINDOW_SIZE);  // Autocorrelation
-        this.m = new Float32Array(this.WINDOW_SIZE);    // Normalization term
+        // YIN-specific buffers
+        this.differenceFunction = new Float32Array(this.WINDOW_SIZE / 2); // d(τ)
+        this.cmndf = new Float32Array(this.WINDOW_SIZE / 2);              // d'(τ) - CMND
         
         // Performance tracking
         this.windowCount = 0;
@@ -124,10 +124,10 @@ class PitchDetection {
                 this.windowBuffer[i] *= this.hannWindow[i];
             }
 
-            // MPM pitch detection
-            const mpmResult = this.detectPitchMPM(this.windowBuffer);
-            const frequency = mpmResult.frequency;
-            const confidence = mpmResult.confidence;
+            // YIN pitch detection
+            const yinResult = this.detectPitchYIN(this.windowBuffer);
+            const frequency = yinResult.frequency;
+            const confidence = yinResult.confidence;
 
             const processingTime = performance.now() - startTime;
 
@@ -203,38 +203,41 @@ class PitchDetection {
      * @param {Float32Array} signal - Windowed input signal
      * @returns {Object} { frequency: number|null, confidence: number }
      */
-    detectPitchMPM(signal) {
-        // 1. Compute autocorrelation function (ACF)
-        this.computeACF(signal);
+    /**
+     * YIN pitch detection algorithm
+     * @param {Float32Array} signal - Windowed input signal
+     * @returns {Object} { frequency: number|null, confidence: number }
+     */
+    detectPitchYIN(signal) {
+        // 1. Compute difference function d(τ)
+        this.computeDifferenceFunction(signal);
         
-        // 2. Compute normalization term m[tau]
-        this.computeNormalization(signal);
+        // 2. Compute cumulative mean normalized difference function d'(τ)
+        this.computeCMNDF();
         
-        // 3. Compute NSDF (Normalized Square Difference Function)
-        this.computeNSDF();
+        // 3. Absolute threshold: find first τ where d'(τ) < threshold
+        const YIN_THRESHOLD = 0.10; // Standard YIN threshold (0.10-0.15)
+        const tau = this.absoluteThreshold(YIN_THRESHOLD);
         
-        // 4. Find key maxima in NSDF
-        const peaks = this.findPeaks();
-        
-        if (peaks.length === 0) {
+        if (tau === -1) {
             return { frequency: null, confidence: 0 };
         }
         
-        // 5. Select best peak (highest peak above threshold)
-        const bestPeak = peaks[0]; // Already sorted by height
+        // 4. Parabolic interpolation for sub-sample accuracy
+        const refinedTau = this.parabolicInterpolation(tau);
         
-        // 6. Parabolic interpolation for sub-sample accuracy
-        const refinedLag = this.parabolicInterpolation(bestPeak.lag);
-        
-        // 7. Convert lag to frequency
-        if (refinedLag > 0) {
-            const frequency = this.SAMPLE_RATE / refinedLag;
+        // 5. Convert tau to frequency
+        if (refinedTau > 0) {
+            const frequency = this.SAMPLE_RATE / refinedTau;
             
             // Validate frequency range
             if (frequency >= this.MIN_FREQUENCY && frequency <= this.MAX_FREQUENCY) {
+                // Confidence = 1 - d'(τ)
+                const confidence = Math.max(0, 1 - this.cmndf[tau]);
+                
                 return {
                     frequency: frequency,
-                    confidence: bestPeak.height // MPM peak clarity metric
+                    confidence: confidence
                 };
             }
         }
@@ -243,123 +246,108 @@ class PitchDetection {
     }
     
     /**
-     * Compute Autocorrelation Function (ACF)
-     * ACF[tau] = sum(signal[i] * signal[i + tau]) for i = 0 to N-tau-1
+     * Compute difference function d(τ)
+     * d(τ) = Σ(x[j] - x[j+τ])² for j = 0 to N-τ-1
      */
-    computeACF(signal) {
+    computeDifferenceFunction(signal) {
         const N = signal.length;
+        const maxTau = Math.floor(N / 2); // Only compute up to N/2
         
-        for (let tau = 0; tau < N; tau++) {
+        for (let tau = 0; tau < maxTau; tau++) {
             let sum = 0;
-            for (let i = 0; i < N - tau; i++) {
-                sum += signal[i] * signal[i + tau];
+            for (let j = 0; j < N - tau; j++) {
+                const delta = signal[j] - signal[j + tau];
+                sum += delta * delta;
             }
-            this.acf[tau] = sum;
+            this.differenceFunction[tau] = sum;
         }
     }
     
     /**
-     * Compute normalization term m[tau]
-     * m[tau] = sum(signal[i]^2) for i=0 to N-tau-1  +  sum(signal[i]^2) for i=tau to N-1
+     * Compute cumulative mean normalized difference function d'(τ)
+     * d'(τ) = d(τ) / [(1/τ) * Σd(j)] for j=1 to τ
+     * 
+     * Special case: d'(0) = 1 by definition
      */
-    computeNormalization(signal) {
-        const N = signal.length;
+    computeCMNDF() {
+        this.cmndf[0] = 1; // Special case for τ=0
         
-        // Pre-compute cumulative sum of squared signal
-        const cumSum = new Float32Array(N + 1);
-        cumSum[0] = 0;
-        for (let i = 0; i < N; i++) {
-            cumSum[i + 1] = cumSum[i] + signal[i] * signal[i];
-        }
+        let runningSum = 0;
+        const maxTau = this.differenceFunction.length;
         
-        // Compute m[tau] = sum(x[0..N-tau-1]^2) + sum(x[tau..N-1]^2)
-        for (let tau = 0; tau < N; tau++) {
-            const leftSum = cumSum[N - tau];        // sum(x[0..N-tau-1]^2)
-            const rightSum = cumSum[N] - cumSum[tau]; // sum(x[tau..N-1]^2)
-            this.m[tau] = leftSum + rightSum;
-        }
-    }
-    
-    /**
-     * Compute NSDF (Normalized Square Difference Function)
-     * NSDF[tau] = 2 * ACF[tau] / m[tau]
-     */
-    computeNSDF() {
-        const N = this.WINDOW_SIZE;
-        
-        for (let tau = 0; tau < N; tau++) {
-            if (this.m[tau] === 0) {
-                this.nsdf[tau] = 0;
+        for (let tau = 1; tau < maxTau; tau++) {
+            runningSum += this.differenceFunction[tau];
+            
+            if (runningSum === 0) {
+                this.cmndf[tau] = 1; // Avoid division by zero
             } else {
-                this.nsdf[tau] = 2 * this.acf[tau] / this.m[tau];
+                // d'(τ) = d(τ) * τ / runningSum
+                this.cmndf[tau] = this.differenceFunction[tau] * tau / runningSum;
             }
         }
     }
     
     /**
-     * Find key maxima (peaks) in NSDF
-     * Returns peaks sorted by height (descending)
+     * Absolute threshold: find first τ where d'(τ) < threshold
+     * Search within valid lag range for target frequency range
+     * 
+     * @param {number} threshold - YIN threshold (typically 0.10-0.15)
+     * @returns {number} τ index, or -1 if not found
      */
-    findPeaks() {
-        const minLag = Math.floor(this.SAMPLE_RATE / this.MAX_FREQUENCY);
-        const maxLag = Math.floor(this.SAMPLE_RATE / this.MIN_FREQUENCY);
-        const MPM_CUTOFF = 0.80; // Lowered for real guitar (0.93 too strict for low strings)
+    absoluteThreshold(threshold) {
+        const minTau = Math.floor(this.SAMPLE_RATE / this.MAX_FREQUENCY);
+        const maxTau = Math.min(
+            Math.floor(this.SAMPLE_RATE / this.MIN_FREQUENCY),
+            this.cmndf.length - 1
+        );
         
-        const peaks = [];
-        
-        // Find zero crossings (positive -> negative)
-        let pos = minLag;
-        
-        while (pos < maxLag && pos < this.WINDOW_SIZE - 1) {
-            // Find next positive zero crossing
-            while (pos < maxLag && this.nsdf[pos] <= 0) {
-                pos++;
-            }
-            
-            if (pos >= maxLag || pos >= this.WINDOW_SIZE - 1) {
-                break;
-            }
-            
-            // Find peak in this positive region
-            let peakPos = pos;
-            let peakValue = this.nsdf[pos];
-            
-            while (pos < maxLag && pos < this.WINDOW_SIZE - 1 && this.nsdf[pos] > 0) {
-                if (this.nsdf[pos] > peakValue) {
-                    peakValue = this.nsdf[pos];
-                    peakPos = pos;
+        // Find first τ > minTau where d'(τ) < threshold
+        for (let tau = minTau; tau < maxTau; tau++) {
+            if (this.cmndf[tau] < threshold) {
+                // Found a candidate, now search for local minimum
+                // (YIN paper step 5: choose deepest valley)
+                while (tau + 1 < maxTau && this.cmndf[tau + 1] < this.cmndf[tau]) {
+                    tau++;
                 }
-                pos++;
-            }
-            
-            // Only keep peaks above cutoff threshold
-            if (peakValue >= MPM_CUTOFF) {
-                peaks.push({
-                    lag: peakPos,
-                    height: peakValue
-                });
+                return tau;
             }
         }
         
-        // Sort peaks by height (descending)
-        peaks.sort((a, b) => b.height - a.height);
+        // No valid τ found below threshold
+        // Fallback: return global minimum (best available)
+        let minValue = this.cmndf[minTau];
+        let minTau_fallback = minTau;
         
-        return peaks;
+        for (let tau = minTau + 1; tau < maxTau; tau++) {
+            if (this.cmndf[tau] < minValue) {
+                minValue = this.cmndf[tau];
+                minTau_fallback = tau;
+            }
+        }
+        
+        // Only return fallback if it's reasonably good (< 0.5)
+        if (minValue < 0.5) {
+            return minTau_fallback;
+        }
+        
+        return -1; // No pitch detected
     }
     
     /**
      * Parabolic interpolation for sub-sample accuracy
      * Fits parabola through 3 points: (x-1, y-1), (x, y), (x+1, y+1)
-     * Returns refined peak position
+     * Returns refined tau position
+     * 
+     * Note: For YIN, we interpolate on CMNDF (finding minimum)
      */
     parabolicInterpolation(x) {
-        if (x <= 0 || x >= this.WINDOW_SIZE - 1) {
+        if (x <= 0 || x >= this.cmndf.length - 1) {
             return x; // Can't interpolate at boundaries
         }
         
-        const y_minus = this.nsdf[x - 1];
-        const y_mid = this.nsdf[x];
-        const y_plus = this.nsdf[x + 1];
+        const y_minus = this.cmndf[x - 1];
+        const y_mid = this.cmndf[x];
+        const y_plus = this.cmndf[x + 1];
         
         // Parabola vertex formula: x_vertex = x + 0.5 * (y- - y+) / (y- - 2*y_mid + y+)
         const denominator = y_minus - 2 * y_mid + y_plus;
