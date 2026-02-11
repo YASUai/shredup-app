@@ -98,22 +98,6 @@ class PitchDetection {
             return false;
         }
     }
-                logger.warn('PITCH-DETECTION', 'Low Frequency Enhancer: NOT LOADED');
-            }
-            
-            this.isInitialized = true;
-            
-            logger.success('PITCH-DETECTION', `Initialized (window: ${this.WINDOW_SIZE}, hop: ${this.HOP_SIZE})`);
-            logger.info('PITCH-DETECTION', `Frequency range: ${this.MIN_FREQUENCY}-${this.MAX_FREQUENCY} Hz`);
-            logger.info('PITCH-DETECTION', `Expected latency: ~55-60ms total`);
-            
-            return true;
-        } catch (error) {
-            logger.error('PITCH-DETECTION', 'Initialization failed', error);
-            this.isInitialized = false;
-            return false;
-        }
-    }
 
     /**
      * Process frames from frame buffer
