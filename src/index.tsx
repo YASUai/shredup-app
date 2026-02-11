@@ -82,8 +82,13 @@ app.get('/metronome-scaled', (c) => {
         // Et les forward vers l'iframe métronome via postMessage
         // ⚠️ NE PAS bloquer ArrowUp/ArrowDown car ils sont utilisés dans les inputs !
         window.addEventListener('keydown', (e) => {
+            console.log('[PROXY DEBUG] Keydown captured:', e.code, 'target:', e.target.tagName);
+            
             const metronomeIframe = document.querySelector('.metronome-iframe');
-            if (!metronomeIframe?.contentWindow) return;
+            if (!metronomeIframe?.contentWindow) {
+                console.log('[PROXY DEBUG] ❌ Iframe not found or no contentWindow');
+                return;
+            }
 
             let action = null;
             let shouldPreventDefault = false;
@@ -132,6 +137,7 @@ app.get('/metronome-scaled', (c) => {
 
             // Bloquer l'événement SEULEMENT si shouldPreventDefault = true
             if (shouldPreventDefault) {
+                console.log('[PROXY DEBUG] Preventing default for', e.code);
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
@@ -139,7 +145,10 @@ app.get('/metronome-scaled', (c) => {
 
             // Forward l'action vers le métronome
             if (action) {
+                console.log('[PROXY DEBUG] ✅ Sending postMessage:', action);
                 metronomeIframe.contentWindow.postMessage({ action }, '*');
+            } else {
+                console.log('[PROXY DEBUG] ⚠️ No action for', e.code);
             }
         }, true); // useCapture = true
     </script>
@@ -226,8 +235,13 @@ app.get('/metronome-scaled-test', (c) => {
         // Et les forward vers l'iframe métronome via postMessage
         // ⚠️ NE PAS bloquer ArrowUp/ArrowDown car ils sont utilisés dans les inputs !
         window.addEventListener('keydown', (e) => {
+            console.log('[PROXY DEBUG] Keydown captured:', e.code, 'target:', e.target.tagName);
+            
             const metronomeIframe = document.querySelector('.metronome-iframe');
-            if (!metronomeIframe?.contentWindow) return;
+            if (!metronomeIframe?.contentWindow) {
+                console.log('[PROXY DEBUG] ❌ Iframe not found or no contentWindow');
+                return;
+            }
 
             let action = null;
             let shouldPreventDefault = false;
@@ -276,6 +290,7 @@ app.get('/metronome-scaled-test', (c) => {
 
             // Bloquer l'événement SEULEMENT si shouldPreventDefault = true
             if (shouldPreventDefault) {
+                console.log('[PROXY DEBUG] Preventing default for', e.code);
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
@@ -283,7 +298,10 @@ app.get('/metronome-scaled-test', (c) => {
 
             // Forward l'action vers le métronome
             if (action) {
+                console.log('[PROXY DEBUG] ✅ Sending postMessage:', action);
                 metronomeIframe.contentWindow.postMessage({ action }, '*');
+            } else {
+                console.log('[PROXY DEBUG] ⚠️ No action for', e.code);
             }
         }, true); // useCapture = true
     </script>
