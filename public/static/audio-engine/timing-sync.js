@@ -74,8 +74,8 @@ class TimingSync {
             return;
         }
 
-        // Get current timestamps
-        const audioTime = audioCapture.audioContext ? audioCapture.audioContext.currentTime : 0;
+        // Get current timestamps (with safety check for audioCapture)
+        const audioTime = (typeof audioCapture !== 'undefined' && audioCapture.audioContext) ? audioCapture.audioContext.currentTime : 0;
         const metronomeTime = metronomeAdapter.getTimestamp();
 
         // Calculate drift (difference between audio context time and metronome time)
@@ -130,7 +130,7 @@ class TimingSync {
      * Get audio context time
      */
     getAudioContextTime() {
-        return audioCapture.audioContext ? audioCapture.audioContext.currentTime : 0;
+        return (typeof audioCapture !== 'undefined' && audioCapture.audioContext) ? audioCapture.audioContext.currentTime : 0;
     }
 
     /**

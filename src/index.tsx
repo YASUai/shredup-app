@@ -1187,11 +1187,11 @@ app.get('/pitch-test', (c) => {
         </div>
     </div>
 
-    <!-- Load all audio engine modules -->
+    <!-- Load all audio engine modules (DEPENDENCY ORDER!) -->
     <script src="/static/audio-engine/debug-logger.js"></script>
+    <script src="/static/audio-engine/audio-capture.js"></script>
     <script src="/static/audio-engine/metronome-adapter.js"></script>
     <script src="/static/audio-engine/frame-buffer.js"></script>
-    <script src="/static/audio-engine/audio-capture.js"></script>
     <script src="/static/audio-engine/timing-sync.js"></script>
     <script src="/static/audio-engine/dsp/fft.js"></script>
     <script src="/static/audio-engine/dsp/pitch-detection.js"></script>
