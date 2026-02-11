@@ -1165,9 +1165,9 @@ app.get('/pitch-test', (c) => {
         <div class="phase-tag">Phase 3 - Pitch Detection Only</div>
 
         <div class="info-box">
-            <h3>📋 Phase 3 Scope</h3>
+            <h3>📋 Phase 3 Scope (MPM Algorithm)</h3>
             <p>
-                <strong>Implemented:</strong> FFT-based autocorrelation pitch detection<br>
+                <strong>Implemented:</strong> McLeod Pitch Method (MPM) using NSDF<br>
                 <strong>Window:</strong> 2048 samples (42.67ms), 50% overlap<br>
                 <strong>Output:</strong> Frequency (Hz) + Confidence (0-1) only<br>
                 <strong>NOT implemented:</strong> Note names, cents, UI display, scoring
@@ -1212,7 +1212,6 @@ app.get('/pitch-test', (c) => {
     <script src="/static/audio-engine/metronome-adapter.js"></script>
     <script src="/static/audio-engine/frame-buffer.js"></script>
     <script src="/static/audio-engine/timing-sync.js"></script>
-    <script src="/static/audio-engine/dsp/fft.js"></script>
     <script src="/static/audio-engine/dsp/pitch-detection.js"></script>
     <script src="/static/audio-engine/audio-engine-phase3.js"></script>
 

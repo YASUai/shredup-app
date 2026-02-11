@@ -1,14 +1,16 @@
 /**
  * SHRED UP - Pitch Detection Module
- * Phase 3 - Pitch Detection Only
+ * Phase 3 - Pitch Detection Only (MPM Algorithm)
  * 
- * FFT-based autocorrelation pitch detection
+ * McLeod Pitch Method (MPM) using NSDF (Normalized Square Difference Function)
  * Input: 2048-sample windows (50% overlap)
  * Output: Frequency (Hz) + Confidence (0-1)
  * 
  * NO musical interpretation (note names, cents)
  * NO metronome synchronization
  * Pure frequency detection only
+ * 
+ * Reference: "A Smarter Way to Find Pitch" by Philip McLeod & Geoff Wyvill (2005)
  */
 
 class PitchDetection {
@@ -24,9 +26,11 @@ class PitchDetection {
         // Pre-allocated buffers
         this.windowBuffer = new Float32Array(this.WINDOW_SIZE);
         this.hannWindow = new Float32Array(this.WINDOW_SIZE);
-        this.fftOutput = new Float32Array(this.WINDOW_SIZE * 2); // Complex
-        this.powerSpectrum = new Float32Array(this.WINDOW_SIZE * 2);
-        this.autocorr = new Float32Array(this.WINDOW_SIZE * 2);
+        
+        // MPM-specific buffers
+        this.nsdf = new Float32Array(this.WINDOW_SIZE); // NSDF values
+        this.acf = new Float32Array(this.WINDOW_SIZE);  // Autocorrelation
+        this.m = new Float32Array(this.WINDOW_SIZE);    // Normalization term
         
         // Performance tracking
         this.windowCount = 0;
@@ -120,9 +124,10 @@ class PitchDetection {
                 this.windowBuffer[i] *= this.hannWindow[i];
             }
 
-            // FFT-based autocorrelation
-            const frequency = this.autocorrelationFFT(this.windowBuffer);
-            const confidence = this.calculateConfidence(this.autocorr, frequency);
+            // MPM pitch detection
+            const result = this.detectPitchMPM(this.windowBuffer);
+            const frequency = result.frequency;
+            const confidence = result.confidence;
 
             const processingTime = performance.now() - startTime;
 
@@ -194,77 +199,181 @@ class PitchDetection {
     }
 
     /**
-     * FFT-based autocorrelation
+     * McLeod Pitch Method (MPM) pitch detection
      * @param {Float32Array} signal - Windowed input signal
-     * @returns {number|null} Detected frequency (Hz) or null
+     * @returns {Object} { frequency: number|null, confidence: number }
      */
-    autocorrelationFFT(signal) {
-        // 1. Compute FFT
-        fft2048.realTransform(signal, this.fftOutput);
-
-        // 2. Compute power spectrum (magnitude squared)
-        for (let i = 0; i < this.WINDOW_SIZE; i++) {
-            const real = this.fftOutput[i * 2];
-            const imag = this.fftOutput[i * 2 + 1];
-            this.powerSpectrum[i * 2] = real * real + imag * imag;
-            this.powerSpectrum[i * 2 + 1] = 0;
+    detectPitchMPM(signal) {
+        // 1. Compute autocorrelation function (ACF)
+        this.computeACF(signal);
+        
+        // 2. Compute normalization term m[tau]
+        this.computeNormalization(signal);
+        
+        // 3. Compute NSDF (Normalized Square Difference Function)
+        this.computeNSDF();
+        
+        // 4. Find key maxima in NSDF
+        const peaks = this.findPeaks();
+        
+        if (peaks.length === 0) {
+            return { frequency: null, confidence: 0 };
         }
-
-        // 3. Inverse FFT to get autocorrelation
-        fft2048.inverseTransform(this.powerSpectrum, this.autocorr);
-
-        // 4. Find peak in autocorrelation (ignoring DC component)
-        const minLag = Math.floor(this.SAMPLE_RATE / this.MAX_FREQUENCY);
-        const maxLag = Math.floor(this.SAMPLE_RATE / this.MIN_FREQUENCY);
-
-        let maxValue = -Infinity;
-        let peakLag = 0;
-
-        for (let lag = minLag; lag < maxLag && lag < this.WINDOW_SIZE; lag++) {
-            const value = this.autocorr[lag * 2]; // Real part only
-            if (value > maxValue) {
-                maxValue = value;
-                peakLag = lag;
-            }
-        }
-
-        // 5. Convert lag to frequency
-        if (peakLag > 0 && maxValue > 0) {
-            const frequency = this.SAMPLE_RATE / peakLag;
+        
+        // 5. Select best peak (highest peak above threshold)
+        const bestPeak = peaks[0]; // Already sorted by height
+        
+        // 6. Parabolic interpolation for sub-sample accuracy
+        const refinedLag = this.parabolicInterpolation(bestPeak.lag);
+        
+        // 7. Convert lag to frequency
+        if (refinedLag > 0) {
+            const frequency = this.SAMPLE_RATE / refinedLag;
             
             // Validate frequency range
             if (frequency >= this.MIN_FREQUENCY && frequency <= this.MAX_FREQUENCY) {
-                return frequency;
+                return {
+                    frequency: frequency,
+                    confidence: bestPeak.height // MPM peak clarity metric
+                };
             }
         }
-
-        return null;
+        
+        return { frequency: null, confidence: 0 };
     }
-
+    
     /**
-     * Calculate confidence score
-     * @param {Float32Array} autocorr - Autocorrelation function
-     * @param {number|null} frequency - Detected frequency
-     * @returns {number} Confidence (0-1)
+     * Compute Autocorrelation Function (ACF)
+     * ACF[tau] = sum(signal[i] * signal[i + tau]) for i = 0 to N-tau-1
      */
-    calculateConfidence(autocorr, frequency) {
-        if (!frequency) {
-            return 0;
+    computeACF(signal) {
+        const N = signal.length;
+        
+        for (let tau = 0; tau < N; tau++) {
+            let sum = 0;
+            for (let i = 0; i < N - tau; i++) {
+                sum += signal[i] * signal[i + tau];
+            }
+            this.acf[tau] = sum;
         }
-
-        // Simple confidence: ratio of peak to DC component
-        const lag = Math.round(this.SAMPLE_RATE / frequency);
-        const peakValue = Math.abs(autocorr[lag * 2]);
-        const dcValue = Math.abs(autocorr[0]);
-
-        if (dcValue === 0) {
-            return 0;
-        }
-
-        const confidence = Math.min(peakValue / dcValue, 1.0);
-
-        return confidence;
     }
+    
+    /**
+     * Compute normalization term m[tau]
+     * m[tau] = sum(signal[i]^2) for i=0 to N-tau-1  +  sum(signal[i]^2) for i=tau to N-1
+     */
+    computeNormalization(signal) {
+        const N = signal.length;
+        
+        // Pre-compute cumulative sum of squared signal
+        const cumSum = new Float32Array(N + 1);
+        cumSum[0] = 0;
+        for (let i = 0; i < N; i++) {
+            cumSum[i + 1] = cumSum[i] + signal[i] * signal[i];
+        }
+        
+        // Compute m[tau] = sum(x[0..N-tau-1]^2) + sum(x[tau..N-1]^2)
+        for (let tau = 0; tau < N; tau++) {
+            const leftSum = cumSum[N - tau];        // sum(x[0..N-tau-1]^2)
+            const rightSum = cumSum[N] - cumSum[tau]; // sum(x[tau..N-1]^2)
+            this.m[tau] = leftSum + rightSum;
+        }
+    }
+    
+    /**
+     * Compute NSDF (Normalized Square Difference Function)
+     * NSDF[tau] = 2 * ACF[tau] / m[tau]
+     */
+    computeNSDF() {
+        const N = this.WINDOW_SIZE;
+        
+        for (let tau = 0; tau < N; tau++) {
+            if (this.m[tau] === 0) {
+                this.nsdf[tau] = 0;
+            } else {
+                this.nsdf[tau] = 2 * this.acf[tau] / this.m[tau];
+            }
+        }
+    }
+    
+    /**
+     * Find key maxima (peaks) in NSDF
+     * Returns peaks sorted by height (descending)
+     */
+    findPeaks() {
+        const minLag = Math.floor(this.SAMPLE_RATE / this.MAX_FREQUENCY);
+        const maxLag = Math.floor(this.SAMPLE_RATE / this.MIN_FREQUENCY);
+        const MPM_CUTOFF = 0.93; // Standard MPM threshold (from paper)
+        
+        const peaks = [];
+        
+        // Find zero crossings (positive -> negative)
+        let pos = minLag;
+        
+        while (pos < maxLag && pos < this.WINDOW_SIZE - 1) {
+            // Find next positive zero crossing
+            while (pos < maxLag && this.nsdf[pos] <= 0) {
+                pos++;
+            }
+            
+            if (pos >= maxLag || pos >= this.WINDOW_SIZE - 1) {
+                break;
+            }
+            
+            // Find peak in this positive region
+            let peakPos = pos;
+            let peakValue = this.nsdf[pos];
+            
+            while (pos < maxLag && pos < this.WINDOW_SIZE - 1 && this.nsdf[pos] > 0) {
+                if (this.nsdf[pos] > peakValue) {
+                    peakValue = this.nsdf[pos];
+                    peakPos = pos;
+                }
+                pos++;
+            }
+            
+            // Only keep peaks above cutoff threshold
+            if (peakValue >= MPM_CUTOFF) {
+                peaks.push({
+                    lag: peakPos,
+                    height: peakValue
+                });
+            }
+        }
+        
+        // Sort peaks by height (descending)
+        peaks.sort((a, b) => b.height - a.height);
+        
+        return peaks;
+    }
+    
+    /**
+     * Parabolic interpolation for sub-sample accuracy
+     * Fits parabola through 3 points: (x-1, y-1), (x, y), (x+1, y+1)
+     * Returns refined peak position
+     */
+    parabolicInterpolation(x) {
+        if (x <= 0 || x >= this.WINDOW_SIZE - 1) {
+            return x; // Can't interpolate at boundaries
+        }
+        
+        const y_minus = this.nsdf[x - 1];
+        const y_mid = this.nsdf[x];
+        const y_plus = this.nsdf[x + 1];
+        
+        // Parabola vertex formula: x_vertex = x + 0.5 * (y- - y+) / (y- - 2*y_mid + y+)
+        const denominator = y_minus - 2 * y_mid + y_plus;
+        
+        if (Math.abs(denominator) < 1e-10) {
+            return x; // Nearly flat, no interpolation needed
+        }
+        
+        const delta = 0.5 * (y_minus - y_plus) / denominator;
+        
+        return x + delta;
+    }
+
+
 
     /**
      * Get module status
