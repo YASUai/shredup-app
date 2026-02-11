@@ -125,9 +125,9 @@ class PitchDetection {
             }
 
             // MPM pitch detection
-            const result = this.detectPitchMPM(this.windowBuffer);
-            const frequency = result.frequency;
-            const confidence = result.confidence;
+            const mpmResult = this.detectPitchMPM(this.windowBuffer);
+            const frequency = mpmResult.frequency;
+            const confidence = mpmResult.confidence;
 
             const processingTime = performance.now() - startTime;
 
@@ -147,7 +147,7 @@ class PitchDetection {
                 }
             }
 
-            // Build result
+            // Build result object
             const result = {
                 frequency: frequency,
                 confidence: confidence,
