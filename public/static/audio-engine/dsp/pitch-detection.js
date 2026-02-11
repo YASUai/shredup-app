@@ -218,7 +218,8 @@ class PitchDetection {
             
             // LOW FREQUENCY SPECIALIST (<70 Hz correction)
             // Post-processing for harmonic detection/correction
-            if (this.lowFreqSpecialist && frequency && confidence >= 0.5 && frequency < 70) {
+            // Activated for f <= 420 Hz (covers harmonics 2×-6× of fundamentals < 70 Hz)
+            if (this.lowFreqSpecialist && frequency && confidence >= 0.5 && frequency <= 420) {
                 const correctedResult = this.lowFreqSpecialist.correctFrequency(frequency, confidence, buffer, windowSize, timestamp);
                 
                 if (correctedResult.corrected) {
