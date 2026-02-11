@@ -42,13 +42,79 @@ class LowFrequencySpecialist {
     }
     
     /**
-     * Process YIN result for low frequency correction
+     * Correct frequency for low frequency harmonic issues
      * @param {number} frequency - Detected frequency (Hz)
      * @param {number} confidence - Detection confidence (0-1)
-     * @param {Float32Array} cmndf - CMND function from YIN
-     * @returns {Object} { frequency, confidence, corrected }
+     * @param {Float32Array} buffer - Audio buffer (not used, kept for API compatibility)
+     * @param {number} windowSize - Window size (not used, kept for API compatibility)
+     * @param {number} timestamp - Timestamp (not used, kept for API compatibility)
+     * @returns {Object} { frequency, confidence, corrected, reason }
      */
-    process(frequency, confidence, cmndf) {
+    correctFrequency(frequency, confidence, buffer, windowSize, timestamp) {
+        // Note: We don't have access to CMNDF here, so we'll use a different approach
+        // based on frequency analysis only
+        
+        if (!this.isInitialized) {
+            return { frequency, confidence, corrected: false, reason: 'not initialized' };
+        }
+        
+        // Only process frequencies < 70 Hz
+        if (!frequency || frequency >= this.ACTIVATION_THRESHOLD) {
+            return { frequency, confidence, corrected: false, reason: 'above threshold' };
+        }
+        
+        const startTime = performance.now();
+        
+        let correctedFreq = frequency;
+        let correctedConf = confidence;
+        let wasCorrected = false;
+        let reason = 'no correction needed';
+        
+        // Step 1: Check if detected frequency is a likely harmonic of a low fundamental
+        // Common issue: A1 (55 Hz) detected as ~230-280 Hz (4×-5× harmonics) or ~330 Hz (6× harmonic)
+        
+        // Test for common harmonic relationships
+        const possibleFundamentals = [
+            { harmonic: 2, fundamental: frequency / 2 },
+            { harmonic: 3, fundamental: frequency / 3 },
+            { harmonic: 4, fundamental: frequency / 4 },
+            { harmonic: 5, fundamental: frequency / 5 },
+            { harmonic: 6, fundamental: frequency / 6 }
+        ];
+        
+        for (const test of possibleFundamentals) {
+            const fund = test.fundamental;
+            
+            // Check if fundamental is in valid range (50-70 Hz for bass notes)
+            if (fund >= this.MIN_FREQUENCY && fund < this.ACTIVATION_THRESHOLD) {
+                // Strong indicator: detected frequency is close to integer multiple
+                const ratio = frequency / fund;
+                const ratioError = Math.abs(ratio - test.harmonic) / test.harmonic;
+                
+                // If ratio error < 5%, very likely a harmonic
+                if (ratioError < 0.05) {
+                    correctedFreq = fund;
+                    correctedConf = confidence; // Keep same confidence
+                    wasCorrected = true;
+                    reason = `Harmonic ${test.harmonic}× detected (lag ratio ${ratio.toFixed(2)})`;
+                    break;
+                }
+            }
+        }
+        
+        // Step 2: Temporal smoothing (5-frame median) - applied even if no correction
+        const smoothedFreq = this.applyMedianSmoothing(wasCorrected ? correctedFreq : frequency);
+        
+        const processingTime = performance.now() - startTime;
+        
+        return {
+            frequency: smoothedFreq,
+            confidence: correctedConf,
+            corrected: wasCorrected,
+            reason: reason,
+            processingTime: processingTime
+        };
+    }
         if (!this.isInitialized) {
             return { frequency, confidence, corrected: false };
         }
@@ -91,79 +157,6 @@ class LowFrequencySpecialist {
             corrected: wasCorrected,
             processingTime: processingTime
         };
-    }
-    
-    /**
-     * Analyze CMND structure to detect harmonic dominance
-     * Compare CMND values at lag, lag×2, lag×3, lag×4
-     * 
-     * @param {number} frequency - Current detected frequency
-     * @param {Float32Array} cmndf - CMND function
-     * @returns {Object} { isHarmonic, fundamentalFreq, fundamentalConf, harmonicOrder }
-     */
-    analyzeHarmonicStructure(frequency, cmndf) {
-        if (!cmndf || cmndf.length === 0) {
-            return { isHarmonic: false };
-        }
-        
-        const lag_f = Math.round(this.SAMPLE_RATE / frequency);
-        const minLag = Math.round(this.SAMPLE_RATE / this.MAX_FREQUENCY);
-        const maxLag = Math.round(this.SAMPLE_RATE / this.MIN_FREQUENCY);
-        
-        // Check if current lag is valid
-        if (lag_f < minLag || lag_f >= maxLag || lag_f >= cmndf.length) {
-            return { isHarmonic: false };
-        }
-        
-        const cmnd_f = cmndf[lag_f];
-        
-        // Test for 2×, 3×, 4× harmonics (subharmonics at lag×2, lag×3, lag×4)
-        const harmonics = [
-            { order: 2, lag: lag_f * 2, freq: frequency / 2 },
-            { order: 3, lag: lag_f * 3, freq: frequency / 3 },
-            { order: 4, lag: lag_f * 4, freq: frequency / 4 }
-        ];
-        
-        let bestSubharmonic = null;
-        let bestRatio = Infinity;
-        
-        for (const harmonic of harmonics) {
-            const lag_sub = Math.round(harmonic.lag);
-            
-            // Check if subharmonic lag is valid
-            if (lag_sub < minLag || lag_sub >= maxLag || lag_sub >= cmndf.length) {
-                continue;
-            }
-            
-            const cmnd_sub = cmndf[lag_sub];
-            
-            // Compare CMND values: if subharmonic has better (lower) CMND, it's likely the fundamental
-            // Threshold: cmnd_sub < cmnd_f * 0.85 (subharmonic must be clearly better)
-            const ratio = cmnd_sub / cmnd_f;
-            
-            if (ratio < 0.85 && ratio < bestRatio) {
-                bestRatio = ratio;
-                bestSubharmonic = {
-                    freq: harmonic.freq,
-                    conf: Math.max(0, 1 - cmnd_sub),
-                    order: harmonic.order,
-                    ratio: ratio
-                };
-            }
-        }
-        
-        // If a clear subharmonic is found, correct to it
-        if (bestSubharmonic && bestSubharmonic.freq >= this.MIN_FREQUENCY) {
-            return {
-                isHarmonic: true,
-                fundamentalFreq: bestSubharmonic.freq,
-                fundamentalConf: bestSubharmonic.conf,
-                harmonicOrder: bestSubharmonic.order,
-                cmndRatio: bestSubharmonic.ratio
-            };
-        }
-        
-        return { isHarmonic: false };
     }
     
     /**
