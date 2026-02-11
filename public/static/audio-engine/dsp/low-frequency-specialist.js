@@ -115,49 +115,6 @@ class LowFrequencySpecialist {
             processingTime: processingTime
         };
     }
-        if (!this.isInitialized) {
-            return { frequency, confidence, corrected: false };
-        }
-        
-        // Only process frequencies < 70 Hz
-        if (!frequency || frequency >= this.ACTIVATION_THRESHOLD) {
-            return { frequency, confidence, corrected: false };
-        }
-        
-        const startTime = performance.now();
-        
-        // Step 1: Structural harmonic analysis
-        const harmonicAnalysis = this.analyzeHarmonicStructure(frequency, cmndf);
-        
-        let correctedFreq = frequency;
-        let correctedConf = confidence;
-        let wasCorrected = false;
-        
-        // Step 2: Apply correction if harmonic detected
-        if (harmonicAnalysis.isHarmonic && harmonicAnalysis.fundamentalFreq) {
-            correctedFreq = harmonicAnalysis.fundamentalFreq;
-            correctedConf = harmonicAnalysis.fundamentalConf;
-            wasCorrected = true;
-            
-            console.log(`[LOW-FREQ] Harmonic detected: ${frequency.toFixed(1)} Hz → ${correctedFreq.toFixed(1)} Hz (${harmonicAnalysis.harmonicOrder}× harmonic)`);
-        }
-        
-        // Step 3: Temporal smoothing (5-frame median)
-        const smoothedFreq = this.applyMedianSmoothing(correctedFreq);
-        
-        const processingTime = performance.now() - startTime;
-        
-        if (wasCorrected || Math.abs(smoothedFreq - correctedFreq) > 0.1) {
-            console.log(`[LOW-FREQ] Correction applied: ${frequency.toFixed(1)} Hz → ${smoothedFreq.toFixed(1)} Hz | Proc: ${processingTime.toFixed(2)}ms`);
-        }
-        
-        return {
-            frequency: smoothedFreq,
-            confidence: correctedConf,
-            corrected: wasCorrected,
-            processingTime: processingTime
-        };
-    }
     
     /**
      * Apply 5-frame median smoothing for temporal stability
