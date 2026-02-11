@@ -174,8 +174,9 @@ class OctaveConsistencyStabilizer {
      * Algorithm:
      * 1. Group similar frequencies (±10% tolerance) into clusters
      * 2. Score each cluster by: count × average_confidence
-     * 3. Select cluster with highest score
-     * 4. Compute weighted average frequency as dominant fundamental
+     * 3. Tie-breaker: If scores within ±20%, prefer lower frequency (fundamental bias)
+     * 4. Octave validation: If new dominant is 2×/4×/0.5×/0.25× of old, keep old
+     * 5. Compute weighted average frequency as dominant fundamental
      */
     updateDominantFundamental() {
         if (this.recentDetections.length < 3) {
@@ -214,21 +215,32 @@ class OctaveConsistencyStabilizer {
             }
         }
         
-        // Step 2: Score clusters (count × average confidence)
-        let maxScore = -1;
-        let dominantCluster = null;
+        // Step 2: Score clusters (count × average confidence) + compute average frequencies
+        const clustersWithScores = [];
         
         for (const cluster of clusters) {
             const avgConfidence = cluster.confidences.reduce((sum, c) => sum + c, 0) / cluster.confidences.length;
             const score = cluster.frequencies.length * avgConfidence;
+            const avgFreq = cluster.frequencies.reduce((sum, f) => sum + f, 0) / cluster.frequencies.length;
             
-            if (score > maxScore) {
-                maxScore = score;
-                dominantCluster = cluster;
-            }
+            clustersWithScores.push({ cluster, score, avgFreq });
         }
         
-        // Step 3: Compute weighted average frequency
+        // Step 3: Tie-breaker - Sort by score (descending), then by frequency (ascending)
+        clustersWithScores.sort((a, b) => {
+            const scoreDiff = b.score - a.score;
+            const scoreToleranceRatio = Math.abs(scoreDiff) / Math.max(a.score, b.score);
+            
+            if (scoreToleranceRatio < 0.20) {
+                // Scores within 20% → TIE-BREAKER: prefer lower frequency (fundamental bias)
+                return a.avgFreq - b.avgFreq;
+            }
+            return scoreDiff;
+        });
+        
+        const dominantCluster = clustersWithScores[0].cluster;
+        
+        // Step 4: Compute weighted average frequency for new candidate dominant
         if (dominantCluster && dominantCluster.frequencies.length >= 2) {
             let weightedSum = 0;
             let totalWeight = 0;
@@ -239,7 +251,28 @@ class OctaveConsistencyStabilizer {
                 totalWeight += weight;
             }
             
-            this.dominantFundamental = weightedSum / totalWeight;
+            const newDominant = weightedSum / totalWeight;
+            const oldDominant = this.dominantFundamental;
+            
+            // Step 5: OCTAVE VALIDATION - Check if new dominant is octave of old dominant
+            if (oldDominant && newDominant) {
+                const ratio = newDominant / oldDominant;
+                const octaveRatios = [2, 4, 0.5, 0.25]; // 2×, 4×, 1/2×, 1/4× octave relationships
+                
+                for (const octaveRatio of octaveRatios) {
+                    const ratioError = Math.abs(ratio - octaveRatio) / octaveRatio;
+                    
+                    if (ratioError < 0.05) {
+                        // New dominant is an octave of old dominant
+                        // KEEP OLD DOMINANT (presumed fundamental)
+                        console.log(`[OCTAVE-STABILIZER] Octave shift rejected: ${newDominant.toFixed(1)} Hz is ${octaveRatio}× of ${oldDominant.toFixed(1)} Hz → Keep old dominant`);
+                        return; // Exit early, keep old dominant
+                    }
+                }
+            }
+            
+            // Not an octave relationship (or no old dominant), accept new dominant
+            this.dominantFundamental = newDominant;
             this.dominantConfidence = totalWeight / dominantCluster.frequencies.length;
         } else {
             // Not enough consensus, clear dominant
