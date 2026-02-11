@@ -303,7 +303,7 @@ class PitchDetection {
     findPeaks() {
         const minLag = Math.floor(this.SAMPLE_RATE / this.MAX_FREQUENCY);
         const maxLag = Math.floor(this.SAMPLE_RATE / this.MIN_FREQUENCY);
-        const MPM_CUTOFF = 0.93; // Standard MPM threshold (from paper)
+        const MPM_CUTOFF = 0.80; // Lowered for real guitar (0.93 too strict for low strings)
         
         const peaks = [];
         
