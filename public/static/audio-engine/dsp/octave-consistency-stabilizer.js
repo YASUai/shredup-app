@@ -286,32 +286,34 @@ class OctaveConsistencyStabilizer {
                     
                     // Only accept shift if confirmed over multiple frames
                     if (this.dominantShiftCounter >= this.DOMINANT_SHIFT_CONFIRM_FRAMES) {
-                        // OCTAVE VALIDATION before accepting shift
+                        // HARMONIC VALIDATION before accepting shift
+                        // Reject shifts to any harmonic multiple of current dominant
                         const ratio = newDominant / oldDominant;
-                        const octaveRatios = [2, 4, 0.5, 0.25]; // 2×, 4×, 1/2×, 1/4× octave relationships
+                        const harmonicRatios = [2, 3, 4, 5, 6, 0.5, 0.333, 0.25, 0.2, 0.167]; 
+                        // 2×, 3×, 4×, 5×, 6×, 1/2×, 1/3×, 1/4×, 1/5×, 1/6× harmonic relationships
                         
-                        let isOctaveShift = false;
-                        for (const octaveRatio of octaveRatios) {
-                            const ratioError = Math.abs(ratio - octaveRatio) / octaveRatio;
+                        let isHarmonicShift = false;
+                        for (const harmonicRatio of harmonicRatios) {
+                            const ratioError = Math.abs(ratio - harmonicRatio) / harmonicRatio;
                             
                             if (ratioError < 0.05) {
-                                // New dominant is an octave of old dominant
+                                // New dominant is a harmonic of old dominant
                                 // REJECT SHIFT (presumed fundamental)
-                                console.log(`[OCTAVE-STABILIZER] Dominant shift rejected (octave): ${newDominant.toFixed(1)} Hz is ${octaveRatio}× of ${oldDominant.toFixed(1)} Hz → Keep old dominant`);
-                                isOctaveShift = true;
+                                console.log(`[OCTAVE-STABILIZER] Dominant shift rejected (harmonic): ${newDominant.toFixed(1)} Hz is ${harmonicRatio.toFixed(2)}× of ${oldDominant.toFixed(1)} Hz → Keep old dominant`);
+                                isHarmonicShift = true;
                                 break;
                             }
                         }
                         
-                        if (!isOctaveShift) {
-                            // Accept confirmed non-octave shift
+                        if (!isHarmonicShift) {
+                            // Accept confirmed non-harmonic shift
                             console.log(`[OCTAVE-STABILIZER] Dominant shift confirmed: ${oldDominant.toFixed(1)} Hz → ${newDominant.toFixed(1)} Hz (${this.dominantShiftCounter} frames)`);
                             this.dominantFundamental = newDominant;
                             this.dominantConfidence = totalWeight / dominantCluster.frequencies.length;
                             this.dominantShiftCounter = 0;
                             this.pendingDominantCandidate = null;
                         } else {
-                            // Octave shift rejected, reset counter
+                            // Harmonic shift rejected, reset counter
                             this.dominantShiftCounter = 0;
                             this.pendingDominantCandidate = null;
                         }
