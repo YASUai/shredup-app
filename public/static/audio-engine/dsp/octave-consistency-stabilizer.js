@@ -292,6 +292,15 @@ class OctaveConsistencyStabilizer {
     }
     
     /**
+     * Get current dominant fundamental frequency
+     * Used for contextual decision-making (e.g., LF-Specialist gating)
+     * @returns {number|null} Current dominant fundamental (Hz) or null if not established
+     */
+    getDominantFundamental() {
+        return this.dominantFundamental;
+    }
+    
+    /**
      * Get statistics
      */
     getStats() {

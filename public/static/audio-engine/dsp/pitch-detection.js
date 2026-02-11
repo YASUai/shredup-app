@@ -229,25 +229,10 @@ class PitchDetection {
             let frequency = yinResult.frequency;
             let confidence = yinResult.confidence;
             
-            // LOW FREQUENCY SPECIALIST (<70 Hz correction)
-            // Post-processing for harmonic detection/correction
-            // LF-Specialist analyzes ALL frequencies but only corrects if fundamental < 70 Hz
-            // Internal logic handles protection (E2 82 Hz, D2 73 Hz will not be corrected)
-            // Harmonics of A1 (5× = 275 Hz, 6× = 330 Hz) will be analyzed and corrected to 55 Hz
-            if (this.lowFreqSpecialist && frequency && confidence >= 0.5 && frequency <= 420) {
-                const correctedResult = this.lowFreqSpecialist.correctFrequency(frequency, confidence, buffer, windowSize, timestamp);
-                
-                if (correctedResult.corrected) {
-                    logger.info('PITCH-DETECTION', `[LF-SPECIALIST] ${frequency.toFixed(1)} Hz → ${correctedResult.frequency.toFixed(1)} Hz | Reason: ${correctedResult.reason}`);
-                    frequency = correctedResult.frequency;
-                    confidence = correctedResult.confidence;
-                }
-            }
-            
             // OCTAVE CONSISTENCY STABILIZER (all frequencies)
+            // Must run BEFORE LF-Specialist to establish dominant context
             // Post-processing for temporal harmonic locking
             // Prevents octave jumping (e.g., D2 73 Hz → 287 Hz 4× harmonic)
-            // Operates independently of LF-Specialist on ALL frequencies
             if (this.octaveStabilizer && frequency && confidence >= 0.5) {
                 const stabilizedResult = this.octaveStabilizer.stabilize(frequency, confidence, timestamp);
                 
@@ -255,6 +240,34 @@ class PitchDetection {
                     logger.info('PITCH-DETECTION', `[OCTAVE-STABILIZER] ${frequency.toFixed(1)} Hz → ${stabilizedResult.frequency.toFixed(1)} Hz | ${stabilizedResult.reason}`);
                     frequency = stabilizedResult.frequency;
                     confidence = stabilizedResult.confidence;
+                }
+            }
+            
+            // LOW FREQUENCY SPECIALIST (<70 Hz correction with context-aware gating)
+            // Post-processing for harmonic detection/correction
+            // CONTEXTUAL CONSTRAINT:
+            //   - Only apply correction if corrected frequency < 70 Hz
+            //   - AND current dominant fundamental < 70 Hz (from Octave Stabilizer)
+            //   - This prevents D2 (73 Hz) harmonics from polluting the detection
+            // Example: A1 context (dominant ~55 Hz): 275 Hz → 55 Hz ✅
+            //          D2 context (dominant ~73 Hz): 220 Hz → 73 Hz ❌ (skipped)
+            if (this.lowFreqSpecialist && frequency && confidence >= 0.5 && frequency <= 420) {
+                const correctedResult = this.lowFreqSpecialist.correctFrequency(frequency, confidence, buffer, windowSize, timestamp);
+                
+                if (correctedResult.corrected) {
+                    // Contextual gating: only apply if dominant context is also <70 Hz
+                    const dominantFreq = this.octaveStabilizer ? this.octaveStabilizer.getDominantFundamental() : null;
+                    const correctedFreq = correctedResult.frequency;
+                    
+                    if (correctedFreq < 70 && dominantFreq !== null && dominantFreq < 70) {
+                        // ✅ Valid low-frequency context: apply correction
+                        logger.info('PITCH-DETECTION', `[LF-SPECIALIST] ${frequency.toFixed(1)} Hz → ${correctedFreq.toFixed(1)} Hz | Reason: ${correctedResult.reason} | Context: dominant ${dominantFreq.toFixed(1)} Hz`);
+                        frequency = correctedFreq;
+                        confidence = correctedResult.confidence;
+                    } else {
+                        // ❌ Skip correction: not in low-frequency context
+                        logger.info('PITCH-DETECTION', `[LF-SPECIALIST] SKIP: ${frequency.toFixed(1)} Hz → ${correctedFreq.toFixed(1)} Hz rejected | Dominant: ${dominantFreq ? dominantFreq.toFixed(1) : 'none'} Hz (context mismatch)`);
+                    }
                 }
             }
 
