@@ -78,79 +78,82 @@ app.get('/metronome-scaled', (c) => {
             }
         });
 
-        // 🔒 NOUVEAU: Capturer les événements clavier DANS LE PROXY
-        // Et les forward vers l'iframe métronome via postMessage
-        // ⚠️ NE PAS bloquer ArrowUp/ArrowDown car ils sont utilisés dans les inputs !
-        window.addEventListener('keydown', (e) => {
-            console.log('[PROXY DEBUG] Keydown captured:', e.code, 'target:', e.target.tagName);
+        // 🔒 ATTENDRE QUE L'IFRAME SOIT CHARGÉE avant d'ajouter le listener keydown
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('[PROXY DEBUG] DOMContentLoaded - Setting up keyboard listener');
             
             const metronomeIframe = document.querySelector('.metronome-iframe');
-            if (!metronomeIframe?.contentWindow) {
-                console.log('[PROXY DEBUG] ❌ Iframe not found or no contentWindow');
+            if (!metronomeIframe) {
+                console.error('[PROXY DEBUG] ❌ Iframe .metronome-iframe NOT FOUND in DOM!');
                 return;
             }
+            
+            console.log('[PROXY DEBUG] ✅ Iframe found:', metronomeIframe);
 
-            let action = null;
-            let shouldPreventDefault = false;
+            // 🔒 Capturer les événements clavier DANS LE PROXY
+            // Et les forward vers l'iframe métronome via postMessage
+            window.addEventListener('keydown', (e) => {
+                console.log('[PROXY DEBUG] Keydown captured:', e.code, 'target:', e.target.tagName);
+                
+                if (!metronomeIframe?.contentWindow) {
+                    console.log('[PROXY DEBUG] ❌ Iframe contentWindow not available');
+                    return;
+                }
 
-            switch(e.code) {
-                case 'Space':
-                    // ✅ Bloquer SPACE (pas utilisé dans inputs)
-                    shouldPreventDefault = true;
-                    action = 'TOGGLE_PLAY';
-                    console.log('[PROXY] ⌨️ SPACE → TOGGLE_PLAY');
-                    break;
-                    
-                case 'ArrowLeft':
-                    // ✅ Bloquer ArrowLeft (pas utilisé dans inputs numériques)
-                    shouldPreventDefault = true;
-                    action = 'TAP_CLICK';
-                    console.log('[PROXY] ⌨️ ArrowLeft → TAP_CLICK');
-                    break;
-                    
-                case 'Equal':
-                case 'NumpadAdd':
-                    // ✅ Bloquer + (pas utilisé dans inputs)
-                    shouldPreventDefault = true;
-                    action = 'BPM_UP';
-                    console.log('[PROXY] ⌨️ + → BPM_UP');
-                    break;
-                    
-                case 'Minus':
-                case 'NumpadSubtract':
-                    // ✅ Bloquer - (pas utilisé dans inputs)
-                    shouldPreventDefault = true;
-                    action = 'BPM_DOWN';
-                    console.log('[PROXY] ⌨️ - → BPM_DOWN');
-                    break;
-                    
-                case 'ArrowUp':
-                case 'ArrowDown':
-                    // ⚠️ NE PAS bloquer ArrowUp/ArrowDown !
-                    // Ils sont utilisés pour naviguer dans les inputs numériques
-                    // On envoie quand même le message, mais le métronome décidera
-                    action = (e.code === 'ArrowUp') ? 'BPM_UP' : 'BPM_DOWN';
-                    console.log('[PROXY] ⌨️ Arrow (passthrough) → ' + action);
-                    // shouldPreventDefault reste false
-                    break;
-            }
+                let action = null;
+                let shouldPreventDefault = false;
 
-            // Bloquer l'événement SEULEMENT si shouldPreventDefault = true
-            if (shouldPreventDefault) {
-                console.log('[PROXY DEBUG] Preventing default for', e.code);
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-            }
+                switch(e.code) {
+                    case 'Space':
+                        shouldPreventDefault = true;
+                        action = 'TOGGLE_PLAY';
+                        console.log('[PROXY] ⌨️ SPACE → TOGGLE_PLAY');
+                        break;
+                        
+                    case 'ArrowLeft':
+                        shouldPreventDefault = true;
+                        action = 'TAP_CLICK';
+                        console.log('[PROXY] ⌨️ ArrowLeft → TAP_CLICK');
+                        break;
+                        
+                    case 'Equal':
+                    case 'NumpadAdd':
+                        shouldPreventDefault = true;
+                        action = 'BPM_UP';
+                        console.log('[PROXY] ⌨️ + → BPM_UP');
+                        break;
+                        
+                    case 'Minus':
+                    case 'NumpadSubtract':
+                        shouldPreventDefault = true;
+                        action = 'BPM_DOWN';
+                        console.log('[PROXY] ⌨️ - → BPM_DOWN');
+                        break;
+                        
+                    case 'ArrowUp':
+                    case 'ArrowDown':
+                        action = (e.code === 'ArrowUp') ? 'BPM_UP' : 'BPM_DOWN';
+                        console.log('[PROXY] ⌨️ Arrow (passthrough) → ' + action);
+                        break;
+                }
 
-            // Forward l'action vers le métronome
-            if (action) {
-                console.log('[PROXY DEBUG] ✅ Sending postMessage:', action);
-                metronomeIframe.contentWindow.postMessage({ action }, '*');
-            } else {
-                console.log('[PROXY DEBUG] ⚠️ No action for', e.code);
-            }
-        }, true); // useCapture = true
+                if (shouldPreventDefault) {
+                    console.log('[PROXY DEBUG] Preventing default for', e.code);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                }
+
+                if (action) {
+                    console.log('[PROXY DEBUG] ✅ Sending postMessage:', action);
+                    metronomeIframe.contentWindow.postMessage({ action }, '*');
+                } else {
+                    console.log('[PROXY DEBUG] ⚠️ No action for', e.code);
+                }
+            }, true); // useCapture = true
+            
+            console.log('[PROXY DEBUG] ✅ Keyboard listener attached with useCapture=true');
+        });
     </script>
 </body>
 </html>`)
@@ -231,79 +234,82 @@ app.get('/metronome-scaled-test', (c) => {
             }
         });
 
-        // 🔒 NOUVEAU: Capturer les événements clavier DANS LE PROXY
-        // Et les forward vers l'iframe métronome via postMessage
-        // ⚠️ NE PAS bloquer ArrowUp/ArrowDown car ils sont utilisés dans les inputs !
-        window.addEventListener('keydown', (e) => {
-            console.log('[PROXY DEBUG] Keydown captured:', e.code, 'target:', e.target.tagName);
+        // 🔒 ATTENDRE QUE L'IFRAME SOIT CHARGÉE avant d'ajouter le listener keydown
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('[PROXY DEBUG] DOMContentLoaded - Setting up keyboard listener');
             
             const metronomeIframe = document.querySelector('.metronome-iframe');
-            if (!metronomeIframe?.contentWindow) {
-                console.log('[PROXY DEBUG] ❌ Iframe not found or no contentWindow');
+            if (!metronomeIframe) {
+                console.error('[PROXY DEBUG] ❌ Iframe .metronome-iframe NOT FOUND in DOM!');
                 return;
             }
+            
+            console.log('[PROXY DEBUG] ✅ Iframe found:', metronomeIframe);
 
-            let action = null;
-            let shouldPreventDefault = false;
+            // 🔒 Capturer les événements clavier DANS LE PROXY
+            // Et les forward vers l'iframe métronome via postMessage
+            window.addEventListener('keydown', (e) => {
+                console.log('[PROXY DEBUG] Keydown captured:', e.code, 'target:', e.target.tagName);
+                
+                if (!metronomeIframe?.contentWindow) {
+                    console.log('[PROXY DEBUG] ❌ Iframe contentWindow not available');
+                    return;
+                }
 
-            switch(e.code) {
-                case 'Space':
-                    // ✅ Bloquer SPACE (pas utilisé dans inputs)
-                    shouldPreventDefault = true;
-                    action = 'TOGGLE_PLAY';
-                    console.log('[PROXY] ⌨️ SPACE → TOGGLE_PLAY');
-                    break;
-                    
-                case 'ArrowLeft':
-                    // ✅ Bloquer ArrowLeft (pas utilisé dans inputs numériques)
-                    shouldPreventDefault = true;
-                    action = 'TAP_CLICK';
-                    console.log('[PROXY] ⌨️ ArrowLeft → TAP_CLICK');
-                    break;
-                    
-                case 'Equal':
-                case 'NumpadAdd':
-                    // ✅ Bloquer + (pas utilisé dans inputs)
-                    shouldPreventDefault = true;
-                    action = 'BPM_UP';
-                    console.log('[PROXY] ⌨️ + → BPM_UP');
-                    break;
-                    
-                case 'Minus':
-                case 'NumpadSubtract':
-                    // ✅ Bloquer - (pas utilisé dans inputs)
-                    shouldPreventDefault = true;
-                    action = 'BPM_DOWN';
-                    console.log('[PROXY] ⌨️ - → BPM_DOWN');
-                    break;
-                    
-                case 'ArrowUp':
-                case 'ArrowDown':
-                    // ⚠️ NE PAS bloquer ArrowUp/ArrowDown !
-                    // Ils sont utilisés pour naviguer dans les inputs numériques
-                    // On envoie quand même le message, mais le métronome décidera
-                    action = (e.code === 'ArrowUp') ? 'BPM_UP' : 'BPM_DOWN';
-                    console.log('[PROXY] ⌨️ Arrow (passthrough) → ' + action);
-                    // shouldPreventDefault reste false
-                    break;
-            }
+                let action = null;
+                let shouldPreventDefault = false;
 
-            // Bloquer l'événement SEULEMENT si shouldPreventDefault = true
-            if (shouldPreventDefault) {
-                console.log('[PROXY DEBUG] Preventing default for', e.code);
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-            }
+                switch(e.code) {
+                    case 'Space':
+                        shouldPreventDefault = true;
+                        action = 'TOGGLE_PLAY';
+                        console.log('[PROXY] ⌨️ SPACE → TOGGLE_PLAY');
+                        break;
+                        
+                    case 'ArrowLeft':
+                        shouldPreventDefault = true;
+                        action = 'TAP_CLICK';
+                        console.log('[PROXY] ⌨️ ArrowLeft → TAP_CLICK');
+                        break;
+                        
+                    case 'Equal':
+                    case 'NumpadAdd':
+                        shouldPreventDefault = true;
+                        action = 'BPM_UP';
+                        console.log('[PROXY] ⌨️ + → BPM_UP');
+                        break;
+                        
+                    case 'Minus':
+                    case 'NumpadSubtract':
+                        shouldPreventDefault = true;
+                        action = 'BPM_DOWN';
+                        console.log('[PROXY] ⌨️ - → BPM_DOWN');
+                        break;
+                        
+                    case 'ArrowUp':
+                    case 'ArrowDown':
+                        action = (e.code === 'ArrowUp') ? 'BPM_UP' : 'BPM_DOWN';
+                        console.log('[PROXY] ⌨️ Arrow (passthrough) → ' + action);
+                        break;
+                }
 
-            // Forward l'action vers le métronome
-            if (action) {
-                console.log('[PROXY DEBUG] ✅ Sending postMessage:', action);
-                metronomeIframe.contentWindow.postMessage({ action }, '*');
-            } else {
-                console.log('[PROXY DEBUG] ⚠️ No action for', e.code);
-            }
-        }, true); // useCapture = true
+                if (shouldPreventDefault) {
+                    console.log('[PROXY DEBUG] Preventing default for', e.code);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                }
+
+                if (action) {
+                    console.log('[PROXY DEBUG] ✅ Sending postMessage:', action);
+                    metronomeIframe.contentWindow.postMessage({ action }, '*');
+                } else {
+                    console.log('[PROXY DEBUG] ⚠️ No action for', e.code);
+                }
+            }, true); // useCapture = true
+            
+            console.log('[PROXY DEBUG] ✅ Keyboard listener attached with useCapture=true');
+        });
     </script>
 </body>
 </html>`)
