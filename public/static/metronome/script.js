@@ -1706,6 +1706,11 @@ document.addEventListener('keydown', (e) => {
         }
     }
 
+    // 🔒 ANTI-DOUBLE-TAP : Vérifier si l'événement vient déjà du parent
+    // Si window.parent !== window, on est dans une iframe
+    // Dans ce cas, on laisse le parent gérer ArrowLeft pour éviter les doubles taps
+    const isInIframe = (window.parent !== window);
+    
     let action = null;
 
     switch(e.code) {
@@ -1716,9 +1721,15 @@ document.addEventListener('keydown', (e) => {
             break;
             
         case 'ArrowLeft':
-            e.preventDefault();
-            action = 'TAP_CLICK';
-            console.log('⌨️ [METRONOME] ArrowLeft → TAP_CLICK');
+            // ⚠️ NE capturer ArrowLeft QUE si on n'est PAS dans une iframe
+            // Pour éviter le double TAP (parent + métronome)
+            if (!isInIframe) {
+                e.preventDefault();
+                action = 'TAP_CLICK';
+                console.log('⌨️ [METRONOME] ArrowLeft → TAP_CLICK (standalone)');
+            } else {
+                console.log('⌨️ [METRONOME] ArrowLeft → Ignored (handled by parent to avoid double tap)');
+            }
             break;
             
         case 'Equal':
