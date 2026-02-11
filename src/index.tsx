@@ -1287,78 +1287,100 @@ app.get('/pitch-test', (c) => {
             const rawOctaveErrorRate = (rawOctaveErrors / allDetections.length) * 100;
             
             // ============================================================
-            // FILTERED STATISTICS (Stable phase)
+            // SCIENTIFIC MEASUREMENT METRICS (3 Tiers)
             // ============================================================
             
-            // Filter 1: Ignore first 200ms (warm-up)
+            // TIER A: RAW ALL (Diagnostic - already computed above)
+            // - All detections including ATTACK, STABLE, RELEASE
+            // - No filtering
+            // - Purpose: Full diagnostic view
+            
+            // TIER B: STABLE ONLY (State Machine Filter)
+            // - Only frames published during STABLE state
+            // - Already filtered by state machine (conf ≥ 0.75, variation < 3%)
+            // - Additional filters: warm-up exclusion, confidence ≥ 0.75
+            
             const warmupThreshold = 200; // ms
-            const filteredByTime = allDetections.filter(d => {
+            const stableOnly = allDetections.filter(d => {
                 const elapsed = d.timestamp - sessionStart;
-                return elapsed >= warmupThreshold;
+                return elapsed >= warmupThreshold && d.confidence >= 0.75;
             });
             
-            // Filter 2: Confidence >= 0.5
-            const filteredByConfidence = filteredByTime.filter(d => d.confidence >= 0.5);
+            // TIER C: CLEAN STABLE (High-Confidence Filter)
+            // - Only frames with confidence ≥ 0.8
+            // - Purpose: Assess peak performance quality
             
-            // Filter 3: Exclude outliers > 20% error
-            const outlierThreshold = 0.20; // 20%
-            const filteredByOutlier = filteredByConfidence.filter(d => {
-                const error = Math.abs(d.frequency - expected) / expected;
-                return error <= outlierThreshold;
+            const cleanStable = allDetections.filter(d => {
+                const elapsed = d.timestamp - sessionStart;
+                return elapsed >= warmupThreshold && d.confidence >= 0.8;
             });
             
-            // Filter 4: Trimmed mean (exclude top/bottom 5%)
-            const trimPercent = 0.05; // 5%
-            const sorted = [...filteredByOutlier].sort((a, b) => a.frequency - b.frequency);
-            const trimCount = Math.floor(sorted.length * trimPercent);
-            const trimmedDetections = sorted.slice(trimCount, sorted.length - trimCount);
-            
-            // Calculate filtered statistics
-            let stableAvgFreq = 0;
-            let stableStdDev = 0;
-            let stableAvgConf = 0;
-            let stableAbsError = 0;
-            let stableRelError = 0;
-            let stableOctaveErrors = 0;
-            let stableOctaveErrorRate = 0;
-            
-            if (trimmedDetections.length > 0) {
-                const stableFrequencies = trimmedDetections.map(d => d.frequency);
-                const stableConfidences = trimmedDetections.map(d => d.confidence);
+            // Helper function to calculate statistics
+            function calculateStats(detections) {
+                if (detections.length === 0) {
+                    return {
+                        avgFreq: 0,
+                        stdDev: 0,
+                        avgConf: 0,
+                        absError: 0,
+                        relError: 0,
+                        octaveErrors: 0,
+                        octaveErrorRate: 0,
+                        count: 0
+                    };
+                }
                 
-                stableAvgFreq = stableFrequencies.reduce((a, b) => a + b, 0) / stableFrequencies.length;
-                stableStdDev = Math.sqrt(
-                    stableFrequencies.map(f => Math.pow(f - stableAvgFreq, 2))
-                        .reduce((a, b) => a + b, 0) / stableFrequencies.length
+                const frequencies = detections.map(d => d.frequency);
+                const confidences = detections.map(d => d.confidence);
+                
+                const avgFreq = frequencies.reduce((a, b) => a + b, 0) / frequencies.length;
+                const stdDev = Math.sqrt(
+                    frequencies.map(f => Math.pow(f - avgFreq, 2))
+                        .reduce((a, b) => a + b, 0) / frequencies.length
                 );
-                stableAvgConf = stableConfidences.reduce((a, b) => a + b, 0) / stableConfidences.length;
+                const avgConf = confidences.reduce((a, b) => a + b, 0) / confidences.length;
                 
-                stableAbsError = stableAvgFreq - expected;
-                stableRelError = (stableAbsError / expected) * 100;
+                const absError = avgFreq - expected;
+                const relError = (absError / expected) * 100;
                 
-                stableOctaveErrors = trimmedDetections.filter(d => window.isOctaveError(d.frequency, expected)).length;
-                stableOctaveErrorRate = (stableOctaveErrors / trimmedDetections.length) * 100;
+                const octaveErrors = detections.filter(d => window.isOctaveError(d.frequency, expected)).length;
+                const octaveErrorRate = (octaveErrors / detections.length) * 100;
+                
+                return {
+                    avgFreq,
+                    stdDev,
+                    avgConf,
+                    absError,
+                    relError,
+                    octaveErrors,
+                    octaveErrorRate,
+                    count: detections.length
+                };
             }
             
+            const stableStats = calculateStats(stableOnly);
+            const cleanStats = calculateStats(cleanStable);
+            
             const sessionDuration = ((Date.now() - sessionStart) / 1000).toFixed(1);
-            const warmupCount = allDetections.length - filteredByTime.length;
-            const lowConfCount = filteredByTime.length - filteredByConfidence.length;
-            const outlierCount = filteredByConfidence.length - filteredByOutlier.length;
-            const trimmedCount = filteredByOutlier.length - trimmedDetections.length;
+            const warmupCount = allDetections.length - allDetections.filter(d => {
+                const elapsed = d.timestamp - sessionStart;
+                return elapsed >= warmupThreshold;
+            }).length;
             
             // ============================================================
-            // LOG SUMMARY (Dual metrics)
+            // LOG SUMMARY (Scientific 3-Tier Metrics)
             // ============================================================
             
             console.log('%c════════════════════════════════════════', 'color: #FF9800');
-            console.log('%c[VALIDATION SUMMARY]', 'color: #FF9800; font-weight: bold; font-size: 14px');
+            console.log('%c[VALIDATION SUMMARY - SCIENTIFIC MEASUREMENT]', 'color: #FF9800; font-weight: bold; font-size: 14px');
             console.log('%c════════════════════════════════════════', 'color: #FF9800');
             console.log('Expected:          ' + expected.toFixed(2) + ' Hz');
             console.log('Session Duration:  ' + sessionDuration + 's');
             console.log('');
             
-            // RAW METRICS (biased)
-            console.log('%c─── RAW AVERAGE (All samples) ───', 'color: #888');
+            // TIER A: RAW ALL (Diagnostic)
+            console.log('%c─── A) RAW ALL (Diagnostic Brut) ───', 'color: #888');
+            console.log('Purpose:           Full diagnostic (IDLE + ATTACK + STABLE + RELEASE)');
             console.log('Detected Avg:      ' + rawAvgFreq.toFixed(2) + ' Hz');
             console.log('Abs Error:         ' + (rawAbsError >= 0 ? '+' : '') + rawAbsError.toFixed(2) + ' Hz');
             console.log('Rel Error:         ' + (rawRelError >= 0 ? '+' : '') + rawRelError.toFixed(2) + '%');
@@ -1367,27 +1389,47 @@ app.get('/pitch-test', (c) => {
             console.log('Avg Confidence:    ' + rawAvgConf.toFixed(3));
             console.log('');
             
-            // STABLE METRICS (filtered)
-            if (trimmedDetections.length > 0) {
-                console.log('%c─── STABLE AVERAGE (Filtered) ───', 'color: #4CAF50; font-weight: bold');
-                console.log('Detected Avg:      ' + stableAvgFreq.toFixed(2) + ' Hz');
-                console.log('Abs Error:         ' + (stableAbsError >= 0 ? '+' : '') + stableAbsError.toFixed(2) + ' Hz');
-                console.log('Rel Error:         ' + (stableRelError >= 0 ? '+' : '') + stableRelError.toFixed(2) + '%');
-                console.log('Std Dev:           ' + stableStdDev.toFixed(2) + ' Hz');
-                console.log('Octave Errors:     ' + stableOctaveErrors + '/' + trimmedDetections.length + ' (' + stableOctaveErrorRate.toFixed(1) + '%)');
-                console.log('Avg Confidence:    ' + stableAvgConf.toFixed(3));
+            // TIER B: STABLE ONLY (State Machine Filter)
+            if (stableStats.count > 0) {
+                console.log('%c─── B) STABLE ONLY (State === STABLE) ───', 'color: #4CAF50; font-weight: bold');
+                console.log('Purpose:           State machine filtered (conf ≥ 0.75, warm-up excluded)');
+                console.log('Detected Avg:      ' + stableStats.avgFreq.toFixed(2) + ' Hz');
+                console.log('Abs Error:         ' + (stableStats.absError >= 0 ? '+' : '') + stableStats.absError.toFixed(2) + ' Hz');
+                console.log('Rel Error:         ' + (stableStats.relError >= 0 ? '+' : '') + stableStats.relError.toFixed(2) + '%');
+                console.log('Std Dev:           ' + stableStats.stdDev.toFixed(2) + ' Hz');
+                console.log('Octave Errors:     ' + stableStats.octaveErrors + '/' + stableStats.count + ' (' + stableStats.octaveErrorRate.toFixed(1) + '%)');
+                console.log('Avg Confidence:    ' + stableStats.avgConf.toFixed(3));
+                console.log('Sample Count:      ' + stableStats.count + ' / ' + allDetections.length + ' (' + ((stableStats.count / allDetections.length) * 100).toFixed(1) + '%)');
                 console.log('');
-                
-                // Filter breakdown
-                console.log('%c─── Filter Breakdown ───', 'color: #2196F3');
-                console.log('Warm-up (< 200ms):  ' + warmupCount + ' samples discarded');
-                console.log('Low confidence:     ' + lowConfCount + ' samples discarded');
-                console.log('Outliers (> 20%):   ' + outlierCount + ' samples discarded');
-                console.log('Trimmed (±5%):      ' + trimmedCount + ' samples discarded');
-                console.log('Stable samples:     ' + trimmedDetections.length + ' / ' + allDetections.length + ' (' + ((trimmedDetections.length / allDetections.length) * 100).toFixed(1) + '%)');
             } else {
-                console.log('%c[WARNING] No stable samples after filtering', 'color: #f44336; font-weight: bold');
+                console.log('%c─── B) STABLE ONLY (State === STABLE) ───', 'color: #f44336');
+                console.log('%c[WARNING] No STABLE samples (state machine did not reach STABLE)', 'color: #f44336; font-weight: bold');
+                console.log('');
             }
+            
+            // TIER C: CLEAN STABLE (High-Confidence Filter)
+            if (cleanStats.count > 0) {
+                console.log('%c─── C) CLEAN STABLE (Confidence ≥ 0.8) ───', 'color: #2196F3; font-weight: bold');
+                console.log('Purpose:           Peak performance quality (conf ≥ 0.8, warm-up excluded)');
+                console.log('Detected Avg:      ' + cleanStats.avgFreq.toFixed(2) + ' Hz');
+                console.log('Abs Error:         ' + (cleanStats.absError >= 0 ? '+' : '') + cleanStats.absError.toFixed(2) + ' Hz');
+                console.log('Rel Error:         ' + (cleanStats.relError >= 0 ? '+' : '') + cleanStats.relError.toFixed(2) + '%');
+                console.log('Std Dev:           ' + cleanStats.stdDev.toFixed(2) + ' Hz');
+                console.log('Octave Errors:     ' + cleanStats.octaveErrors + '/' + cleanStats.count + ' (' + cleanStats.octaveErrorRate.toFixed(1) + '%)');
+                console.log('Avg Confidence:    ' + cleanStats.avgConf.toFixed(3));
+                console.log('Sample Count:      ' + cleanStats.count + ' / ' + allDetections.length + ' (' + ((cleanStats.count / allDetections.length) * 100).toFixed(1) + '%)');
+                console.log('');
+            } else {
+                console.log('%c─── C) CLEAN STABLE (Confidence ≥ 0.8) ───', 'color: #FF9800');
+                console.log('%c[WARNING] No CLEAN STABLE samples (confidence never reached 0.8)', 'color: #FF9800; font-weight: bold');
+                console.log('');
+            }
+            
+            // Filter Breakdown
+            console.log('%c─── Filter Breakdown ───', 'color: #9E9E9E');
+            console.log('Warm-up (< 200ms):  ' + warmupCount + ' samples discarded');
+            console.log('Tier B samples:     ' + stableStats.count + ' (conf ≥ 0.75, warm-up excluded)');
+            console.log('Tier C samples:     ' + cleanStats.count + ' (conf ≥ 0.8, warm-up excluded)');
             
             console.log('%c════════════════════════════════════════', 'color: #FF9800');
         }
