@@ -25,6 +25,17 @@ class PitchDetection {
         
         this.isInitialized = false;
         
+        // Attack Ignore Window (200-300 ms)
+        this.ATTACK_IGNORE_DURATION = 300; // ms
+        this.sessionStartTime = null;
+        
+        // Confidence Gating
+        this.MIN_CONFIDENCE_GATE = 0.55;
+        
+        // Dominant Deviation Filter
+        this.MAX_DOMINANT_DEVIATION = 0.40; // 40%
+        this.DEVIATION_CONFIDENCE_THRESHOLD = 0.65;
+        
         // Pre-allocated buffers (2048 baseline)
         this.windowBuffer = new Float32Array(this.WINDOW_SIZE);
         this.hannWindow = new Float32Array(this.WINDOW_SIZE);
@@ -309,6 +320,36 @@ class PitchDetection {
                 const expected = window.validationStats.expectedFreq;
                 
                 if (frequency && confidence >= 0.5) {
+                    // FILTER 1: Attack Ignore Window (200-300 ms)
+                    if (!this.sessionStartTime) {
+                        this.sessionStartTime = timestamp;
+                    }
+                    const sessionElapsed = (timestamp - this.sessionStartTime) * 1000; // Convert to ms
+                    
+                    if (sessionElapsed < this.ATTACK_IGNORE_DURATION) {
+                        // Skip validation during attack phase
+                        if (this.windowCount % 10 === 0) {
+                            console.log(`[VALIDATION] ATTACK-IGNORE: ${sessionElapsed.toFixed(0)}ms / ${this.ATTACK_IGNORE_DURATION}ms`);
+                        }
+                        return result;
+                    }
+                    
+                    // FILTER 2: Confidence Gating (< 0.55)
+                    if (confidence < this.MIN_CONFIDENCE_GATE) {
+                        console.log(`[VALIDATION] CONFIDENCE-GATE: ${frequency.toFixed(2)} Hz rejected (conf: ${confidence.toFixed(2)} < ${this.MIN_CONFIDENCE_GATE})`);
+                        return result;
+                    }
+                    
+                    // FILTER 3: Dominant Deviation Filter (>40% + low confidence)
+                    const dominantFreq = this.octaveStabilizer ? this.octaveStabilizer.getDominantFundamental() : null;
+                    if (dominantFreq !== null) {
+                        const deviation = Math.abs(frequency - dominantFreq) / dominantFreq;
+                        if (deviation > this.MAX_DOMINANT_DEVIATION && confidence < this.DEVIATION_CONFIDENCE_THRESHOLD) {
+                            console.log(`[VALIDATION] DEVIATION-FILTER: ${frequency.toFixed(2)} Hz rejected (deviation: ${(deviation * 100).toFixed(1)}% > 40%, conf: ${confidence.toFixed(2)} < 0.65)`);
+                            return result;
+                        }
+                    }
+                    
                     // WARM-UP PHASE: Skip validation until dominant fundamental is established
                     // Check if Octave Stabilizer has established a dominant (requires >= 3 detections)
                     const isDominantEstablished = this.octaveStabilizer && 

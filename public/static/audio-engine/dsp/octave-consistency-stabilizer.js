@@ -24,7 +24,7 @@ class OctaveConsistencyStabilizer {
     constructor() {
         // Configuration
         this.WINDOW_SIZE = 5;                  // Frames to determine dominant fundamental
-        this.HARMONIC_RATIOS = [2, 3, 4, 5, 6]; // Harmonic ratios to check (ascending)
+        this.HARMONIC_RATIOS = [2, 3, 4, 5, 6, 7]; // Harmonic ratios to check (ascending, added 7×)
         this.RATIO_TOLERANCE = 0.05;           // ±5% tolerance for harmonic match
         this.MIN_CONFIDENCE = 0.5;             // Minimum confidence threshold
         this.CLUSTER_TOLERANCE = 0.10;         // ±10% for frequency clustering
@@ -49,7 +49,7 @@ class OctaveConsistencyStabilizer {
         
         console.log('[OCTAVE-STABILIZER] Initializing...');
         console.log('[OCTAVE-STABILIZER] Window size: 5 frames');
-        console.log('[OCTAVE-STABILIZER] Harmonic ratios: 2×, 3×, 4×, 5×, 6×');
+        console.log('[OCTAVE-STABILIZER] Harmonic ratios: 2×, 3×, 4×, 5×, 6×, 7×');
         console.log('[OCTAVE-STABILIZER] Ratio tolerance: ±5%');
         console.log('[OCTAVE-STABILIZER] Cluster tolerance: ±10%');
         console.log('[OCTAVE-STABILIZER] Dominant Lock: ±15% shift threshold, 3 frames confirmation');
