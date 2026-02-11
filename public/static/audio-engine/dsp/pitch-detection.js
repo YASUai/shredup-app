@@ -142,8 +142,11 @@ class PitchDetection {
             let frequency = yinResult.frequency;
             const confidence = yinResult.confidence;
             
-            // Apply Low Frequency Enhancement (< 70 Hz only)
-            if (this.lowFreqEnhancer && frequency && frequency < 70) {
+            // Structural harmonic dominance detection
+            const shouldEnhance = this.detectHarmonicDominance(frequency);
+            
+            // Apply Low Frequency Enhancement (structural activation)
+            if (this.lowFreqEnhancer && frequency && shouldEnhance) {
                 const enhanced = this.lowFreqEnhancer.enhance(frequency, confidence, this.cmndf);
                 frequency = enhanced.frequency;
             }
@@ -378,6 +381,58 @@ class PitchDetection {
         const delta = 0.5 * (y_minus - y_plus) / denominator;
         
         return x + delta;
+    }
+
+    /**
+     * Detect harmonic dominance via CMND structure analysis
+     * 
+     * Activation rules:
+     * 1. frequency < 70 Hz → direct activation (low frequency case)
+     * 2. frequency >= 70 Hz AND structural evidence of harmonic dominance:
+     *    - cmnd[lag_f/2] is close to cmnd[lag_f] (within 20%)
+     *    - This suggests f/2 (subharmonic) is equally valid
+     *    - Indicates detected frequency might be harmonic, not fundamental
+     * 
+     * @param {number} frequency - Detected frequency from YIN
+     * @returns {boolean} - True if enhancement should be applied
+     */
+    detectHarmonicDominance(frequency) {
+        if (!frequency) {
+            return false;
+        }
+        
+        // Rule 1: Direct activation for very low frequencies
+        if (frequency < 70) {
+            return true;
+        }
+        
+        // Rule 2: Structural harmonic dominance detection
+        const lag_f = Math.round(this.SAMPLE_RATE / frequency);
+        const lag_f_half = Math.round(lag_f / 2);  // Corresponds to 2× frequency (octave up)
+        
+        // Calculate frequency range bounds
+        const minLag = Math.round(this.SAMPLE_RATE / this.MAX_FREQUENCY);
+        const maxLag = Math.round(this.SAMPLE_RATE / this.MIN_FREQUENCY);
+        
+        // Check if lag_f_half is within valid range
+        if (lag_f_half < minLag || lag_f_half >= maxLag || lag_f_half >= this.cmndf.length) {
+            return false;
+        }
+        
+        // Inspect CMND values
+        const cmnd_at_f = this.cmndf[lag_f];
+        const cmnd_at_f_half = this.cmndf[lag_f_half];
+        
+        // If cmnd[lag/2] is within 20% of cmnd[lag], suspect harmonic dominance
+        // Lower CMND = better match, so if subharmonic has similar or better score → activate
+        const ratio = cmnd_at_f_half / cmnd_at_f;
+        
+        if (ratio < 1.20) {
+            // cmnd[f/2] is close to cmnd[f] → harmonic dominance suspected
+            return true;
+        }
+        
+        return false;
     }
 
 
