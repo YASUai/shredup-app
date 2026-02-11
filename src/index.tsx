@@ -11,6 +11,333 @@ app.get('/metronome-local', (c) => {
   return c.redirect('/static/metronome/index.html')
 })
 
+// 🎸 Route TEST: Audio Engine Phase 2A (Audio Scaffolding)
+app.get('/audio-test', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED UP - Audio Engine Test (Phase 2A)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: white;
+            font-family: 'Courier New', monospace;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+
+        .phase-tag {
+            display: inline-block;
+            background: #1a1a1a;
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 30px;
+            color: #888;
+        }
+
+        .controls {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #333;
+            cursor: not-allowed;
+        }
+
+        button.stop {
+            background: #f44336;
+        }
+
+        button.stop:hover {
+            background: #da190b;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .status-card {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #333;
+        }
+
+        .status-card.healthy {
+            border-left-color: #4CAF50;
+        }
+
+        .status-card.degraded {
+            border-left-color: #f44336;
+        }
+
+        .status-card h3 {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .status-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .indicator-connected {
+            background: #4CAF50;
+        }
+
+        .indicator-disconnected {
+            background: #666;
+        }
+
+        .info-box {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .info-box h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #2196F3;
+        }
+
+        .info-box p {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #aaa;
+        }
+
+        .console-hint {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #FF9800;
+            margin-top: 20px;
+        }
+
+        .console-hint p {
+            font-size: 12px;
+            color: #FF9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎸 SHRED UP - Audio Engine Test</h1>
+        <div class="phase-tag">Phase 2A - Audio Scaffolding Only</div>
+
+        <div class="info-box">
+            <h3>📋 Phase 2A Scope</h3>
+            <p>
+                This test page validates the audio pipeline scaffolding.<br>
+                <strong>Implemented:</strong> Audio capture, AudioWorklet, frame buffering, timing sync<br>
+                <strong>NOT implemented:</strong> Pitch detection, onset detection, timing analysis, scoring (Phase 3+)
+            </p>
+        </div>
+
+        <div class="controls">
+            <button id="initBtn" onclick="initAudioEngine()">Initialize Audio Engine</button>
+            <button id="startBtn" onclick="startAudioEngine()" disabled>Start Audio Capture</button>
+            <button id="stopBtn" class="stop" onclick="stopAudioEngine()" disabled>Stop Audio Capture</button>
+            <button onclick="logStatus()">Log Status</button>
+        </div>
+
+        <div class="status-grid">
+            <div class="status-card" id="micStatus">
+                <h3>Microphone</h3>
+                <div class="status-value">
+                    <span class="status-indicator indicator-disconnected" id="micIndicator"></span>
+                    <span id="micText">Disconnected</span>
+                </div>
+            </div>
+
+            <div class="status-card" id="frameStatus">
+                <h3>Frame Processing</h3>
+                <div class="status-value">
+                    <span id="frameText">Idle</span>
+                </div>
+            </div>
+
+            <div class="status-card" id="syncStatus">
+                <h3>Clock Sync</h3>
+                <div class="status-value">
+                    <span id="syncText">Not Synced</span>
+                </div>
+            </div>
+
+            <div class="status-card" id="tempoStatus">
+                <h3>Tempo (from metronome)</h3>
+                <div class="status-value">
+                    <span id="tempoText">-- BPM</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="console-hint">
+            <p>💡 Open Console (F12) to see detailed debug logs</p>
+        </div>
+    </div>
+
+    <!-- Load all audio engine modules -->
+    <script src="/static/audio-engine/debug-logger.js"></script>
+    <script src="/static/audio-engine/metronome-adapter.js"></script>
+    <script src="/static/audio-engine/frame-buffer.js"></script>
+    <script src="/static/audio-engine/audio-capture.js"></script>
+    <script src="/static/audio-engine/timing-sync.js"></script>
+    <script src="/static/audio-engine/audio-engine.js"></script>
+
+    <script>
+        // UI update interval
+        let statusUpdateInterval = null;
+
+        async function initAudioEngine() {
+            console.log('Initializing Audio Engine...');
+            document.getElementById('initBtn').disabled = true;
+            
+            const success = await audioEngine.init();
+            
+            if (success) {
+                document.getElementById('initBtn').textContent = 'Initialized ✓';
+                document.getElementById('startBtn').disabled = false;
+                startStatusUpdates();
+            } else {
+                document.getElementById('initBtn').disabled = false;
+                alert('Initialization failed. Check console for errors.');
+            }
+        }
+
+        async function startAudioEngine() {
+            console.log('Starting Audio Engine...');
+            document.getElementById('startBtn').disabled = true;
+            
+            const success = await audioEngine.start();
+            
+            if (success) {
+                document.getElementById('startBtn').textContent = 'Running ✓';
+                document.getElementById('stopBtn').disabled = false;
+            } else {
+                document.getElementById('startBtn').disabled = false;
+                alert('Start failed. Check console for errors.');
+            }
+        }
+
+        function stopAudioEngine() {
+            console.log('Stopping Audio Engine...');
+            
+            const success = audioEngine.stop();
+            
+            if (success) {
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('startBtn').textContent = 'Start Audio Capture';
+            }
+        }
+
+        function logStatus() {
+            audioEngine.logStatus();
+        }
+
+        function startStatusUpdates() {
+            statusUpdateInterval = setInterval(updateStatus, 200);
+        }
+
+        function updateStatus() {
+            const status = audioEngine.getStatus();
+
+            // Microphone status
+            const micConnected = status.audioCapture.capturing;
+            document.getElementById('micIndicator').className = 
+                \`status-indicator \${micConnected ? 'indicator-connected' : 'indicator-disconnected'}\`;
+            document.getElementById('micText').textContent = 
+                micConnected ? 'Connected' : 'Disconnected';
+            document.getElementById('micStatus').className = 
+                \`status-card \${micConnected ? 'healthy' : ''}\`;
+
+            // Frame processing status
+            const frameHealthy = status.frameBuffer.healthy;
+            const frameCount = status.frameBuffer.frameCount;
+            document.getElementById('frameText').textContent = 
+                frameHealthy ? \`✓ Healthy (\${frameCount} frames)\` : \`✗ Degraded (\${frameCount} frames)\`;
+            document.getElementById('frameStatus').className = 
+                \`status-card \${frameHealthy ? 'healthy' : 'degraded'}\`;
+
+            // Clock sync status
+            const synced = status.timingSync.synced;
+            document.getElementById('syncText').textContent = 
+                synced ? '✓ Synced' : '✗ Not Synced';
+            document.getElementById('syncStatus').className = 
+                \`status-card \${synced ? 'healthy' : ''}\`;
+
+            // Tempo status
+            const tempo = status.timingSync.tempo;
+            document.getElementById('tempoText').textContent = \`\${tempo} BPM\`;
+        }
+
+        // Log initial message
+        console.log('%c🎸 SHRED UP - Audio Engine Test (Phase 2A)', 
+            'font-size: 16px; font-weight: bold; color: #4CAF50');
+        console.log('%cAudio Scaffolding Only - No DSP Intelligence', 
+            'font-size: 12px; color: #888');
+        console.log('──────────────────────────────────');
+    </script>
+</body>
+</html>`)
+})
+
 // 🧪 Route TEST : SHRED UP avec Métronome LOCAL (same-origin)
 app.get('/test-local', (c) => {
   return c.render(
