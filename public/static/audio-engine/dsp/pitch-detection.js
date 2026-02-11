@@ -152,20 +152,23 @@ class PitchDetection {
 
         // DUAL-PASS DECISION
         // Note: We already read 4 frames, so we only need 4 more for extended mode
-        const remainingFrames = frameBuffer.getAvailableFrames();
+        const remainingFrames = frameBuffer.getBufferSize();
         
         if (useExtendedWindow && remainingFrames >= 4) {
             // Extended mode: Read 4 more frames (total 8 frames = 4096 samples)
             logger.info('PITCH-DETECTION', `[DUAL-PASS] Sufficient frames (${remainingFrames}) → Activating 4096 window`);
             const extendedFrames = [...frames];
             
+            logger.info('PITCH-DETECTION', `[DUAL-PASS] Starting to read 4 additional frames (already have ${frames.length})`);
+            
             for (let i = 0; i < 4; i++) {
                 const frame = frameBuffer.getNextFrame();
                 if (!frame) {
                     // Not enough frames available, fall back to 2048
-                    logger.warn('PITCH-DETECTION', '[DUAL-PASS] Extended frames unavailable, falling back to 2048');
+                    logger.warn('PITCH-DETECTION', `[DUAL-PASS] ❌ Frame ${i+1}/4 unavailable after reading ${i} frames, falling back to 2048`);
                     return this.detectPitch(frames[0].timestamp, frames[0].frameNumber, false);
                 }
+                logger.info('PITCH-DETECTION', `[DUAL-PASS] ✓ Read frame ${i+1}/4 (total: ${extendedFrames.length + 1})`);
                 extendedFrames.push(frame);
             }
             
