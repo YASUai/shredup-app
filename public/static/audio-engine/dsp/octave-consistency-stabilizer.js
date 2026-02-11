@@ -342,7 +342,39 @@ class OctaveConsistencyStabilizer {
                     this.dominantConfidence = totalWeight / dominantCluster.frequencies.length;
                 }
             } else {
-                // No old dominant: accept new dominant immediately (first establishment)
+                // No old dominant: ROBUST FIRST LOCK MECHANISM
+                // Require stable signal before establishing first dominant
+                
+                // Condition 1: Warm-up buffer (frame > 50)
+                if (this.frameCount <= 50) {
+                    return; // Too early in warm-up phase
+                }
+                
+                // Condition 2: Minimum 3 consecutive coherent frames (±5% deviation)
+                if (dominantCluster.frequencies.length < 3) {
+                    return; // Not enough consecutive frames
+                }
+                
+                // Check coherence: all frequencies within ±5% of mean
+                const avgFreq = dominantCluster.frequencies.reduce((sum, f) => sum + f, 0) / dominantCluster.frequencies.length;
+                const maxDeviation = dominantCluster.frequencies.reduce((max, f) => {
+                    const deviation = Math.abs(f - avgFreq) / avgFreq;
+                    return Math.max(max, deviation);
+                }, 0);
+                
+                if (maxDeviation > 0.05) {
+                    return; // Coherence failed: deviation > ±5%
+                }
+                
+                // Condition 3: Average confidence ≥ 0.75
+                const avgConfidence = dominantCluster.confidences.reduce((sum, c) => sum + c, 0) / dominantCluster.confidences.length;
+                
+                if (avgConfidence < 0.75) {
+                    return; // Confidence too low
+                }
+                
+                // ALL CONDITIONS MET: Accept first dominant lock
+                console.log(`[OCTAVE-STABILIZER] First dominant lock: ${newDominant.toFixed(1)} Hz (frame ${this.frameCount}, avg conf: ${avgConfidence.toFixed(2)}, max dev: ${(maxDeviation * 100).toFixed(1)}%)`);
                 this.dominantFundamental = newDominant;
                 this.dominantConfidence = totalWeight / dominantCluster.frequencies.length;
                 this.dominantShiftCounter = 0;

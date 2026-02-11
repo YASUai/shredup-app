@@ -36,6 +36,13 @@ class PitchDetection {
         this.MAX_DOMINANT_DEVIATION = 0.40; // 40%
         this.DEVIATION_CONFIDENCE_THRESHOLD = 0.65;
         
+        // Energy Gate (Release Phase Detection)
+        this.ENERGY_GATE_THRESHOLD = 0.005; // RMS threshold (adjust if needed)
+        this.ENERGY_GATE_FRAMES = 3; // Consecutive frames under threshold
+        this.energyGateCounter = 0; // Counter for low-energy frames
+        this.isEnergyGateClosed = false; // Gate state
+        this.lastValidFrequency = null; // Last stable frequency before gate
+        
         // Pre-allocated buffers (2048 baseline)
         this.windowBuffer = new Float32Array(this.WINDOW_SIZE);
         this.hannWindow = new Float32Array(this.WINDOW_SIZE);
@@ -282,6 +289,28 @@ class PitchDetection {
                 }
             }
 
+            // ENERGY GATE: Calculate RMS to detect release phase
+            const rms = this.calculateRMS(buffer, windowSize);
+            
+            // Update energy gate state
+            if (rms < this.ENERGY_GATE_THRESHOLD) {
+                this.energyGateCounter++;
+                if (this.energyGateCounter >= this.ENERGY_GATE_FRAMES) {
+                    if (!this.isEnergyGateClosed) {
+                        this.isEnergyGateClosed = true;
+                        this.lastValidFrequency = frequency;
+                        logger.info('PITCH-DETECTION', `[ENERGY-GATE] CLOSED (RMS: ${rms.toFixed(6)} < ${this.ENERGY_GATE_THRESHOLD}, ${this.energyGateCounter} frames) → Ignoring release phase`);
+                    }
+                }
+            } else {
+                // Reset gate if energy returns
+                if (this.isEnergyGateClosed) {
+                    logger.info('PITCH-DETECTION', `[ENERGY-GATE] REOPENED (RMS: ${rms.toFixed(6)} > ${this.ENERGY_GATE_THRESHOLD})`);
+                }
+                this.energyGateCounter = 0;
+                this.isEnergyGateClosed = false;
+            }
+
             const processingTime = performance.now() - startTime;
 
             // Update performance stats
@@ -318,6 +347,12 @@ class PitchDetection {
             // VALIDATION MODE: Log validation data if window.validationStats exists
             if (typeof window !== 'undefined' && window.validationStats && window.validationStats.expectedFreq) {
                 const expected = window.validationStats.expectedFreq;
+                
+                // ENERGY GATE: Skip validation if gate is closed (release phase)
+                if (this.isEnergyGateClosed) {
+                    // Do not publish detections during release phase
+                    return result;
+                }
                 
                 if (frequency && confidence >= 0.5) {
                     // FILTER 1: Attack Ignore Window (200-300 ms)
@@ -568,6 +603,21 @@ class PitchDetection {
         const delta = 0.5 * (y_minus - y_plus) / denominator;
         
         return x + delta;
+    }
+
+    /**
+     * Calculate RMS (Root Mean Square) energy of signal
+     * Used for energy gate to detect release phase
+     * @param {Float32Array} signal - Audio signal buffer
+     * @param {number} length - Signal length
+     * @returns {number} RMS value (0-1 range typically)
+     */
+    calculateRMS(signal, length) {
+        let sum = 0;
+        for (let i = 0; i < length; i++) {
+            sum += signal[i] * signal[i];
+        }
+        return Math.sqrt(sum / length);
     }
 
     /**
