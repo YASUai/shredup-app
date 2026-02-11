@@ -1215,6 +1215,7 @@ app.get('/pitch-test', (c) => {
     <script src="/static/audio-engine/timing-sync.js"></script>
     <script src="/static/audio-engine/dsp/spectral-analyzer.js"></script>
     <script src="/static/audio-engine/dsp/low-frequency-specialist.js"></script>
+    <script src="/static/audio-engine/dsp/octave-consistency-stabilizer.js"></script>
     <script src="/static/audio-engine/dsp/pitch-detection.js"></script>
     <script src="/static/audio-engine/audio-engine-phase3.js"></script>
 
@@ -1380,6 +1381,36 @@ app.get('/pitch-test', (c) => {
     </script>
 </body>
 </html>`)
+})
+
+// 🧪 API Test Endpoint - Low Frequency Validation
+app.get('/test-low-freq-tuning', (c) => {
+  const frequency = c.req.query('frequency') || '73.42'
+  const duration = c.req.query('duration') || '10000'
+  
+  return c.json({
+    status: 'manual_test_required',
+    message: 'This endpoint provides instructions for manual testing in browser console',
+    instructions: {
+      step1: 'Open http://localhost:3000/pitch-test in your browser',
+      step2: 'Open browser Developer Console (F12)',
+      step3: 'Initialize Audio Engine by clicking "Initialize Audio Engine" button',
+      step4: `Set validation frequency: window.validationStats.expectedFreq = ${frequency}`,
+      step5: 'Click "Start Pitch Detection" and play your instrument',
+      step6: `Test duration: ${parseInt(duration) / 1000} seconds`,
+      step7: 'Stop detection and check console for validation summary',
+      step8: 'Look for [LF-SPECIALIST] logs (should be ZERO for D2)',
+    },
+    expected_frequency: parseFloat(frequency),
+    test_duration_ms: parseInt(duration),
+    validation_criteria: {
+      lf_specialist_activations: 0,
+      relative_error: '<5%',
+      octave_errors: '<5%',
+      confidence: '>0.7'
+    },
+    note: 'D2 (73.42 Hz) is a CRITICAL edge case - frequency is below 75 Hz guard threshold but above 70 Hz LF-Specialist internal threshold'
+  })
 })
 
 export default app

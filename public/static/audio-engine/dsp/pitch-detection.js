@@ -32,6 +32,9 @@ class PitchDetection {
         // Low Frequency Specialist (post-detection layer for < 70 Hz)
         this.lowFreqSpecialist = null;
         
+        // Octave Consistency Stabilizer (post-detection layer for all frequencies)
+        this.octaveStabilizer = null;
+        
         // Extended buffers (4096 for A1)
         this.windowBufferExtended = new Float32Array(this.WINDOW_SIZE_EXTENDED);
         this.hannWindowExtended = new Float32Array(this.WINDOW_SIZE_EXTENDED);
@@ -86,6 +89,16 @@ class PitchDetection {
                 logger.info('PITCH-DETECTION', 'Mode: Structural harmonic analysis + median smoothing');
             } else {
                 logger.warn('PITCH-DETECTION', 'Low Frequency Specialist: NOT LOADED (baseline only)');
+            }
+            
+            // Initialize Octave Consistency Stabilizer
+            if (typeof OctaveConsistencyStabilizer !== 'undefined') {
+                this.octaveStabilizer = new OctaveConsistencyStabilizer();
+                this.octaveStabilizer.init();
+                logger.info('PITCH-DETECTION', 'Octave Consistency Stabilizer: ACTIVE (all frequencies)');
+                logger.info('PITCH-DETECTION', 'Mode: Temporal harmonic locking (5-frame window)');
+            } else {
+                logger.warn('PITCH-DETECTION', 'Octave Consistency Stabilizer: NOT LOADED');
             }
             
             this.isInitialized = true;
@@ -237,6 +250,20 @@ class PitchDetection {
                         frequency = correctedResult.frequency;
                         confidence = correctedResult.confidence;
                     }
+                }
+            }
+            
+            // OCTAVE CONSISTENCY STABILIZER (all frequencies)
+            // Post-processing for temporal harmonic locking
+            // Prevents octave jumping (e.g., D2 73 Hz → 287 Hz 4× harmonic)
+            // Operates independently of LF-Specialist on ALL frequencies
+            if (this.octaveStabilizer && frequency && confidence >= 0.5) {
+                const stabilizedResult = this.octaveStabilizer.stabilize(frequency, confidence, timestamp);
+                
+                if (stabilizedResult.stabilized) {
+                    logger.info('PITCH-DETECTION', `[OCTAVE-STABILIZER] ${frequency.toFixed(1)} Hz → ${stabilizedResult.frequency.toFixed(1)} Hz | ${stabilizedResult.reason}`);
+                    frequency = stabilizedResult.frequency;
+                    confidence = stabilizedResult.confidence;
                 }
             }
 

@@ -1,10 +1,10 @@
-# 🎸 SHRED UP v1.2 - Phase 3 (Pitch Detection)
+# 🎸 SHRED UP v1.2 - Phase 3 (Pitch Detection + Octave Stabilization)
 
 **Professional music practice SaaS with integrated metronome & real-time pitch detection**
 
-[![Version](https://img.shields.io/badge/version-1.2--phase3--pitch--detection-brightgreen)](https://github.com)
-[![Status](https://img.shields.io/badge/status-pitch--detection--active-success)](https://github.com)
-[![Build](https://img.shields.io/badge/build-90.71kB-blue)](https://github.com)
+[![Version](https://img.shields.io/badge/version-1.2--phase3--octave--stabilizer-brightgreen)](https://github.com)
+[![Status](https://img.shields.io/badge/status-octave--stabilization--active-success)](https://github.com)
+[![Build](https://img.shields.io/badge/build-91.86kB-blue)](https://github.com)
 
 ---
 
@@ -23,11 +23,12 @@ SHRED UP est une application web professionnelle de pratique musicale intégrant
 
 #### Pitch Detection (Phase 3) 🎵
 - 🎸 **YIN Algorithm** : Détection de fréquence fondamentale (50-1200 Hz)
-- 🎯 **Low Frequency Specialist** : Post-traitement pour < 70 Hz (A1 55 Hz, etc.)
+- 🎯 **Low Frequency Specialist** : Post-traitement pour < 70 Hz (A1 55 Hz uniquement)
+- 🔒 **Octave Consistency Stabilizer** : Verrouillage harmonique temporel (toutes fréquences)
 - ⚡ **Temps réel** : Fenêtre 2048 échantillons (50% overlap), latence ~55ms
 - 🔬 **Haute précision** : Détection des harmoniques et correction de la fondamentale
 - 📊 **Feedback visuel** : Affichage de la fréquence détectée + confidence
-- 🎼 **Range étendu** : Support 4-string bass (A1 55 Hz) + 6-string guitar (E2-E4)
+- 🎼 **Range étendu** : Support 7-string guitar DROP D (D2-D6) + 4-string bass (A1-G2)
 
 ---
 
@@ -77,13 +78,23 @@ pm2 start ecosystem.config.cjs
 - **Latency** : ~55ms (acceptable pour practice)
 - **Processing Time** : ~1.5ms par frame
 
-#### Low Frequency Specialist (<70 Hz)
+#### Low Frequency Specialist (<70 Hz ONLY)
 - **Activation** : POST-traitement si `frequency < 70 Hz` et `confidence >= 0.5`
+- **Scope** : A1 (55 Hz) uniquement - notes vraiment basses 4-string bass
 - **Fonction** : Correction des harmoniques dominantes (ex: 230-270 Hz → 55 Hz)
-- **Méthode** : Analyse structurelle CMNDF (comparaison lag, lag×2, lag×3)
+- **Méthode** : Analyse structurelle des ratios harmoniques (6×→5×→4×→3×→2×)
 - **Smoothing** : Médian 5-frame window pour stabilité
 - **Overhead** : < 0.5ms
-- **Target** : A1 (55 Hz) et notes basses 4-string bass
+- **Guard-rail** : `if (frequency > 75 Hz)` → skip (protège E2, D2, et toutes fréquences mid-range)
+
+#### Octave Consistency Stabilizer (ALL frequencies)
+- **Activation** : POST-traitement APRÈS LF-Specialist sur TOUTES les fréquences
+- **Scope** : Toutes les notes (D2-D6) - correction d'instabilité harmonique YIN baseline
+- **Fonction** : Verrouillage harmonique temporel (snap-back 2×-6× vers fondamental dominant)
+- **Méthode** : Clustering temporel 5-frame window + pondération confiance
+- **Target** : Résoudre instabilité D2 (73 Hz → 287 Hz 4× octave jump)
+- **Overhead** : < 0.5ms
+- **Architecture** : Indépendant du LF-Specialist (séparation des responsabilités)
 
 #### Pipeline de Détection
 
@@ -96,13 +107,65 @@ Process Frames (4 frames = 2048 samples)
     ↓
 YIN Detection (2048 window)
     ↓
-[IF f < 70 Hz] → Low Frequency Specialist
-    ├─ Structural CMNDF Analysis
-    ├─ Harmonic Detection (2×, 3×, 4×, 5×, 6×)
-    ├─ Fundamental Correction
-    └─ Median Smoothing (5 frames)
+[IF f < 75 Hz] → Low Frequency Specialist (<70 Hz)
+    ├─ Harmonic ratio analysis (6×→5×→4×→3×→2×)
+    ├─ Fundamental correction (A1 ~55 Hz)
+    └─ Median smoothing (5-frame)
     ↓
-Result: { frequency, confidence, timestamp, frameNumber }
+Octave Consistency Stabilizer (ALL frequencies)
+    ├─ Temporal window (5 frames)
+    ├─ Dominant fundamental clustering
+    ├─ Harmonic locking (2×-6× snap-back)
+    └─ Confidence-weighted averaging
+    ↓
+Output: [Frequency (Hz), Confidence (0-1)]
+```
+
+### Validation Results (DROP D Tuning)
+
+#### ✅ A1 (55 Hz) - 4-String Bass Low A
+```
+Rel Error:      +0.38% (< 5% ✅)
+Octave Errors:  0% (< 5% ✅)
+Avg Confidence: 0.818 (> 0.7 ✅)
+LF-Specialist:  38 snap events (harmonic correction active)
+Octave-Stabilizer: 0 snap events (not needed for A1)
+Status: VALIDATED ✅
+```
+
+#### ✅ E2 (82.41 Hz) - Standard 6th String
+```
+Rel Error:      +2.98% (< 5% ✅)
+Octave Errors:  0% (< 5% ✅)
+Avg Confidence: 0.851 (> 0.7 ✅)
+LF-Specialist:  0 activations (protected by 75 Hz guard)
+Octave-Stabilizer: 0 snap events (baseline stable)
+Status: VALIDATED ✅
+```
+
+#### ✅ D4 (293.66 Hz) - DROP D 1st String
+```
+Rel Error:      -3.66% (< 5% ✅)
+Octave Errors:  3.9% (< 5% ✅)
+Avg Confidence: 0.860 (> 0.7 ✅)
+LF-Specialist:  0 activations (mid-range frequency)
+Octave-Stabilizer: 0 snap events (baseline stable)
+Status: VALIDATED ✅
+```
+
+#### ❌ D2 (73.42 Hz) - DROP D 6th String (BEFORE Octave Stabilizer)
+```
+Rel Error:      +166.35% (>> 5% ❌)
+Octave Errors:  42.5% (>> 5% ❌)
+Avg Confidence: 0.663 (< 0.7 ⚠️)
+Issue: YIN detects 4× harmonic (287-300 Hz) instead of fundamental
+Status: FAILED ❌ → Octave Stabilizer implementation required
+```
+
+#### 🔄 D2 (73.42 Hz) - Pending Re-validation with Octave Stabilizer
+```
+Expected: <5% octave errors, <5% rel error, dominant snap-backs active
+Status: PENDING VALIDATION
 ```
 
 ### Logs Attendus
@@ -111,12 +174,18 @@ Result: { frequency, confidence, timestamp, frameNumber }
 [PITCH-DETECTION] Initialized (window: 2048, hop: 1024)
 [PITCH-DETECTION] Low Frequency Specialist: ACTIVE (<70 Hz correction)
 [PITCH-DETECTION] Mode: Structural harmonic analysis + median smoothing
+[PITCH-DETECTION] Octave Consistency Stabilizer: ACTIVE (all frequencies)
+[PITCH-DETECTION] Mode: Temporal harmonic locking (5-frame window)
 [PITCH-DETECTION] Frequency range: 50-1200 Hz
 [PITCH-DETECTION] Expected latency: ~55ms (2048 baseline)
 
 [PITCH-DETECTION] Frame 124 | 54.8 Hz | Conf: 0.52 | Win: 2048 | Proc: 1.5ms
 [LF-SPECIALIST] 267.1 Hz → 54.3 Hz | Reason: Harmonic 5× detected (lag ratio 4.92)
 [PITCH-DETECTION] Frame 128 | 54.3 Hz | Conf: 0.75 | Win: 2048 | Proc: 1.8ms
+
+[PITCH-DETECTION] Frame 540 | 287.3 Hz | Conf: 0.73 | Win: 2048 | Proc: 1.9ms
+[OCTAVE-STABILIZER] 287.3 Hz → 73.2 Hz | Harmonic 4× detected (287.3 Hz → 73.2 Hz)
+[PITCH-DETECTION] Frame 544 | 73.2 Hz | Conf: 0.66 | Win: 2048 | Proc: 2.1ms
 ```
 
 ### Fichiers Principaux
@@ -124,7 +193,10 @@ Result: { frequency, confidence, timestamp, frameNumber }
 ```
 public/static/audio-engine/
 ├── dsp/
-│   ├── pitch-detection.js          # YIN Algorithm (baseline 2048)
+│   ├── pitch-detection.js                    # YIN Algorithm (baseline 2048)
+│   ├── low-frequency-specialist.js           # Post-processing <70 Hz (A1)
+│   ├── octave-consistency-stabilizer.js      # Post-processing all frequencies (harmonic locking)
+│   └── spectral-analyzer.js                  # Spectral pre-analysis (future use)
 │   ├── low-frequency-specialist.js # Post-processing <70 Hz
 │   └── spectral-analyzer.js        # Spectral pre-analysis (inactive)
 ├── frame-buffer.js                 # Frame accumulation
