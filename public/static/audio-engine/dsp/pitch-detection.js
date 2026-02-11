@@ -334,21 +334,21 @@ class PitchDetection {
                         return result;
                     }
                     
-                    // FILTER 2: Confidence Gating (< 0.55)
-                    if (confidence < this.MIN_CONFIDENCE_GATE) {
-                        console.log(`[VALIDATION] CONFIDENCE-GATE: ${frequency.toFixed(2)} Hz rejected (conf: ${confidence.toFixed(2)} < ${this.MIN_CONFIDENCE_GATE})`);
-                        return result;
-                    }
+                    // FILTER 2: Confidence Gating (< 0.55) — DISABLED for Amplitude Constraint isolation test
+                    // if (confidence < this.MIN_CONFIDENCE_GATE) {
+                    //     console.log(`[VALIDATION] CONFIDENCE-GATE: ${frequency.toFixed(2)} Hz rejected (conf: ${confidence.toFixed(2)} < ${this.MIN_CONFIDENCE_GATE})`);
+                    //     return result;
+                    // }
                     
-                    // FILTER 3: Dominant Deviation Filter (>40% + low confidence)
-                    const dominantFreq = this.octaveStabilizer ? this.octaveStabilizer.getDominantFundamental() : null;
-                    if (dominantFreq !== null) {
-                        const deviation = Math.abs(frequency - dominantFreq) / dominantFreq;
-                        if (deviation > this.MAX_DOMINANT_DEVIATION && confidence < this.DEVIATION_CONFIDENCE_THRESHOLD) {
-                            console.log(`[VALIDATION] DEVIATION-FILTER: ${frequency.toFixed(2)} Hz rejected (deviation: ${(deviation * 100).toFixed(1)}% > 40%, conf: ${confidence.toFixed(2)} < 0.65)`);
-                            return result;
-                        }
-                    }
+                    // FILTER 3: Dominant Deviation Filter (>40% + low confidence) — DISABLED for Amplitude Constraint isolation test
+                    // const dominantFreq = this.octaveStabilizer ? this.octaveStabilizer.getDominantFundamental() : null;
+                    // if (dominantFreq !== null) {
+                    //     const deviation = Math.abs(frequency - dominantFreq) / dominantFreq;
+                    //     if (deviation > this.MAX_DOMINANT_DEVIATION && confidence < this.DEVIATION_CONFIDENCE_THRESHOLD) {
+                    //         console.log(`[VALIDATION] DEVIATION-FILTER: ${frequency.toFixed(2)} Hz rejected (deviation: ${(deviation * 100).toFixed(1)}% > 40%, conf: ${confidence.toFixed(2)} < 0.65)`);
+                    //         return result;
+                    //     }
+                    // }
                     
                     // WARM-UP PHASE: Skip validation until dominant fundamental is established
                     // Check if Octave Stabilizer has established a dominant (requires >= 3 detections)
