@@ -58,9 +58,9 @@ class LowFrequencySpecialist {
             return { frequency, confidence, corrected: false, reason: 'not initialized' };
         }
         
-        // Only process frequencies < 70 Hz
-        if (!frequency || frequency >= this.ACTIVATION_THRESHOLD) {
-            return { frequency, confidence, corrected: false, reason: 'above threshold' };
+        // Early exit for invalid frequencies
+        if (!frequency) {
+            return { frequency, confidence, corrected: false, reason: 'no frequency' };
         }
         
         const startTime = performance.now();
