@@ -389,9 +389,12 @@ class PitchDetection {
      * Activation rules:
      * 1. frequency < 70 Hz → direct activation (low frequency case)
      * 2. frequency >= 70 Hz AND structural evidence of harmonic dominance:
-     *    - cmnd[lag_f/2] is close to cmnd[lag_f] (within 20%)
-     *    - This suggests f/2 (subharmonic) is equally valid
-     *    - Indicates detected frequency might be harmonic, not fundamental
+     *    - Check if a LOWER frequency (lag × 2 = freq / 2) has a good CMND score
+     *    - If cmnd[lag×2] (subharmonic) is within 20% of cmnd[lag] (current)
+     *    - This suggests current detection might be harmonic, not fundamental
+     * 
+     * CRITICAL: lag × 2 = frequency / 2 (lower frequency, subharmonic)
+     *           lag / 2 = frequency × 2 (higher frequency, harmonic)
      * 
      * @param {number} frequency - Detected frequency from YIN
      * @returns {boolean} - True if enhancement should be applied
@@ -408,27 +411,27 @@ class PitchDetection {
         
         // Rule 2: Structural harmonic dominance detection
         const lag_f = Math.round(this.SAMPLE_RATE / frequency);
-        const lag_f_half = Math.round(lag_f / 2);  // Corresponds to 2× frequency (octave up)
+        const lag_subharmonic = lag_f * 2;  // Corresponds to frequency / 2 (subharmonic)
         
         // Calculate frequency range bounds
         const minLag = Math.round(this.SAMPLE_RATE / this.MAX_FREQUENCY);
         const maxLag = Math.round(this.SAMPLE_RATE / this.MIN_FREQUENCY);
         
-        // Check if lag_f_half is within valid range
-        if (lag_f_half < minLag || lag_f_half >= maxLag || lag_f_half >= this.cmndf.length) {
+        // Check if subharmonic lag is within valid range
+        if (lag_subharmonic < minLag || lag_subharmonic >= maxLag || lag_subharmonic >= this.cmndf.length) {
             return false;
         }
         
         // Inspect CMND values
-        const cmnd_at_f = this.cmndf[lag_f];
-        const cmnd_at_f_half = this.cmndf[lag_f_half];
+        const cmnd_at_current = this.cmndf[lag_f];
+        const cmnd_at_subharmonic = this.cmndf[lag_subharmonic];
         
-        // If cmnd[lag/2] is within 20% of cmnd[lag], suspect harmonic dominance
+        // If cmnd[subharmonic] is within 20% of cmnd[current], suspect harmonic dominance
         // Lower CMND = better match, so if subharmonic has similar or better score → activate
-        const ratio = cmnd_at_f_half / cmnd_at_f;
+        const ratio = cmnd_at_subharmonic / cmnd_at_current;
         
         if (ratio < 1.20) {
-            // cmnd[f/2] is close to cmnd[f] → harmonic dominance suspected
+            // cmnd[subharmonic] is close to cmnd[current] → harmonic dominance suspected
             return true;
         }
         
