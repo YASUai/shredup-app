@@ -309,21 +309,36 @@ class PitchDetection {
                 const expected = window.validationStats.expectedFreq;
                 
                 if (frequency && confidence >= 0.5) {
-                    // Record detection for statistics
-                    window.validationStats.detections.push({
-                        frequency: frequency,
-                        confidence: confidence,
-                        timestamp: timestamp,
-                        frameNumber: frameNumber
-                    });
+                    // WARM-UP PHASE: Skip validation until dominant fundamental is established
+                    // Check if Octave Stabilizer has established a dominant (requires >= 3 detections)
+                    const isDominantEstablished = this.octaveStabilizer && 
+                                                 this.octaveStabilizer.getDominantFundamental() !== null &&
+                                                 this.octaveStabilizer.recentDetections.length >= 3;
                     
-                    // Calculate validation metrics
-                    const absError = frequency - expected;
-                    const relError = (absError / expected) * 100;
-                    const isOctave = window.isOctaveError ? window.isOctaveError(frequency, expected) : false;
-                    
-                    // Log validation line (every detection)
-                    console.log(`[VALIDATION] Expected ${expected.toFixed(2)} Hz | Detected ${frequency.toFixed(2)} Hz | Error ${absError >= 0 ? '+' : ''}${absError.toFixed(2)} Hz (${relError >= 0 ? '+' : ''}${relError.toFixed(2)}%) ${isOctave ? '⚠️ OCTAVE' : ''}`);
+                    if (isDominantEstablished) {
+                        // Dominant established: normal validation active
+                        window.validationStats.detections.push({
+                            frequency: frequency,
+                            confidence: confidence,
+                            timestamp: timestamp,
+                            frameNumber: frameNumber
+                        });
+                        
+                        // Calculate validation metrics
+                        const absError = frequency - expected;
+                        const relError = (absError / expected) * 100;
+                        const isOctave = window.isOctaveError ? window.isOctaveError(frequency, expected) : false;
+                        
+                        // Log validation line (every detection)
+                        console.log(`[VALIDATION] Expected ${expected.toFixed(2)} Hz | Detected ${frequency.toFixed(2)} Hz | Error ${absError >= 0 ? '+' : ''}${absError.toFixed(2)} Hz (${relError >= 0 ? '+' : ''}${relError.toFixed(2)}%) ${isOctave ? '⚠️ OCTAVE' : ''}`);
+                    } else {
+                        // Warm-up phase: skip validation but allow DSP to establish dominant
+                        // Log warm-up status (less verbose, every 10 frames)
+                        if (this.windowCount % 10 === 0) {
+                            const bufferSize = this.octaveStabilizer ? this.octaveStabilizer.recentDetections.length : 0;
+                            console.log(`[VALIDATION] WARM-UP: Establishing dominant fundamental (buffer: ${bufferSize}/3)`);
+                        }
+                    }
                 }
             }
 
