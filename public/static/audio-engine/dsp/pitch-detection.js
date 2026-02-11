@@ -502,10 +502,10 @@ class PitchDetection {
     }
 }
 
-// Singleton instance
-const pitchDetection = new PitchDetection();
+// Create singleton instance (global for browser)
+var pitchDetection = new PitchDetection();
 
-// Export
+// Export for Node.js
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = pitchDetection;
 }
