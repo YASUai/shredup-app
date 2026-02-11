@@ -1190,7 +1190,8 @@ app.get('/pitch-test', (c) => {
                     border-radius: 4px; width: 200px; font-size: 14px; margin-top: 5px;">
             </p>
             <p style="font-size: 11px; color: #888; margin-top: 10px;">
-                Standard tuning: E2=82.41, A2=110.00, D3=146.83, G3=196.00, B3=246.94, E4=329.63
+                <strong>6-String Standard:</strong> E2=82.41, A2=110.00, D3=146.83, G3=196.00, B3=246.94, E4=329.63<br>
+                <strong>7-String Modern (A1):</strong> A1=55.00, D2=73.42, G2=98.00, C3=130.81, F3=174.61, A3=220.00, D4=293.66
             </p>
             <p style="font-size: 11px; color: #888; margin-top: 5px;">
                 <button onclick="resetValidation()" style="background: #555; padding: 6px 12px; font-size: 12px;">
@@ -1212,6 +1213,7 @@ app.get('/pitch-test', (c) => {
     <script src="/static/audio-engine/metronome-adapter.js"></script>
     <script src="/static/audio-engine/frame-buffer.js"></script>
     <script src="/static/audio-engine/timing-sync.js"></script>
+    <script src="/static/audio-engine/dsp/low-frequency-enhancer.js"></script>
     <script src="/static/audio-engine/dsp/pitch-detection.js"></script>
     <script src="/static/audio-engine/audio-engine-phase3.js"></script>
 

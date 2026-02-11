@@ -40,6 +40,10 @@ class PitchDetection {
         // Frame accumulator for 50% overlap
         this.frameAccumulator = [];
         this.currentFrameIndex = 0;
+        
+        // Low Frequency Enhancer (post-detection layer)
+        // NOTE: Will be initialized lazily when available
+        this.lowFreqEnhancer = null;
     }
 
     /**
@@ -52,6 +56,15 @@ class PitchDetection {
             // Pre-compute Hann window
             for (let i = 0; i < this.WINDOW_SIZE; i++) {
                 this.hannWindow[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (this.WINDOW_SIZE - 1)));
+            }
+            
+            // Initialize Low Frequency Enhancer (if available)
+            if (typeof lowFrequencyEnhancer !== 'undefined') {
+                this.lowFreqEnhancer = lowFrequencyEnhancer;
+                this.lowFreqEnhancer.init();
+                logger.info('PITCH-DETECTION', 'Low Frequency Enhancer: ACTIVE (<70 Hz)');
+            } else {
+                logger.warn('PITCH-DETECTION', 'Low Frequency Enhancer: NOT LOADED');
             }
             
             this.isInitialized = true;
@@ -126,8 +139,14 @@ class PitchDetection {
 
             // YIN pitch detection
             const yinResult = this.detectPitchYIN(this.windowBuffer);
-            const frequency = yinResult.frequency;
+            let frequency = yinResult.frequency;
             const confidence = yinResult.confidence;
+            
+            // Apply Low Frequency Enhancement (< 70 Hz only)
+            if (this.lowFreqEnhancer && frequency && frequency < 70) {
+                const enhanced = this.lowFreqEnhancer.enhance(frequency, confidence, this.cmndf);
+                frequency = enhanced.frequency;
+            }
 
             const processingTime = performance.now() - startTime;
 
@@ -384,6 +403,11 @@ class PitchDetection {
      */
     shutdown() {
         logger.info('PITCH-DETECTION', 'Shutting down...');
+        
+        // Reset low frequency enhancer if active
+        if (this.lowFreqEnhancer) {
+            this.lowFreqEnhancer.reset();
+        }
         
         this.isInitialized = false;
         this.windowCount = 0;
