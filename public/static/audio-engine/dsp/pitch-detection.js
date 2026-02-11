@@ -37,11 +37,35 @@ class PitchDetection {
         this.DEVIATION_CONFIDENCE_THRESHOLD = 0.65;
         
         // Energy Gate (Release Phase Detection)
-        this.ENERGY_GATE_THRESHOLD = 0.005; // RMS threshold (adjust if needed)
+        this.ENERGY_GATE_THRESHOLD = 0.005; // RMS threshold (DO NOT MODIFY)
         this.ENERGY_GATE_FRAMES = 3; // Consecutive frames under threshold
         this.energyGateCounter = 0; // Counter for low-energy frames
         this.isEnergyGateClosed = false; // Gate state
         this.lastValidFrequency = null; // Last stable frequency before gate
+        
+        // VALIDATION STATE MACHINE (Phase 3)
+        // States: IDLE → ATTACK → STABLE → RELEASE → IDLE
+        this.ValidationState = {
+            IDLE: 'IDLE',
+            ATTACK: 'ATTACK',
+            STABLE: 'STABLE',
+            RELEASE: 'RELEASE'
+        };
+        this.currentValidationState = this.ValidationState.IDLE;
+        
+        // Validation State Thresholds (FIXED - NON-NEGOTIABLE)
+        this.ATTACK_MIN_CONFIDENCE = 0.55;
+        this.STABLE_MIN_CONFIDENCE = 0.75;
+        this.STABLE_VARIATION_MAX = 0.03; // 3%
+        this.STABLE_FRAMES_REQUIRED = 5;
+        this.RELEASE_CONFIDENCE_MIN = 0.60;
+        this.RELEASE_RMS_FRAMES = 3;
+        this.IDLE_RMS_FRAMES = 5;
+        
+        // Validation State Tracking
+        this.stableFramesBuffer = []; // Track recent frames for STABLE validation
+        this.releaseFramesCounter = 0; // Counter for RELEASE detection
+        this.idleFramesCounter = 0; // Counter for IDLE return
         
         // Pre-allocated buffers (2048 baseline)
         this.windowBuffer = new Float32Array(this.WINDOW_SIZE);
@@ -344,8 +368,19 @@ class PitchDetection {
                 logger.info('PITCH-DETECTION', `Frame ${frameNumber} | ${frequency.toFixed(1)} Hz | Conf: ${confidence.toFixed(2)} | Win: ${windowLabel} | Proc: ${processingTime.toFixed(1)}ms`);
             }
 
-            // VALIDATION MODE: Log validation data if window.validationStats exists
+            // VALIDATION MODE: State Machine for precise validation
             if (typeof window !== 'undefined' && window.validationStats && window.validationStats.expectedFreq) {
+                const expected = window.validationStats.expectedFreq;
+                
+                // STATE MACHINE VALIDATION
+                this.updateValidationState(frequency, confidence, rms, timestamp, expected);
+                
+                // Early return - skip old validation logic
+                return result;
+            }
+            
+            // OLD VALIDATION (kept for non-validation mode)
+            if (false && typeof window !== 'undefined' && window.validationStats && window.validationStats.expectedFreq) {
                 const expected = window.validationStats.expectedFreq;
                 
                 // ENERGY GATE: Skip validation if gate is closed (release phase)
@@ -603,6 +638,152 @@ class PitchDetection {
         const delta = 0.5 * (y_minus - y_plus) / denominator;
         
         return x + delta;
+    }
+
+    /**
+     * VALIDATION STATE MACHINE
+     * Manages IDLE → ATTACK → STABLE → RELEASE → IDLE transitions
+     * Only STABLE frames are included in statistics
+     * 
+     * @param {number} frequency - Detected frequency (Hz)
+     * @param {number} confidence - Detection confidence (0-1)
+     * @param {number} rms - Signal RMS energy
+     * @param {number} timestamp - AudioContext timestamp
+     * @param {number} expected - Expected frequency for validation
+     */
+    updateValidationState(frequency, confidence, rms, timestamp, expected) {
+        const dominantFreq = this.octaveStabilizer ? this.octaveStabilizer.getDominantFundamental() : null;
+        const currentState = this.currentValidationState;
+        
+        // STATE: IDLE → ATTACK
+        if (currentState === this.ValidationState.IDLE) {
+            if (rms > this.ENERGY_GATE_THRESHOLD && 
+                frequency !== null && 
+                confidence >= this.ATTACK_MIN_CONFIDENCE) {
+                
+                this.currentValidationState = this.ValidationState.ATTACK;
+                this.stableFramesBuffer = [];
+                this.releaseFramesCounter = 0;
+                this.idleFramesCounter = 0;
+                console.log(`[STATE] IDLE → ATTACK (RMS: ${rms.toFixed(6)}, Conf: ${confidence.toFixed(2)}, Freq: ${frequency.toFixed(1)} Hz)`);
+            }
+            return;
+        }
+        
+        // STATE: ATTACK → STABLE
+        if (currentState === this.ValidationState.ATTACK) {
+            // Build stable frames buffer
+            if (frequency !== null && 
+                confidence >= this.STABLE_MIN_CONFIDENCE && 
+                rms > this.ENERGY_GATE_THRESHOLD) {
+                
+                this.stableFramesBuffer.push({
+                    frequency: frequency,
+                    confidence: confidence,
+                    rms: rms,
+                    timestamp: timestamp
+                });
+                
+                // Keep only last N frames
+                if (this.stableFramesBuffer.length > this.STABLE_FRAMES_REQUIRED) {
+                    this.stableFramesBuffer.shift();
+                }
+                
+                // Check if we have enough stable frames
+                if (this.stableFramesBuffer.length === this.STABLE_FRAMES_REQUIRED) {
+                    // Validate stability: variation < 3%
+                    const frequencies = this.stableFramesBuffer.map(f => f.frequency);
+                    const avgFreq = frequencies.reduce((a, b) => a + b, 0) / frequencies.length;
+                    const maxVariation = Math.max(...frequencies.map(f => Math.abs(f - avgFreq) / avgFreq));
+                    
+                    // Validate RMS: no frame below threshold
+                    const allRmsStable = this.stableFramesBuffer.every(f => f.rms > this.ENERGY_GATE_THRESHOLD);
+                    
+                    if (dominantFreq !== null && 
+                        maxVariation < this.STABLE_VARIATION_MAX && 
+                        allRmsStable) {
+                        
+                        this.currentValidationState = this.ValidationState.STABLE;
+                        this.releaseFramesCounter = 0;
+                        console.log(`[STATE] ATTACK → STABLE (Dominant: ${dominantFreq.toFixed(1)} Hz, Variation: ${(maxVariation * 100).toFixed(2)}%, Avg: ${avgFreq.toFixed(1)} Hz)`);
+                    }
+                }
+            } else {
+                // Reset buffer if conditions not met
+                this.stableFramesBuffer = [];
+            }
+            return;
+        }
+        
+        // STATE: STABLE → RELEASE
+        if (currentState === this.ValidationState.STABLE) {
+            // Publish to validation statistics (ONLY STABLE frames)
+            if (frequency !== null && confidence >= 0.5) {
+                window.validationStats.detections.push({
+                    frequency: frequency,
+                    confidence: confidence,
+                    timestamp: timestamp,
+                    frameNumber: this.windowCount
+                });
+                
+                const absError = frequency - expected;
+                const relError = (absError / expected) * 100;
+                const isOctaveError = this.isOctaveError(frequency, expected);
+                
+                console.log(`[VALIDATION-STABLE] Expected: ${expected.toFixed(2)} Hz | Detected: ${frequency.toFixed(2)} Hz | Error: ${absError.toFixed(2)} Hz (${relError.toFixed(2)}%)${isOctaveError ? ' ⚠️ OCTAVE' : ''}`);
+            }
+            
+            // Check for RELEASE transition
+            const rmsLow = rms < this.ENERGY_GATE_THRESHOLD;
+            const confLow = confidence < this.RELEASE_CONFIDENCE_MIN;
+            
+            if (rmsLow || confLow) {
+                this.releaseFramesCounter++;
+                
+                if (this.releaseFramesCounter >= this.RELEASE_RMS_FRAMES) {
+                    this.currentValidationState = this.ValidationState.RELEASE;
+                    this.idleFramesCounter = 0;
+                    console.log(`[STATE] STABLE → RELEASE (RMS: ${rms.toFixed(6)}, Conf: ${confidence.toFixed(2)}, Frames: ${this.releaseFramesCounter})`);
+                }
+            } else {
+                this.releaseFramesCounter = 0;
+            }
+            return;
+        }
+        
+        // STATE: RELEASE → IDLE
+        if (currentState === this.ValidationState.RELEASE) {
+            if (rms < this.ENERGY_GATE_THRESHOLD) {
+                this.idleFramesCounter++;
+                
+                if (this.idleFramesCounter >= this.IDLE_RMS_FRAMES) {
+                    this.currentValidationState = this.ValidationState.IDLE;
+                    this.stableFramesBuffer = [];
+                    this.releaseFramesCounter = 0;
+                    this.idleFramesCounter = 0;
+                    console.log(`[STATE] RELEASE → IDLE (RMS: ${rms.toFixed(6)}, Frames: ${this.idleFramesCounter})`);
+                }
+            } else {
+                this.idleFramesCounter = 0;
+            }
+            return;
+        }
+    }
+    
+    /**
+     * Check if detected frequency is an octave error
+     * @param {number} detected - Detected frequency
+     * @param {number} expected - Expected frequency
+     * @returns {boolean} True if octave error
+     */
+    isOctaveError(detected, expected) {
+        const ratios = [0.5, 2.0, 0.333, 3.0, 0.25, 4.0, 0.2, 5.0];
+        for (const ratio of ratios) {
+            if (Math.abs(detected - expected * ratio) / expected < 0.05) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
