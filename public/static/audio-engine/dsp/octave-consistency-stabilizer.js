@@ -286,6 +286,18 @@ class OctaveConsistencyStabilizer {
                     
                     // Only accept shift if confirmed over multiple frames
                     if (this.dominantShiftCounter >= this.DOMINANT_SHIFT_CONFIRM_FRAMES) {
+                        // AMPLITUDE CONSTRAINT before harmonic validation
+                        // Reject shifts with excessive amplitude change (max +50%)
+                        // This prevents shifts like 52 Hz → 459 Hz (8.8×) during attack phase
+                        const amplitudeRatio = newDominant / oldDominant;
+                        if (amplitudeRatio > 1.5) {
+                            // Excessive upward shift (>50% increase) → REJECT
+                            console.log(`[OCTAVE-STABILIZER] Dominant shift rejected (amplitude): ${oldDominant.toFixed(1)} Hz → ${newDominant.toFixed(1)} Hz (${amplitudeRatio.toFixed(1)}× > 1.5×) → Keep old dominant`);
+                            this.dominantShiftCounter = 0;
+                            this.pendingDominantCandidate = null;
+                            return; // Exit early, shift rejected
+                        }
+                        
                         // HARMONIC VALIDATION before accepting shift
                         // Reject shifts to any harmonic multiple of current dominant
                         const ratio = newDominant / oldDominant;
@@ -306,7 +318,7 @@ class OctaveConsistencyStabilizer {
                         }
                         
                         if (!isHarmonicShift) {
-                            // Accept confirmed non-harmonic shift
+                            // Accept confirmed non-harmonic shift within amplitude bounds
                             console.log(`[OCTAVE-STABILIZER] Dominant shift confirmed: ${oldDominant.toFixed(1)} Hz → ${newDominant.toFixed(1)} Hz (${this.dominantShiftCounter} frames)`);
                             this.dominantFundamental = newDominant;
                             this.dominantConfidence = totalWeight / dominantCluster.frequencies.length;
