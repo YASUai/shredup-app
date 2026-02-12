@@ -686,7 +686,7 @@ app.get('/metronome-scaled', (c) => {
 <body>
     <div class="metronome-wrapper">
         <iframe 
-            src="https://7777-iopksqtiphh7vk63ml8pt-c07dda5e.sandbox.novita.ai/" 
+            src="/static/metronome/index.html" 
             class="metronome-iframe"
             title="SHRED-UP Metronome"
             scrolling="no"
@@ -751,7 +751,7 @@ app.get('/metronome-scaled-test', (c) => {
 <body>
     <div class="metronome-wrapper">
         <iframe 
-            src="https://7777-iopksqtiphh7vk63ml8pt-c07dda5e.sandbox.novita.ai/" 
+            src="/static/metronome/index.html" 
             class="metronome-iframe"
             title="SHRED-UP Metronome (Test -10%)"
             scrolling="no"
