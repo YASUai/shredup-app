@@ -357,8 +357,12 @@ function initializeKeyboardShortcuts() {
     
     // 🔒 FORCER LE FOCUS À REVENIR SUR SHRED UP
     if (handled) {
-      // Blur tous les éléments de l'iframe
+      // Forcer document.body à prendre le focus
+      if (document.activeElement && document.activeElement !== document.body) {
+        document.activeElement.blur()
+      }
       document.body.focus()
+      console.log('🔒 Focus maintained on SHRED UP')
     }
   }, true) // ✅ useCapture = true pour capturer AVANT l'iframe
   

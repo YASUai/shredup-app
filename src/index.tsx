@@ -729,6 +729,8 @@ app.get('/metronome-scaled', (c) => {
             // 🔒 Capturer les événements clavier DANS LE PROXY
             // Et les forward vers l'iframe métronome via postMessage
             window.addEventListener('keydown', (e) => {
+                // ⚠️ CRITICAL DEBUG: Log EVERY keydown at parent level
+                console.log('🔑 PARENT KEYDOWN:', e.code, 'Target:', e.target.tagName, 'Timestamp:', Date.now());
                 console.log('[PROXY DEBUG] Keydown captured:', e.code, 'target:', e.target.tagName);
                 
                 if (!metronomeIframe?.contentWindow) {
@@ -885,6 +887,8 @@ app.get('/metronome-scaled-test', (c) => {
             // 🔒 Capturer les événements clavier DANS LE PROXY
             // Et les forward vers l'iframe métronome via postMessage
             window.addEventListener('keydown', (e) => {
+                // ⚠️ CRITICAL DEBUG: Log EVERY keydown at parent level
+                console.log('🔑 PARENT KEYDOWN:', e.code, 'Target:', e.target.tagName, 'Timestamp:', Date.now());
                 console.log('[PROXY DEBUG] Keydown captured:', e.code, 'target:', e.target.tagName);
                 
                 if (!metronomeIframe?.contentWindow) {
