@@ -367,6 +367,18 @@ class PitchDetection {
                 const windowLabel = useExtended ? '4096' : '2048';
                 logger.info('PITCH-DETECTION', `Frame ${frameNumber} | ${frequency.toFixed(1)} Hz | Conf: ${confidence.toFixed(2)} | Win: ${windowLabel} | Proc: ${processingTime.toFixed(1)}ms`);
             }
+            
+            // TUNER MODE: Expose raw detections globally (bypasses validation state machine)
+            // This allows tuner to react instantly to ANY detection, even ATTACK/RELEASE states
+            if (typeof window !== 'undefined') {
+                window._pitchDetectionRaw = {
+                    frequency: frequency,
+                    confidence: confidence,
+                    timestamp: timestamp,
+                    rms: rms,
+                    hasDetection: frequency !== null && confidence >= 0.3 // Lower threshold for tuner
+                };
+            }
 
             // VALIDATION MODE: State Machine for precise validation
             if (typeof window !== 'undefined' && window.validationStats && window.validationStats.expectedFreq) {

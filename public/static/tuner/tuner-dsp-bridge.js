@@ -147,25 +147,50 @@ class TunerDSPBridge {
     /**
      * Start pitch consumer loop
      * Reads pitch detection results and converts to musical data
+     * TUNER MODE: Reads raw detections (bypasses validation state machine)
      */
     startPitchConsumer() {
         this.pitchConsumerInterval = setInterval(() => {
-            // Get pitch detection result
-            const result = pitchDetection.processFrames();
-            
-            if (result && result.frequency) {
-                // Convert frequency to musical data
-                const musical = this.frequencyToMusical(result.frequency);
+            // TUNER MODE: Read raw detections from global variable
+            // This bypasses the validation state machine for instant response
+            if (typeof window !== 'undefined' && window._pitchDetectionRaw) {
+                const raw = window._pitchDetectionRaw;
                 
-                // Update last detection
-                this.lastDetection = {
-                    frequency: result.frequency,
-                    note: musical.note,
-                    cents: musical.cents,
-                    string: musical.string,
-                    confidence: result.confidence,
-                    timestamp: performance.now()
-                };
+                if (raw.hasDetection && raw.frequency) {
+                    // Convert frequency to musical data
+                    const musical = this.frequencyToMusical(raw.frequency);
+                    
+                    // Update even with low confidence (tuner needs continuous feedback)
+                    if (musical.note) {
+                        this.lastDetection = {
+                            frequency: raw.frequency,
+                            note: musical.note,
+                            cents: musical.cents,
+                            string: musical.string,
+                            confidence: raw.confidence,
+                            timestamp: performance.now()
+                        };
+                        
+                        // Debug log occasionally
+                        if (Math.random() < 0.025) { // ~every 1s
+                            console.log(`[TUNER-DSP] ${musical.note} | ${raw.frequency.toFixed(2)} Hz | ${musical.cents >= 0 ? '+' : ''}${musical.cents} cents | Conf: ${raw.confidence.toFixed(2)}`);
+                        }
+                    }
+                } else {
+                    // Clear detection if no valid signal
+                    // Keep last detection for max 150ms to avoid flicker
+                    if (this.lastDetection.timestamp && 
+                        (performance.now() - this.lastDetection.timestamp) > 150) {
+                        this.lastDetection = {
+                            frequency: null,
+                            note: null,
+                            cents: null,
+                            string: null,
+                            confidence: null,
+                            timestamp: null
+                        };
+                    }
+                }
             }
         }, 20); // 50 Hz update rate
     }
