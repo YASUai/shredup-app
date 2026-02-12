@@ -357,8 +357,13 @@ function initializeKeyboardShortcuts() {
     
     // 🔒 FORCER LE FOCUS À REVENIR SUR SHRED UP
     if (handled) {
-      // Forcer document.body à prendre le focus
-      if (document.activeElement && document.activeElement !== document.body) {
+      // Blur activeElement SAUF si c'est un input/textarea légitime
+      if (
+        document.activeElement &&
+        document.activeElement !== document.body &&
+        document.activeElement.tagName !== 'INPUT' &&
+        document.activeElement.tagName !== 'TEXTAREA'
+      ) {
         document.activeElement.blur()
       }
       document.body.focus()
