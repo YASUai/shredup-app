@@ -247,11 +247,44 @@ class TunerDSPBridge {
         
         // Calculate cents offset
         // Formula: cents = 1200 * log2(f_detected / f_reference)
-        const cents = Math.round(1200 * Math.log2(frequency / closestNote.freq));
+        let cents = Math.round(1200 * Math.log2(frequency / closestNote.freq));
         
-        // Only accept notes within ±50 cents
+        // OCTAVE ERROR CORRECTION
+        // If cents > ±50, check if it's an octave error and auto-correct
         if (Math.abs(cents) > 50) {
-            return { note: null, cents: null, string: null, closestFreq: null };
+            const octaveRatio = frequency / closestNote.freq;
+            
+            // Check if detected frequency is half (one octave below)
+            if (Math.abs(octaveRatio - 0.5) < 0.1) {
+                // Frequency is one octave too low, multiply by 2
+                const correctedFreq = frequency * 2;
+                cents = Math.round(1200 * Math.log2(correctedFreq / closestNote.freq));
+                console.warn(`[TUNER-DSP] OCTAVE CORRECTION: ${frequency.toFixed(2)} Hz → ${correctedFreq.toFixed(2)} Hz (${closestNote.name}) | cents: ${cents}`);
+                
+                // If still out of range after correction, reject
+                if (Math.abs(cents) > 50) {
+                    return { note: null, cents: null, string: null, closestFreq: null };
+                }
+            }
+            // Check if detected frequency is double (one octave above)
+            else if (Math.abs(octaveRatio - 2.0) < 0.1) {
+                // Frequency is one octave too high, divide by 2
+                const correctedFreq = frequency / 2;
+                cents = Math.round(1200 * Math.log2(correctedFreq / closestNote.freq));
+                console.warn(`[TUNER-DSP] OCTAVE CORRECTION: ${frequency.toFixed(2)} Hz → ${correctedFreq.toFixed(2)} Hz (${closestNote.name}) | cents: ${cents}`);
+                
+                // If still out of range after correction, reject
+                if (Math.abs(cents) > 50) {
+                    return { note: null, cents: null, string: null, closestFreq: null };
+                }
+            }
+            // Not an octave error, just out of tune
+            else {
+                if (closestNote.name === 'C3' || closestNote.name === 'F3') {
+                    console.warn(`[TUNER-DSP] REJECTED: ${frequency.toFixed(2)} Hz → ${closestNote.name} (${closestNote.freq.toFixed(2)} Hz) | cents: ${cents} (not octave error)`);
+                }
+                return { note: null, cents: null, string: null, closestFreq: null };
+            }
         }
         
         return {
