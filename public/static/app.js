@@ -50,6 +50,8 @@ function initializeTempoSubdivision() {
   
   // Update button states
   function updateButtonStates() {
+    if (!reduceBtn || !subdivideBtn) return;  // Guard clause for iframe
+    
     // Disable - button at minimum (1)
     if (currentColumns <= 1) {
       reduceBtn.classList.add('min-subdivisions')
@@ -65,8 +67,10 @@ function initializeTempoSubdivision() {
     }
   }
   
-  // Initialize button states
-  updateButtonStates()
+  // Initialize button states (only if buttons exist)
+  if (subdivideBtn && reduceBtn) {
+    updateButtonStates()
+  }
   
   // + Button: Add a new column
   if (subdivideBtn) {

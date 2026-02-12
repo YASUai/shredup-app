@@ -694,11 +694,9 @@ app.get('/metronome-scaled', (c) => {
         ></iframe>
     </div>
 
+    <script src="/static/app.js"></script>
     <script>
-        // ✅ NO keyboard listeners needed here
-        // Parent window (app.js) handles ALL keyboard shortcuts
-        // and calls iframe functions directly (metronomeTogglePlay, metronomeTap, etc.)
-        console.log('✅ /metronome-scaled loaded - keyboard shortcuts handled by parent app.js');
+        console.log('✅ /metronome-scaled loaded - keyboard shortcuts handled by app.js');
     </script>
 </body>
 </html>`)
@@ -759,11 +757,9 @@ app.get('/metronome-scaled-test', (c) => {
         ></iframe>
     </div>
 
+    <script src="/static/app.js"></script>
     <script>
-        // ✅ NO keyboard listeners needed here
-        // Parent window (app.js) handles ALL keyboard shortcuts
-        // and calls iframe functions directly (metronomeTogglePlay, metronomeTap, etc.)
-        console.log('✅ /metronome-scaled loaded - keyboard shortcuts handled by parent app.js');
+        console.log('✅ /metronome-scaled loaded - keyboard shortcuts handled by app.js');
     </script>
 </body>
 </html>`)
