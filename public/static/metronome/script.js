@@ -799,6 +799,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Ensure all beat LEDs are OFF at startup
     updateBeatIndicators();
+    
+    // 🔒 CRITICAL: Remove keyboard focusability from ALL buttons
+    // All keyboard control is centralized in parent window
+    // Buttons must not receive focus to prevent CSS :focus/:active states
+    document.querySelectorAll('button').forEach(btn => {
+        btn.setAttribute('tabindex', '-1');
+        // Ensure button type is explicit
+        if (!btn.hasAttribute('type')) {
+            btn.setAttribute('type', 'button');
+        }
+    });
+    console.log('🔒 All buttons set to tabindex="-1" (not keyboard-focusable)');
 });
 
 // ═══════════════════════════════════════════════════════════════════
