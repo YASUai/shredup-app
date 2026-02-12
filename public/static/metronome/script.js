@@ -1269,10 +1269,6 @@ function initBPMClick() {
             
             input.remove();
             bpmDisplay.style.display = 'block';
-            
-            // ✅ CRITICAL FIX: Restore focus to body to re-enable keyboard shortcuts
-            document.body.focus();
-            console.log('🔓 Focus restored to body after BPM input');
         };
         
         input.addEventListener('blur', validateAndUpdate);
@@ -1282,10 +1278,6 @@ function initBPMClick() {
             } else if (e.key === 'Escape') {
                 input.remove();
                 bpmDisplay.style.display = 'block';
-                
-                // ✅ CRITICAL FIX: Restore focus to body
-                document.body.focus();
-                console.log('🔓 Focus restored to body after ESC');
             }
         });
     });
@@ -1318,8 +1310,7 @@ function initTempoButtons() {
     const tapBtn = document.querySelector('.tap-btn');
     
     if (plusBtn) {
-        plusBtn.addEventListener('mousedown', async (e) => {
-            e.preventDefault();  // Prevent button from taking focus
+        plusBtn.addEventListener('mousedown', async () => {
             await playUIClick();  // Son UI click
             
             // Ajouter classe .clicking pour feedback visuel
@@ -1334,15 +1325,11 @@ function initTempoButtons() {
             if (isPlaying) {
                 restartMetronome();
             }
-            
-            // ✅ CRITICAL FIX: Keep focus on body
-            document.body.focus();
         });
     }
     
     if (minusBtn) {
-        minusBtn.addEventListener('mousedown', async (e) => {
-            e.preventDefault();  // Prevent button from taking focus
+        minusBtn.addEventListener('mousedown', async () => {
             await playUIClick();  // Son UI click
             
             // Ajouter classe .clicking pour feedback visuel
@@ -1357,9 +1344,6 @@ function initTempoButtons() {
             if (isPlaying) {
                 restartMetronome();
             }
-            
-            // ✅ CRITICAL FIX: Keep focus on body
-            document.body.focus();
         });
     }
     
@@ -1367,7 +1351,6 @@ function initTempoButtons() {
         console.log('[TAP DEBUG] Bouton TAP trouvé, ajout listener mousedown');
         
         tapBtn.addEventListener('mousedown', (e) => {
-            e.preventDefault();  // Prevent button from taking focus
             console.log('[TAP DEBUG] ===== MOUSEDOWN DÉCLENCHÉ =====');
             console.log('[TAP DEBUG] Event type:', e.type);
             console.log('[TAP DEBUG] Event target:', e.target);
@@ -1388,9 +1371,6 @@ function initTempoButtons() {
                 console.warn('[TAP DEBUG] Son indisponible:', err);
             });
             
-            // ✅ CRITICAL FIX: Keep focus on body
-            document.body.focus();
-            
             console.log('[TAP DEBUG] ===== MOUSEDOWN TERMINÉ (instant) =====');
         });
         
@@ -1409,8 +1389,7 @@ function initMaskingButton() {
     
     maskingField.style.cursor = 'pointer';
     
-    maskingField.addEventListener('click', (e) => {
-        e.preventDefault();  // Prevent button from taking focus
+    maskingField.addEventListener('click', () => {
         isMaskingOn = !isMaskingOn;
         playUIClick();
         
@@ -1420,9 +1399,6 @@ function initMaskingButton() {
         
         updateMaskingLED(isMaskingOn);
         updateMaskingText(isMaskingOn);
-        
-        // ✅ CRITICAL FIX: Keep focus on body
-        document.body.focus();
     });
 }
 
@@ -1459,16 +1435,12 @@ function initUniversalUIClick() {
     selectors.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(element => {
-            element.addEventListener('click', (e) => {
-                e.preventDefault();  // Prevent element from taking focus
+            element.addEventListener('click', () => {
                 playUIClick();
                 
                 // Add visual feedback with .clicking class
                 element.classList.add('clicking');
                 setTimeout(() => element.classList.remove('clicking'), 150);
-                
-                // ✅ CRITICAL FIX: Keep focus on body
-                document.body.focus();
             });
         });
     });
@@ -1483,8 +1455,7 @@ function initPlaybackControls() {
     const stopBtn = document.querySelector('.stop-btn');
     
     if (playBtn) {
-        playBtn.addEventListener('click', (e) => {
-            e.preventDefault();  // Prevent button from taking focus
+        playBtn.addEventListener('click', () => {
             if (!isPlaying) {
                 // Pas de son UI pour PLAY
                 startMetronome();
@@ -1494,15 +1465,11 @@ function initPlaybackControls() {
                 stopMetronome();
                 playBtn.classList.remove('active');  // Retire la classe active
             }
-            
-            // ✅ CRITICAL FIX: Keep focus on body
-            document.body.focus();
         });
     }
     
     if (stopBtn) {
-        stopBtn.addEventListener('click', (e) => {
-            e.preventDefault();  // Prevent button from taking focus
+        stopBtn.addEventListener('click', () => {
             if (isPlaying) {
                 playUIClick();  // Son de click UI
                 
@@ -1513,9 +1480,6 @@ function initPlaybackControls() {
                 stopMetronome();
                 if (playBtn) playBtn.classList.remove('active');  // Retire active du bouton PLAY
             }
-            
-            // ✅ CRITICAL FIX: Keep focus on body
-            document.body.focus();
         });
     }
 }
@@ -1732,83 +1696,6 @@ function updateBeatIndicators() {
 // ============================================================================
 // KEYBOARD SHORTCUTS VIA POSTMESSAGE (Communication from parent window)
 // ============================================================================
-// 🔒 LISTENER CLAVIER NATIF DANS LE MÉTRONOME (pour fonctionner même avec focus dans iframe)
-document.addEventListener('keydown', (e) => {
-    // ❌ NE PAS capturer si on tape dans un input/textarea (sauf ArrowLeft pour TAP)
-    const target = e.target;
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-        if (e.code !== 'ArrowLeft') {
-            return; // Laisser ArrowUp/ArrowDown modifier les valeurs des inputs
-        }
-    }
-
-    // 🔒 ANTI-DOUBLE-TAP : Vérifier si l'événement vient déjà du parent
-    // Si window.parent !== window, on est dans une iframe
-    // Dans ce cas, on laisse le parent gérer ArrowLeft pour éviter les doubles taps
-    const isInIframe = (window.parent !== window);
-    
-    let action = null;
-
-    switch(e.code) {
-        case 'Space':
-            e.preventDefault();
-            action = 'TOGGLE_PLAY';
-            console.log('⌨️ [METRONOME] SPACE → TOGGLE_PLAY');
-            break;
-            
-        case 'ArrowLeft':
-            // ⚠️ NE capturer ArrowLeft QUE si on n'est PAS dans une iframe
-            // Pour éviter le double TAP (parent + métronome)
-            if (!isInIframe) {
-                e.preventDefault();
-                action = 'TAP_CLICK';
-                console.log('⌨️ [METRONOME] ArrowLeft → TAP_CLICK (standalone)');
-            } else {
-                console.log('⌨️ [METRONOME] ArrowLeft → Ignored (handled by parent to avoid double tap)');
-            }
-            break;
-            
-        case 'Equal':
-        case 'NumpadAdd':
-            e.preventDefault();
-            action = 'BPM_UP';
-            console.log('⌨️ [METRONOME] + → BPM_UP');
-            break;
-            
-        case 'Minus':
-        case 'NumpadSubtract':
-            e.preventDefault();
-            action = 'BPM_DOWN';
-            console.log('⌨️ [METRONOME] - → BPM_DOWN');
-            break;
-            
-        case 'ArrowUp':
-            // Ne bloquer que si PAS dans un input
-            if (target.tagName !== 'INPUT') {
-                e.preventDefault();
-                action = 'BPM_UP';
-                console.log('⌨️ [METRONOME] ArrowUp → BPM_UP');
-            }
-            break;
-            
-        case 'ArrowDown':
-            // Ne bloquer que si PAS dans un input
-            if (target.tagName !== 'INPUT') {
-                e.preventDefault();
-                action = 'BPM_DOWN';
-                console.log('⌨️ [METRONOME] ArrowDown → BPM_DOWN');
-            }
-            break;
-    }
-
-    if (action) {
-        // Simuler un postMessage pour réutiliser le handler existant
-        window.dispatchEvent(new MessageEvent('message', {
-            data: { action },
-            source: window
-        }));
-    }
-}, true); // useCapture = true pour capturer avant les inputs
 
 window.addEventListener('message', (event) => {
     const { action, bpm: newBpm } = event.data;
@@ -1955,66 +1842,89 @@ window.addEventListener('message', (event) => {
 // ============================================================================
 // DIRECT KEYBOARD SHORTCUTS (Native keyboard events)
 // ============================================================================
+// UNIFIED KEYBOARD SHORTCUTS (window.addEventListener for universal support)
+// ============================================================================
 window.addEventListener('keydown', (event) => {
     // Ignorer si on est dans un input/textarea
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
         return;
     }
     
-    // ✅ ARROW LEFT → TAP (raccourci principal)
-    // ✅ TOUCHE "0" → TAP (raccourci secondaire)
-    if (event.key === 'ArrowLeft' || event.key === '0') {
-        event.preventDefault(); // Empêcher le comportement par défaut
-        
-        const keyName = event.key === 'ArrowLeft' ? '⬅️ ARROW LEFT' : '0️⃣ TOUCHE 0';
-        console.log(`${keyName} pressed → TAP`);
-        
-        // ✅ ANIMATION IMMÉDIATE (feedback visuel instantané, 0ms latence)
-        const tapBtn = document.querySelector('.tap-btn');
-        if (tapBtn) {
-            tapBtn.classList.add('tapping');
-            setTimeout(() => tapBtn.classList.remove('tapping'), 150);
-        }
-        
-        // ✅ LOGIQUE TAP IMMÉDIATE (calcul BPM instantané)
-        if (typeof handleTapLogic === 'function') {
-            handleTapLogic();
-        }
-        
-        // ✅ SON EN PARALLÈLE (ne bloque pas l'animation)
-        playUIClick().then(() => {
-            console.log(`[${keyName}] Son joué`);
-        }).catch(err => {
-            console.warn(`[${keyName}] Son indisponible:`, err);
-        });
-        
-        console.log(`${keyName} TAP completed (instant)`);
+    switch(event.code) {
+        case 'Space':
+            event.preventDefault();
+            console.log('⌨️ SPACE → TOGGLE_PLAY');
+            
+            const playBtn = document.querySelector('.play-btn');
+            if (playBtn) {
+                playBtn.click();
+            }
+            break;
+            
+        case 'ArrowLeft':
+        case 'Digit0':
+        case 'Numpad0':
+            event.preventDefault();
+            const keyName = event.code === 'ArrowLeft' ? '⬅️ ARROW LEFT' : '0️⃣ TOUCHE 0';
+            console.log(`${keyName} pressed → TAP`);
+            
+            // ✅ ANIMATION IMMÉDIATE
+            const tapBtn = document.querySelector('.tap-btn');
+            if (tapBtn) {
+                tapBtn.classList.add('tapping');
+                setTimeout(() => tapBtn.classList.remove('tapping'), 150);
+            }
+            
+            // ✅ LOGIQUE TAP IMMÉDIATE
+            if (typeof handleTapLogic === 'function') {
+                handleTapLogic();
+            }
+            
+            // ✅ SON EN PARALLÈLE
+            playUIClick().then(() => {
+                console.log(`[${keyName}] Son joué`);
+            }).catch(err => {
+                console.warn(`[${keyName}] Son indisponible:`, err);
+            });
+            
+            console.log(`${keyName} TAP completed (instant)`);
+            break;
+            
+        case 'Equal':
+        case 'NumpadAdd':
+        case 'ArrowUp':
+            event.preventDefault();
+            console.log('⌨️', event.code, '→ BPM_UP');
+            
+            bpm = Math.min(MAX_BPM, bpm + 1);
+            updateBPMDisplay(bpm);
+            const percentageUp = bpmToSliderPosition(bpm);
+            updateVerticalSliderPosition(percentageUp);
+            
+            if (isPlaying) {
+                restartMetronome();
+            }
+            break;
+            
+        case 'Minus':
+        case 'NumpadSubtract':
+        case 'ArrowDown':
+            event.preventDefault();
+            console.log('⌨️', event.code, '→ BPM_DOWN');
+            
+            bpm = Math.max(MIN_BPM, bpm - 1);
+            updateBPMDisplay(bpm);
+            const percentageDown = bpmToSliderPosition(bpm);
+            updateVerticalSliderPosition(percentageDown);
+            
+            if (isPlaying) {
+                restartMetronome();
+            }
+            break;
     }
 });
 
-console.log('✅ PostMessage listener initialized for keyboard shortcuts');
-
-// ============================================================================
-// FOCUS MANAGEMENT - CRITICAL FIX FOR KEYBOARD SHORTCUTS
-// ============================================================================
-// 🔒 Force focus on body at page load to enable keyboard shortcuts
-document.body.setAttribute('tabindex', '-1'); // Allow body to receive focus
-document.body.focus();
-console.log('🔓 Initial focus set on body for keyboard shortcuts');
-
-// 🔒 Restore focus to body after ANY click (global safety net)
-document.addEventListener('click', (e) => {
-    // Skip if clicking on an input/textarea (they need focus)
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-        return;
-    }
-    
-    // After 50ms delay (let the click finish), restore focus to body
-    setTimeout(() => {
-        document.body.focus();
-        console.log('🔓 Focus restored to body after click');
-    }, 50);
-}, true); // useCapture = true
+console.log('✅ Unified keyboard shortcuts initialized (window.addEventListener)');
 
 // ============================================================================
 // SERVICE WORKER POUR PWA (Progressive Web App)
