@@ -1842,89 +1842,11 @@ window.addEventListener('message', (event) => {
 // ============================================================================
 // DIRECT KEYBOARD SHORTCUTS (Native keyboard events)
 // ============================================================================
-// UNIFIED KEYBOARD SHORTCUTS (window.addEventListener for universal support)
+// KEYBOARD SHORTCUTS - iframe receives ALL events via postMessage from parent
 // ============================================================================
-window.addEventListener('keydown', (event) => {
-    // Ignorer si on est dans un input/textarea
-    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-        return;
-    }
-    
-    switch(event.code) {
-        case 'Space':
-            event.preventDefault();
-            console.log('⌨️ SPACE → TOGGLE_PLAY');
-            
-            const playBtn = document.querySelector('.play-btn');
-            if (playBtn) {
-                playBtn.click();
-            }
-            break;
-            
-        case 'ArrowLeft':
-        case 'Digit0':
-        case 'Numpad0':
-            event.preventDefault();
-            const keyName = event.code === 'ArrowLeft' ? '⬅️ ARROW LEFT' : '0️⃣ TOUCHE 0';
-            console.log(`${keyName} pressed → TAP`);
-            
-            // ✅ ANIMATION IMMÉDIATE
-            const tapBtn = document.querySelector('.tap-btn');
-            if (tapBtn) {
-                tapBtn.classList.add('tapping');
-                setTimeout(() => tapBtn.classList.remove('tapping'), 150);
-            }
-            
-            // ✅ LOGIQUE TAP IMMÉDIATE
-            if (typeof handleTapLogic === 'function') {
-                handleTapLogic();
-            }
-            
-            // ✅ SON EN PARALLÈLE
-            playUIClick().then(() => {
-                console.log(`[${keyName}] Son joué`);
-            }).catch(err => {
-                console.warn(`[${keyName}] Son indisponible:`, err);
-            });
-            
-            console.log(`${keyName} TAP completed (instant)`);
-            break;
-            
-        case 'Equal':
-        case 'NumpadAdd':
-        case 'ArrowUp':
-            event.preventDefault();
-            console.log('⌨️', event.code, '→ BPM_UP');
-            
-            bpm = Math.min(MAX_BPM, bpm + 1);
-            updateBPMDisplay(bpm);
-            const percentageUp = bpmToSliderPosition(bpm);
-            updateVerticalSliderPosition(percentageUp);
-            
-            if (isPlaying) {
-                restartMetronome();
-            }
-            break;
-            
-        case 'Minus':
-        case 'NumpadSubtract':
-        case 'ArrowDown':
-            event.preventDefault();
-            console.log('⌨️', event.code, '→ BPM_DOWN');
-            
-            bpm = Math.max(MIN_BPM, bpm - 1);
-            updateBPMDisplay(bpm);
-            const percentageDown = bpmToSliderPosition(bpm);
-            updateVerticalSliderPosition(percentageDown);
-            
-            if (isPlaying) {
-                restartMetronome();
-            }
-            break;
-    }
-});
-
-console.log('✅ Unified keyboard shortcuts initialized (window.addEventListener)');
+// ⚠️ NO direct keyboard listener in iframe - parent handles ALL keyboard events
+// and forwards them via postMessage to avoid focus issues
+console.log('✅ Keyboard shortcuts handled via postMessage only (no direct listener in iframe)');
 
 // ============================================================================
 // SERVICE WORKER POUR PWA (Progressive Web App)
