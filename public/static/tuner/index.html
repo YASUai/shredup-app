@@ -554,6 +554,7 @@
     let dspInitialized = false;
     let animationFrame = null;
     let currentCents = -4;
+    let hasActiveDetection = false; // Track if we're receiving real signal
     
     // DOM elements
     const noteEl = document.getElementById('note-display');
@@ -659,6 +660,7 @@
     function getCurrentNoteFromDSP() {
       if (!tunerDSP || !tunerDSP.isRunning) {
         // Mock data: cycle through notes when DSP not running
+        hasActiveDetection = true; // Mock mode always has signal
         return NOTES[currentNoteIndex];
       }
       
@@ -666,6 +668,8 @@
       const detection = tunerDSP.getLastDetection();
       
       if (detection.note) {
+        hasActiveDetection = true; // We have a real detection
+        
         // Find matching note in NOTES array
         const noteData = NOTES.find(n => n.name === detection.note);
         if (noteData) {
@@ -677,7 +681,10 @@
         }
       }
       
-      // Return last valid note if no current detection
+      // No current detection
+      hasActiveDetection = false;
+      
+      // Return last valid note but signal UI has no detection
       return NOTES[currentNoteIndex];
     }
     
@@ -754,6 +761,14 @@
     
     // Update needle position and color
     function updateNeedle() {
+      // If no active detection, position needle at minimum (left, waiting state)
+      if (!hasActiveDetection) {
+        needleEl.style.left = '0%'; // Position à gauche (attente de signal)
+        needleEl.style.background = 'linear-gradient(180deg, transparent 0%, #555 30%, #555 70%, transparent 100%)';
+        needleEl.style.filter = 'none';
+        return;
+      }
+      
       // Map cents (-50 to +50) to position (0% to 100%)
       const normalizedCents = (currentCents + 50) / 100; // 0 to 1
       const position = normalizedCents * 100;
@@ -930,10 +945,11 @@
     // Initialize
     currentCents = -4;
     currentNoteIndex = 0;
+    hasActiveDetection = false; // No signal at start
     stringInfoEl.textContent = '1/7';
     centsInfoEl.textContent = '-4';
     updateHexagons();
-    updateNeedle();
+    updateNeedle(); // Will position needle at 0% (left) since hasActiveDetection = false
     
     // Resize canvas to fit container
     function resizeCentsCanvas() {
