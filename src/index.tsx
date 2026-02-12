@@ -415,7 +415,7 @@ app.get('/test-local', (c) => {
         </div>
       </div>
 
-      {/* METRONOME + TUNER COLUMN - Stacked Vertically */}
+      {/* METRONOME + SESSION SUMMARY COLUMN - Stacked Vertically */}
       <div class="zone-metronome-tuner">
         {/* METRONOME - Top - 🧪 VERSION LOCAL */}
         <div class="zone-metronome">
@@ -428,20 +428,18 @@ app.get('/test-local', (c) => {
           ></iframe>
         </div>
 
-        {/* TUNER - Bottom */}
-        <div class="zone-tuner">
-          <iframe 
-            src="/static/tuner/index.html?v=3" 
-            class="tuner-iframe"
-            title="SHRED-UP Tuner V3"
-            scrolling="no"
-          ></iframe>
+        {/* SESSION SUMMARY - Bottom (was TUNER) */}
+        <div class="zone-session-summary-bottom">
+          <div class="block-title">SESSION<br />SUMMARY</div>
+          <div class="summary-placeholder">
+            Complete your practice session to see analysis and feedback here. No real-time feedback during practice.
+          </div>
         </div>
       </div>
 
-      {/* RIGHT COLUMN - Date/Time + Session Summary + Notepad */}
+      {/* RIGHT COLUMN - Date/Time + Tuner + Notepad */}
       <div class="zone-right-top">
-        {/* Date/Time Block - 725px */}
+        {/* Date/Time Block - 140px */}
         <div class="datetime-container">
           <div class="datetime-block">
             <div class="datetime-time" id="current-time">00:00:00</div>
@@ -452,12 +450,14 @@ app.get('/test-local', (c) => {
           </div>
         </div>
 
-        {/* Session Summary Block - 725px */}
-        <div class="right-block session-summary-block">
-          <div class="block-title">SESSION<br />SUMMARY</div>
-          <div class="summary-placeholder">
-            🧪 TEST VERSION LOCALE - Same Origin
-          </div>
+        {/* TUNER Block - 592px (was SESSION SUMMARY) */}
+        <div class="right-block tuner-block">
+          <iframe 
+            src="/static/tuner/index.html?v=4" 
+            class="tuner-iframe-right"
+            title="SHRED-UP Tuner V4"
+            scrolling="no"
+          ></iframe>
         </div>
 
         {/* Notepad Block - Flexible */}
@@ -1022,7 +1022,7 @@ app.get('/', (c) => {
         </div>
       </div>
 
-      {/* METRONOME + TUNER COLUMN - Stacked Vertically */}
+      {/* METRONOME + SESSION SUMMARY COLUMN - Stacked Vertically */}
       <div class="zone-metronome-tuner">
         {/* METRONOME - Top */}
         <div class="zone-metronome">
@@ -1035,20 +1035,19 @@ app.get('/', (c) => {
           ></iframe>
         </div>
 
-        {/* TUNER - Bottom */}
-        <div class="zone-tuner">
-          <iframe 
-            src="/static/tuner/index.html?v=3" 
-            class="tuner-iframe"
-            title="SHRED-UP Tuner V3"
-            scrolling="no"
-          ></iframe>
+        {/* SESSION SUMMARY - Bottom (was TUNER) */}
+        <div class="zone-session-summary-bottom">
+          <div class="block-title">SESSION<br />SUMMARY</div>
+          <div class="summary-placeholder">
+            Complete your practice session to see analysis and feedback here.
+            No real-time feedback during practice.
+          </div>
         </div>
       </div>
 
-      {/* RIGHT COLUMN - Date/Time + Session Summary + Notepad */}
+      {/* RIGHT COLUMN - Date/Time + Tuner + Notepad */}
       <div class="zone-right-top">
-        {/* Date/Time Block - 725px */}
+        {/* Date/Time Block - 140px */}
         <div class="datetime-container">
           <div class="datetime-block">
             <div class="datetime-time" id="current-time">00:00:00</div>
@@ -1059,13 +1058,14 @@ app.get('/', (c) => {
           </div>
         </div>
 
-        {/* Session Summary Block - 725px */}
-        <div class="right-block session-summary-block">
-          <div class="block-title">SESSION<br />SUMMARY</div>
-          <div class="summary-placeholder">
-            Complete your practice session to see analysis and feedback here.
-            No real-time feedback during practice.
-          </div>
+        {/* TUNER Block - 592px (was SESSION SUMMARY) */}
+        <div class="right-block tuner-block">
+          <iframe 
+            src="/static/tuner/index.html?v=4" 
+            class="tuner-iframe-right"
+            title="SHRED-UP Tuner V4"
+            scrolling="no"
+          ></iframe>
         </div>
 
         {/* Notepad Block - Flexible */}

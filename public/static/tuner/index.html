@@ -32,14 +32,14 @@
       color: #666;
       margin: 0;
       overflow: hidden;
-      height: 100vh;
+      height: 592px;
     }
 
     .container {
       max-width: 100%;
       width: 100%;
-      height: 100%;
-      padding: 15px;
+      height: 592px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
     }
@@ -52,8 +52,8 @@
 
     .sample {
       background: #1a1a1a;
-      border-radius: 16px;
-      padding: 20px;
+      border-radius: 12px;
+      padding: 12px;
       position: relative;
       border: 1px solid #222;
       flex: 1;
@@ -80,16 +80,16 @@
     /* ON/OFF Toggle Button - Neumorphic - BOTTOM RIGHT */
     .toggle-container {
       position: absolute;
-      bottom: 20px;
-      right: 20px;
+      bottom: 12px;
+      right: 12px;
       z-index: 100;
     }
     
     .toggle-btn {
-      width: 80px;
-      height: 36px;
+      width: 60px;
+      height: 28px;
       background: #1a1a1a;
-      border-radius: 18px;
+      border-radius: 14px;
       border: 1px solid #222;
       position: relative;
       cursor: pointer;
@@ -107,13 +107,13 @@
     }
     
     .toggle-knob {
-      width: 28px;
-      height: 28px;
+      width: 22px;
+      height: 22px;
       background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
       border-radius: 50%;
       position: absolute;
-      top: 3px;
-      left: 4px;
+      top: 2px;
+      left: 3px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 
         2px 2px 4px rgba(0,0,0,0.4),
@@ -121,7 +121,7 @@
     }
     
     .toggle-btn.active .toggle-knob {
-      left: 48px;
+      left: 35px;
       background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
     }
     
@@ -129,7 +129,7 @@
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 9px;
+      font-size: 8px;
       font-weight: 500;
       letter-spacing: 1px;
       transition: all 0.3s ease;
@@ -137,12 +137,12 @@
     }
     
     .toggle-label.off {
-      right: 8px;
+      right: 6px;
       color: #555;
     }
     
     .toggle-label.on {
-      left: 8px;
+      left: 6px;
       color: #888;
       opacity: 0;
     }
@@ -158,39 +158,39 @@
     .bars-row {
       display: flex;
       justify-content: center;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 8px;
+      margin-bottom: 12px;
       flex-shrink: 0;
     }
     .bar-item {
       text-align: center;
     }
     .bar {
-      width: 20px;
+      width: 16px;
       background: linear-gradient(180deg, #3a3a3a, #2a2a2a);
-      margin: 0 auto 6px;
+      margin: 0 auto 4px;
       transition: height 0.3s ease;
     }
     .bar-label {
-      font-size: 8px;
+      font-size: 7px;
       color: #555;
     }
 
     .hex-area {
       position: relative;
-      height: 220px;
+      height: 160px;
       background: #1a1a1a;
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 6px;
+      margin-bottom: 12px;
       flex-shrink: 0;
     }
     .hex {
-      width: 50px;
-      height: 58px;
+      width: 40px;
+      height: 46px;
       position: relative;
       transition: all 0.3s ease;
     }
@@ -203,7 +203,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
+      font-size: 9px;
       color: #555;
       transition: all 0.3s ease;
     }
@@ -222,11 +222,11 @@
       pointer-events: none;
     }
     .v2-note {
-      font-size: 72px;
+      font-size: 52px;
       font-weight: 600;
       font-family: 'Conthrax', 'Orbitron', sans-serif;
       color: #888;
-      letter-spacing: 4px;
+      letter-spacing: 3px;
       transition: all 0.3s ease;
       line-height: 1;
     }
@@ -239,19 +239,19 @@
       pointer-events: none;
     }
     .v2-freq {
-      font-size: 14px;
+      font-size: 11px;
       color: #555;
-      letter-spacing: 3px;
+      letter-spacing: 2px;
       transition: all 0.3s ease;
     }
 
     /* Cents line visualization */
     .cents-line {
-      height: 70px;
+      height: 50px;
       background: #1a1a1a;
-      border-radius: 8px;
+      border-radius: 6px;
       position: relative;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       border: 1px solid #222;
       overflow: hidden;
       flex-shrink: 0;
@@ -274,11 +274,11 @@
     }
     .cents-info {
       position: absolute;
-      top: 6px;
-      left: 12px;
-      font-size: 10px;
+      top: 4px;
+      left: 8px;
+      font-size: 8px;
       color: #555;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
       text-transform: uppercase;
     }
     .cents-value {
@@ -288,11 +288,11 @@
 
     /* Tuning meter */
     .tuning-meter {
-      height: 50px;
+      height: 40px;
       background: #1a1a1a;
-      border-radius: 8px;
+      border-radius: 6px;
       position: relative;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       border: 1px solid #222;
       overflow: hidden;
       flex-shrink: 0;
@@ -335,7 +335,7 @@
       left: 50%;
       transform: translate(-50%, -50%);
       width: 2px;
-      height: 32px;
+      height: 26px;
       background: linear-gradient(180deg, transparent 0%, #888 30%, #888 70%, transparent 100%);
       transition: left 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 10;
@@ -343,26 +343,26 @@
     .meter-needle::before {
       content: '';
       position: absolute;
-      top: -5px;
+      top: -4px;
       left: 50%;
       transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-left: 4px solid transparent;
-      border-right: 4px solid transparent;
-      border-top: 6px solid #888;
+      border-left: 3px solid transparent;
+      border-right: 3px solid transparent;
+      border-top: 5px solid #888;
     }
     .meter-labels {
       position: absolute;
-      bottom: 6px;
+      bottom: 4px;
       left: 0;
       right: 0;
       display: flex;
       justify-content: space-between;
-      padding: 0 35px;
-      font-size: 8px;
+      padding: 0 25px;
+      font-size: 7px;
       color: #555;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
 
     .controls {
@@ -447,7 +447,7 @@
 
       <!-- Cents line visualization -->
       <div class="cents-line">
-        <canvas id="cents-canvas" class="cents-line-graph" width="720" height="70"></canvas>
+        <canvas id="cents-canvas" class="cents-line-graph" width="720" height="50"></canvas>
         <div class="cents-line-track"></div>
         <div class="cents-info">
           STRING <span class="cents-value" id="string-info">1/7</span> · 
@@ -672,7 +672,7 @@
     function resizeCentsCanvas() {
       const rect = centsCanvas.parentElement.getBoundingClientRect();
       centsCanvas.width = rect.width;
-      centsCanvas.height = 70;
+      centsCanvas.height = 50;
       drawCentsLine();
     }
     
