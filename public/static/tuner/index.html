@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SHRED UP - Variant 2 Animated</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>SHRED UP - Tuner V3</title>
   <style>
     * {
       margin: 0;
@@ -32,20 +35,6 @@
       display: none;
     }
 
-    .header h1 {
-      font-size: 32px;
-      font-weight: 300;
-      margin-bottom: 12px;
-      color: #888;
-      letter-spacing: 3px;
-    }
-
-    .header p {
-      font-size: 13px;
-      color: #555;
-      font-weight: 300;
-    }
-
     .sample {
       background: #1a1a1a;
       border-radius: 16px;
@@ -67,6 +56,84 @@
       text-transform: uppercase;
       border: 1px solid #333;
       display: none;
+    }
+
+    /* ON/OFF Toggle Button - Neumorphic */
+    .toggle-container {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      z-index: 100;
+    }
+    
+    .toggle-btn {
+      width: 80px;
+      height: 36px;
+      background: #1a1a1a;
+      border-radius: 18px;
+      border: 1px solid #222;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 
+        inset 2px 2px 5px rgba(0,0,0,0.5),
+        inset -2px -2px 5px rgba(255,255,255,0.02);
+    }
+    
+    .toggle-btn.active {
+      background: #1e1e1e;
+      box-shadow: 
+        inset 2px 2px 5px rgba(0,0,0,0.3),
+        inset -2px -2px 5px rgba(255,255,255,0.03);
+    }
+    
+    .toggle-knob {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+      border-radius: 50%;
+      position: absolute;
+      top: 3px;
+      left: 4px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 
+        2px 2px 4px rgba(0,0,0,0.4),
+        -1px -1px 2px rgba(255,255,255,0.03);
+    }
+    
+    .toggle-btn.active .toggle-knob {
+      left: 48px;
+      background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
+    }
+    
+    .toggle-label {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+    }
+    
+    .toggle-label.off {
+      right: 8px;
+      color: #555;
+    }
+    
+    .toggle-label.on {
+      left: 8px;
+      color: #888;
+      opacity: 0;
+    }
+    
+    .toggle-btn.active .toggle-label.off {
+      opacity: 0;
+    }
+    
+    .toggle-btn.active .toggle-label.on {
+      opacity: 1;
     }
 
     .bars-row {
@@ -155,15 +222,6 @@
       transition: all 0.3s ease;
     }
 
-    .info-bottom {
-      text-align: center;
-      font-size: 14px;
-      color: #666;
-      letter-spacing: 4px;
-      transition: all 0.3s ease;
-      margin-top: 20px;
-    }
-
     /* Cents line visualization */
     .cents-line {
       height: 80px;
@@ -172,15 +230,7 @@
       position: relative;
       margin-bottom: 20px;
       border: 1px solid #222;
-      overflow: visible;
-    }
-    .cents-line-track {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: #2a2a2a;
+      overflow: hidden;
     }
     .cents-line-graph {
       position: absolute;
@@ -189,6 +239,14 @@
       right: 0;
       height: 100%;
       pointer-events: none;
+    }
+    .cents-line-track {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #2a2a2a;
     }
     .cents-info {
       position: absolute;
@@ -202,38 +260,6 @@
     .cents-value {
       color: #888;
       font-weight: 400;
-    }
-
-    .controls {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      margin-top: 30px;
-    }
-    .btn {
-      background: #2a2a2a;
-      color: #888;
-      border: 1px solid #333;
-      padding: 12px 32px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 400;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .btn:hover {
-      background: #333;
-      border-color: #3a3a3a;
-    }
-    .btn:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-    .btn.stop {
-      background: #3a2a2a;
-      border-color: #3a3a3a;
     }
 
     /* Tuning meter */
@@ -314,18 +340,24 @@
       letter-spacing: 1px;
     }
 
+    .controls {
+      display: none;
+    }
+
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>VARIANT 2 ANIMATED</h1>
-      <p>Real-time pitch detection simulation</p>
-    </div>
-
     <div class="sample">
-      <div class="sample-label">VARIANT 2 - LIVE</div>
-      
+      <!-- ON/OFF Toggle -->
+      <div class="toggle-container">
+        <div class="toggle-btn" id="power-toggle">
+          <div class="toggle-knob"></div>
+          <span class="toggle-label on">ON</span>
+          <span class="toggle-label off">OFF</span>
+        </div>
+      </div>
+
       <div class="bars-row">
         <div class="bar-item">
           <div class="bar" id="bar-0" style="height: 60px;"></div>
@@ -381,10 +413,10 @@
         </div>
 
         <div class="v2-top">
-          <div class="v2-note" id="note-display">G2</div>
+          <div class="v2-note" id="note-display">A1</div>
         </div>
         <div class="v2-bottom">
-          <div class="v2-freq" id="freq-display">98.00 HZ</div>
+          <div class="v2-freq" id="freq-display">55.00 HZ</div>
         </div>
       </div>
 
@@ -422,13 +454,6 @@
           <span>+50</span>
         </div>
       </div>
-
-
-
-      <div class="controls">
-        <button class="btn" id="start-btn">Start Animation</button>
-        <button class="btn stop" id="stop-btn">Stop Animation</button>
-      </div>
     </div>
   </div>
 
@@ -444,11 +469,10 @@
       { name: 'D4', freq: 293.66, string: 7 }
     ];
     
-    let currentNoteIndex = 2; // Start with G2
-    let animationRunning = false;
+    let currentNoteIndex = 0; // Start with A1
+    let tunerRunning = false;
     let animationFrame = null;
-    
-    let currentCents = 0;
+    let currentCents = -4;
     
     // DOM elements
     const noteEl = document.getElementById('note-display');
@@ -456,8 +480,7 @@
     const stringInfoEl = document.getElementById('string-info');
     const centsInfoEl = document.getElementById('cents-info');
     const needleEl = document.getElementById('meter-needle');
-    const startBtn = document.getElementById('start-btn');
-    const stopBtn = document.getElementById('stop-btn');
+    const powerToggle = document.getElementById('power-toggle');
     const bars = [];
     const hexes = [];
     
@@ -509,7 +532,7 @@
       // Clear canvas
       centsCtx.clearRect(0, 0, width, height);
       
-      // Draw zero line
+      // Draw zero line (horizontal center)
       centsCtx.strokeStyle = '#2a2a2a';
       centsCtx.lineWidth = 1;
       centsCtx.beginPath();
@@ -577,7 +600,7 @@
     
     // Animation loop
     function animate() {
-      if (!animationRunning) return;
+      if (!tunerRunning) return;
       
       updateBars();
       updateDisplay();
@@ -587,43 +610,37 @@
     
     // Change note every 3 seconds
     function cycleNotes() {
-      if (!animationRunning) return;
+      if (!tunerRunning) return;
       
       currentNoteIndex = (currentNoteIndex + 1) % NOTES.length;
       
       setTimeout(cycleNotes, 3000);
     }
     
-    // Start animation
-    startBtn.addEventListener('click', () => {
-      if (animationRunning) return;
+    // Toggle power
+    powerToggle.addEventListener('click', () => {
+      tunerRunning = !tunerRunning;
       
-      animationRunning = true;
-      startBtn.disabled = true;
-      stopBtn.disabled = false;
-      
-      animate();
-      cycleNotes();
-    });
-    
-    // Stop animation
-    stopBtn.addEventListener('click', () => {
-      animationRunning = false;
-      
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-        animationFrame = null;
+      if (tunerRunning) {
+        powerToggle.classList.add('active');
+        animate();
+        cycleNotes();
+      } else {
+        powerToggle.classList.remove('active');
+        
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+          animationFrame = null;
+        }
       }
-      
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
     });
     
     // Initialize
-    stopBtn.disabled = true;
     currentCents = -4;
+    currentNoteIndex = 0;
     stringInfoEl.textContent = '1/7';
     centsInfoEl.textContent = '-4';
+    updateHexagons();
     updateNeedle();
     
     // Resize canvas to fit container
@@ -636,6 +653,8 @@
     
     resizeCentsCanvas();
     window.addEventListener('resize', resizeCentsCanvas);
+    
+    console.log('🎸 SHRED UP Tuner V3 loaded - ' + new Date().toISOString());
   </script>
 </body>
 </html>

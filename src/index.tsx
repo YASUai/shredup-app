@@ -431,9 +431,9 @@ app.get('/test-local', (c) => {
         {/* TUNER - Bottom */}
         <div class="zone-tuner">
           <iframe 
-            src="/static/tuner/index.html" 
+            src="/static/tuner/index.html?v=3" 
             class="tuner-iframe"
-            title="SHRED-UP Tuner"
+            title="SHRED-UP Tuner V3"
             scrolling="no"
           ></iframe>
         </div>
@@ -1038,9 +1038,9 @@ app.get('/', (c) => {
         {/* TUNER - Bottom */}
         <div class="zone-tuner">
           <iframe 
-            src="/static/tuner/index.html" 
+            src="/static/tuner/index.html?v=3" 
             class="tuner-iframe"
-            title="SHRED-UP Tuner"
+            title="SHRED-UP Tuner V3"
             scrolling="no"
           ></iframe>
         </div>
