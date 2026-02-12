@@ -27,12 +27,27 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      background: #141414;
-      padding: 0;
-      color: #666;
-      margin: 0;
-      overflow: hidden;
+      width: 100%;
       height: 592px;
+      min-height: 592px;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      
+      /* Background identique au métronome */
+      background: linear-gradient(180deg, 
+        #141414 0%, 
+        #161616 15%, 
+        #181818 30%, 
+        #1a1a1a 45%, 
+        #1b1b1b 50%, 
+        #1a1a1a 55%, 
+        #181818 70%, 
+        #161616 85%, 
+        #151515 100%);
+      background-size: 100% 100%;
+      background-attachment: fixed;
+      color: #666;
     }
 
     .container {
@@ -42,6 +57,7 @@
       padding: 10px;
       display: flex;
       flex-direction: column;
+      /* Pas de background ici, le body gère */
     }
 
     .header {
@@ -51,11 +67,11 @@
     }
 
     .sample {
-      background: #1a1a1a;
+      background: transparent;
       border-radius: 12px;
       padding: 12px;
       position: relative;
-      border: 1px solid #222;
+      border: none;
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -77,10 +93,10 @@
       display: none;
     }
 
-    /* ON/OFF Toggle Button - Neumorphic - BOTTOM RIGHT */
+    /* ON/OFF Toggle Button - Neumorphic - BOTTOM RIGHT - VISIBLE */
     .toggle-container {
       position: absolute;
-      bottom: 12px;
+      bottom: 22px;
       right: 12px;
       z-index: 100;
     }
@@ -179,7 +195,7 @@
     .hex-area {
       position: relative;
       height: 160px;
-      background: #1a1a1a;
+      background: rgba(26, 26, 26, 0.3);
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -197,8 +213,8 @@
     .hex-shape {
       width: 100%;
       height: 100%;
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
+      background: rgba(26, 26, 26, 0.5);
+      border: 1px solid rgba(42, 42, 42, 0.8);
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
       display: flex;
       align-items: center;
@@ -208,8 +224,8 @@
       transition: all 0.3s ease;
     }
     .hex.active .hex-shape {
-      background: #1e1e1e;
-      border-color: #3a3a3a;
+      background: rgba(30, 30, 30, 0.8);
+      border-color: rgba(58, 58, 58, 0.9);
       color: #888;
     }
 
@@ -248,11 +264,11 @@
     /* Cents line visualization */
     .cents-line {
       height: 50px;
-      background: #1a1a1a;
+      background: rgba(26, 26, 26, 0.3);
       border-radius: 6px;
       position: relative;
       margin-bottom: 10px;
-      border: 1px solid #222;
+      border: 1px solid rgba(34, 34, 34, 0.5);
       overflow: hidden;
       flex-shrink: 0;
     }
@@ -289,11 +305,11 @@
     /* Tuning meter */
     .tuning-meter {
       height: 40px;
-      background: #1a1a1a;
+      background: rgba(26, 26, 26, 0.3);
       border-radius: 6px;
       position: relative;
       margin-bottom: 10px;
-      border: 1px solid #222;
+      border: 1px solid rgba(34, 34, 34, 0.5);
       overflow: hidden;
       flex-shrink: 0;
     }
