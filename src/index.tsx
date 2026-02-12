@@ -442,7 +442,7 @@ app.get('/test-local', (c) => {
         {/* Date/Time Block - 140px */}
         <div class="datetime-container">
           <div class="datetime-block">
-            <div class="datetime-time" id="current-time">00:00:00</div>
+            <div class="datetime-time" id="current-time" style="font-family: 'Conthrax', sans-serif;">00:00:00</div>
             <div class="datetime-info">
               <div class="datetime-day" id="current-day">Monday</div>
               <div class="datetime-session">Session <span id="session-number">1</span></div>
@@ -1054,7 +1054,7 @@ app.get('/', (c) => {
         {/* Date/Time Block - 140px */}
         <div class="datetime-container">
           <div class="datetime-block">
-            <div class="datetime-time" id="current-time">00:00:00</div>
+            <div class="datetime-time" id="current-time" style="font-family: 'Conthrax', sans-serif;">00:00:00</div>
             <div class="datetime-info">
               <div class="datetime-day" id="current-day">Monday</div>
               <div class="datetime-session">Session <span id="session-number">1</span></div>
