@@ -355,21 +355,42 @@ function initializeKeyboardShortcuts() {
         break
     }
     
-    // 🔒 FORCER LE FOCUS À REVENIR SUR SHRED UP
+    // Log if action was handled
     if (handled) {
-      // Blur activeElement SAUF si c'est un input/textarea légitime
-      if (
-        document.activeElement &&
-        document.activeElement !== document.body &&
-        document.activeElement.tagName !== 'INPUT' &&
-        document.activeElement.tagName !== 'TEXTAREA'
-      ) {
-        document.activeElement.blur()
-      }
-      document.body.focus()
-      console.log('🔒 Focus maintained on SHRED UP')
+      console.log('🔒 Keyboard shortcut handled')
     }
   }, true) // ✅ useCapture = true pour capturer AVANT l'iframe
+  
+  // 🔒 CRITICAL: Prevent native Space → button click on keyup
+  // Browser activates focused buttons on keyup Space, not just keydown
+  // We must preventDefault on BOTH keydown AND keyup
+  window.addEventListener('keyup', (e) => {
+    const target = e.target
+    
+    // Ignore if typing in input/textarea
+    if (target && target.ownerDocument === document) {
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return
+      }
+    }
+    
+    // Prevent native button activation for ALL keyboard shortcuts
+    switch(e.code) {
+      case 'Space':
+      case 'ArrowLeft':
+      case 'Equal':
+      case 'NumpadAdd':
+      case 'ArrowUp':
+      case 'Minus':
+      case 'NumpadSubtract':
+      case 'ArrowDown':
+      case 'NumpadMultiply':
+        e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
+        break
+    }
+  }, true) // ✅ useCapture = true
   
   // 🔒 SOLUTION 2: Forcer le focus à revenir après un clic dans l'iframe
   metronomeIframe.addEventListener('load', () => {

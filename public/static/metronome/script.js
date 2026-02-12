@@ -1702,19 +1702,6 @@ window.addEventListener('message', (event) => {
     
     console.log('📨 Message received from parent:', event.data);
     
-    // 🔒 CRITICAL: Blur activeElement in iframe to prevent Space → button click
-    // This prevents visual button activation when keyboard shortcuts are used
-    if (
-        document.activeElement &&
-        document.activeElement !== document.body &&
-        document.activeElement.tagName !== 'INPUT' &&
-        document.activeElement.tagName !== 'TEXTAREA'
-    ) {
-        console.log('🔓 Blurring activeElement in iframe:', document.activeElement.tagName, document.activeElement.className);
-        document.activeElement.blur();
-        document.body.focus();
-    }
-    
     switch (action) {
         case 'TOGGLE_PLAY':
             const playBtn = document.querySelector('.play-btn');
