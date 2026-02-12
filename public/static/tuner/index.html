@@ -177,10 +177,8 @@
     
     .toggle-btn.active .toggle-label.on {
       opacity: 1;
-      text-shadow: 
-        0 0 8px rgba(255, 80, 80, 0.8),
-        0 0 16px rgba(255, 80, 80, 0.4),
-        0 0 24px rgba(255, 80, 80, 0.2);
+      color: #ff5050;
+      text-shadow: none;
     }
 
     .bars-row {
@@ -366,8 +364,9 @@
       transform: translate(-50%, -50%);
       width: 2px;
       height: 26px;
+      /* Color dynamically set by JavaScript based on cents */
       background: linear-gradient(180deg, transparent 0%, #888 30%, #888 70%, transparent 100%);
-      transition: left 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: left 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, filter 0.2s ease;
       z-index: 10;
     }
     .meter-needle::before {
@@ -381,6 +380,7 @@
       border-left: 3px solid transparent;
       border-right: 3px solid transparent;
       border-top: 5px solid #888;
+      transition: border-top-color 0.2s ease;
     }
     .meter-labels {
       position: absolute;
@@ -571,11 +571,13 @@
     function getNoteColorAndGlow(cents) {
       const absCents = Math.abs(cents);
       
-      // Pure white with glow for perfect tuning (±2 cents)
+      // Pure white with subtle glow for perfect tuning (±2 cents)
+      // Original glow: 0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.4)
+      // Reduced by 70%: multiply alpha by 0.3
       if (absCents <= 2) {
         return {
           color: 'rgba(255, 255, 255, 1)',
-          textShadow: '0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.4)'
+          textShadow: '0 0 20px rgba(255, 255, 255, 0.24), 0 0 40px rgba(255, 255, 255, 0.12)'
         };
       }
       
@@ -703,12 +705,63 @@
       drawCentsLine();
     }
     
-    // Update needle position
+    // Update needle position and color
     function updateNeedle() {
       // Map cents (-50 to +50) to position (0% to 100%)
       const normalizedCents = (currentCents + 50) / 100; // 0 to 1
       const position = normalizedCents * 100;
       needleEl.style.left = `${position}%`;
+      
+      // Apply same color gradient as note overlay
+      const absCents = Math.abs(currentCents);
+      
+      if (absCents <= 2) {
+        // White needle at perfect tuning
+        needleEl.style.background = 'linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.9) 30%, rgba(255, 255, 255, 0.9) 70%, transparent 100%)';
+        needleEl.style.filter = 'none';
+      } else if (absCents <= 12) {
+        // Gradient from white to gray (same as note overlay)
+        const gradPosition = ((absCents - 2) / 10) * 100;
+        const gradientStops = [
+          { pos: 0,   rgb: [255, 255, 255] },
+          { pos: 10,  rgb: [236, 236, 236] },
+          { pos: 20,  rgb: [212, 212, 212] },
+          { pos: 30,  rgb: [184, 184, 184] },
+          { pos: 40,  rgb: [157, 157, 157] },
+          { pos: 50,  rgb: [131, 131, 131] },
+          { pos: 60,  rgb: [107, 107, 107] },
+          { pos: 70,  rgb: [85,  85,  85]  },
+          { pos: 80,  rgb: [66,  66,  66]  },
+          { pos: 90,  rgb: [50,  50,  50]  },
+          { pos: 100, rgb: [136, 136, 136] }
+        ];
+        
+        let lowerStop = gradientStops[0];
+        let upperStop = gradientStops[gradientStops.length - 1];
+        
+        for (let i = 0; i < gradientStops.length - 1; i++) {
+          if (gradPosition >= gradientStops[i].pos && gradPosition <= gradientStops[i + 1].pos) {
+            lowerStop = gradientStops[i];
+            upperStop = gradientStops[i + 1];
+            break;
+          }
+        }
+        
+        const range = upperStop.pos - lowerStop.pos;
+        const ratio = (gradPosition - lowerStop.pos) / range;
+        
+        const r = Math.round(lowerStop.rgb[0] + (upperStop.rgb[0] - lowerStop.rgb[0]) * ratio);
+        const g = Math.round(lowerStop.rgb[1] + (upperStop.rgb[1] - lowerStop.rgb[1]) * ratio);
+        const b = Math.round(lowerStop.rgb[2] + (upperStop.rgb[2] - lowerStop.rgb[2]) * ratio);
+        
+        const needleColor = `rgb(${r}, ${g}, ${b})`;
+        needleEl.style.background = `linear-gradient(180deg, transparent 0%, ${needleColor} 30%, ${needleColor} 70%, transparent 100%)`;
+        needleEl.style.filter = 'none';
+      } else {
+        // Default gray needle
+        needleEl.style.background = 'linear-gradient(180deg, transparent 0%, #888 30%, #888 70%, transparent 100%)';
+        needleEl.style.filter = 'none';
+      }
     }
     
     // Update display
