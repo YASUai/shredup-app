@@ -93,12 +93,19 @@
       display: none;
     }
 
-    /* ON/OFF Toggle Button - Neumorphic - BOTTOM RIGHT - VISIBLE */
-    .toggle-container {
+    /* Toggle Buttons Container - TWO TOGGLES */
+    .toggles-container {
       position: absolute;
-      bottom: 22px;
+      bottom: 42px;
       right: 12px;
       z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .toggle-container {
+      /* No absolute positioning here, managed by parent */
     }
     
     .toggle-btn {
@@ -241,10 +248,10 @@
       font-size: 52px;
       font-weight: 600;
       font-family: 'Conthrax', 'Orbitron', sans-serif;
-      color: #888;
       letter-spacing: 3px;
-      transition: all 0.3s ease;
+      transition: color 0.2s ease;
       line-height: 1;
+      /* Color dynamically set by JavaScript based on cents */
     }
     .v2-bottom {
       position: absolute;
@@ -390,12 +397,24 @@
 <body>
   <div class="container">
     <div class="sample">
-      <!-- ON/OFF Toggle -->
-      <div class="toggle-container">
-        <div class="toggle-btn" id="power-toggle">
-          <div class="toggle-knob"></div>
-          <span class="toggle-label on">ON</span>
-          <span class="toggle-label off">OFF</span>
+      <!-- TWO Toggle Buttons - BEND and ON/OFF -->
+      <div class="toggles-container">
+        <!-- BEND Toggle (top) -->
+        <div class="toggle-container">
+          <div class="toggle-btn" id="bend-toggle">
+            <div class="toggle-knob"></div>
+            <span class="toggle-label on">BEND</span>
+            <span class="toggle-label off">BEND</span>
+          </div>
+        </div>
+        
+        <!-- ON/OFF Toggle (bottom) -->
+        <div class="toggle-container">
+          <div class="toggle-btn" id="power-toggle">
+            <div class="toggle-knob"></div>
+            <span class="toggle-label on">ON</span>
+            <span class="toggle-label off">OFF</span>
+          </div>
         </div>
       </div>
 
@@ -522,6 +541,7 @@
     const centsInfoEl = document.getElementById('cents-info');
     const needleEl = document.getElementById('meter-needle');
     const powerToggle = document.getElementById('power-toggle');
+    const bendToggle = document.getElementById('bend-toggle');
     const bars = [];
     const hexes = [];
     
@@ -531,9 +551,64 @@
     const centsHistory = [];
     const maxCentsHistory = 120;
     
+    let bendMode = false; // BEND toggle state
+    
     for (let i = 0; i < 7; i++) {
       bars.push(document.getElementById(`bar-${i}`));
       hexes.push(document.getElementById(`hex-${i}`));
+    }
+    
+    // Calculate note color based on cents (like metronome slider gradient)
+    // White at center (±2 cents), gradient to gray at extremes
+    function getNoteColor(cents) {
+      // Keep white pure for ±2 cents
+      const absCents = Math.abs(cents);
+      
+      if (absCents <= 2) {
+        return 'rgb(255, 255, 255)'; // Pure white
+      }
+      
+      // Map cents (2-50) to gradient position (0-100%)
+      // Using metronome slider gradient (inverted: white at top)
+      const position = Math.min(100, ((absCents - 2) / 48) * 100); // 0-100%
+      
+      // Gradient from white to dark gray (metronome slider inverted)
+      const gradientStops = [
+        { pos: 0,   rgb: [255, 255, 255] },  // White (center)
+        { pos: 6,   rgb: [236, 236, 236] },
+        { pos: 12,  rgb: [212, 212, 212] },
+        { pos: 20,  rgb: [184, 184, 184] },
+        { pos: 30,  rgb: [157, 157, 157] },
+        { pos: 40,  rgb: [131, 131, 131] },
+        { pos: 50,  rgb: [107, 107, 107] },
+        { pos: 60,  rgb: [85,  85,  85]  },
+        { pos: 70,  rgb: [66,  66,  66]  },
+        { pos: 80,  rgb: [50,  50,  50]  },
+        { pos: 90,  rgb: [37,  37,  37]  },
+        { pos: 100, rgb: [26,  26,  26]  }   // Dark gray (extreme)
+      ];
+      
+      // Find the two stops to interpolate between
+      let lowerStop = gradientStops[0];
+      let upperStop = gradientStops[gradientStops.length - 1];
+      
+      for (let i = 0; i < gradientStops.length - 1; i++) {
+        if (position >= gradientStops[i].pos && position <= gradientStops[i + 1].pos) {
+          lowerStop = gradientStops[i];
+          upperStop = gradientStops[i + 1];
+          break;
+        }
+      }
+      
+      // Interpolate RGB values
+      const range = upperStop.pos - lowerStop.pos;
+      const ratio = (position - lowerStop.pos) / range;
+      
+      const r = Math.round(lowerStop.rgb[0] + (upperStop.rgb[0] - lowerStop.rgb[0]) * ratio);
+      const g = Math.round(lowerStop.rgb[1] + (upperStop.rgb[1] - lowerStop.rgb[1]) * ratio);
+      const b = Math.round(lowerStop.rgb[2] + (upperStop.rgb[2] - lowerStop.rgb[2]) * ratio);
+      
+      return `rgb(${r}, ${g}, ${b})`;
     }
     
     // Generate oscillating cents value
@@ -628,6 +703,7 @@
       currentCents = generateCents();
       
       noteEl.textContent = note.name;
+      noteEl.style.color = getNoteColor(currentCents); // Apply gradient color
       freqEl.textContent = `${note.freq.toFixed(2)} HZ`;
       
       const centsSign = currentCents >= 0 ? '+' : '';
@@ -673,6 +749,19 @@
           cancelAnimationFrame(animationFrame);
           animationFrame = null;
         }
+      }
+    });
+    
+    // Toggle BEND mode
+    bendToggle.addEventListener('click', () => {
+      bendMode = !bendMode;
+      
+      if (bendMode) {
+        bendToggle.classList.add('active');
+        console.log('🎸 BEND mode activated');
+      } else {
+        bendToggle.classList.remove('active');
+        console.log('🎸 BEND mode deactivated');
       }
     });
     
