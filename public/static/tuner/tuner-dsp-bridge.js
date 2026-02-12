@@ -52,12 +52,29 @@ class TunerDSPBridge {
                 throw new Error('AudioEngine not loaded');
             }
             
-            // Create and initialize audio engine
-            this.audioEngine = new AudioEngine();
-            const initSuccess = await this.audioEngine.init();
+            // CRITICAL FIX: Use global shared instance to avoid multiple consumers
+            // Check if global instance already exists
+            if (typeof window !== 'undefined' && window._audioEngineInstance) {
+                console.log('[TUNER-DSP] Using existing AudioEngine instance (shared)');
+                this.audioEngine = window._audioEngineInstance;
+            } else {
+                // Create new instance and make it global
+                console.log('[TUNER-DSP] Creating new AudioEngine instance (global)');
+                this.audioEngine = new AudioEngine();
+                
+                // Store as global instance
+                if (typeof window !== 'undefined') {
+                    window._audioEngineInstance = this.audioEngine;
+                }
+            }
             
-            if (!initSuccess) {
-                throw new Error('Audio engine initialization failed');
+            // Initialize if not already initialized
+            if (!this.audioEngine.isInitialized) {
+                const initSuccess = await this.audioEngine.init();
+                
+                if (!initSuccess) {
+                    throw new Error('Audio engine initialization failed');
+                }
             }
             
             this.isInitialized = true;
@@ -88,13 +105,20 @@ class TunerDSPBridge {
         try {
             console.log('[TUNER-DSP] Starting audio capture...');
             
-            // Start audio engine
-            const startSuccess = await this.audioEngine.start();
-            if (!startSuccess) {
-                throw new Error('Audio engine start failed');
+            // CRITICAL FIX: Only start audio engine if not already running
+            // This prevents multiple pitch consumers from competing
+            if (!this.audioEngine.isRunning) {
+                const startSuccess = await this.audioEngine.start();
+                if (!startSuccess) {
+                    throw new Error('Audio engine start failed');
+                }
+                console.log('[TUNER-DSP] ✓ Started AudioEngine (new)');
+            } else {
+                console.log('[TUNER-DSP] ✓ AudioEngine already running (shared)');
             }
             
-            // Start pitch consumer (reads from pitchDetection)
+            // Start our own consumer for tuner UI updates
+            // This ONLY reads window._pitchDetectionRaw (no processFrames() call)
             this.startPitchConsumer();
             
             this.isRunning = true;
