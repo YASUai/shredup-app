@@ -524,6 +524,19 @@
     </div>
   </div>
 
+  <!-- Load audio engine modules for DSP integration -->
+  <script src="/static/audio-engine/debug-logger.js"></script>
+  <script src="/static/audio-engine/audio-capture.js"></script>
+  <script src="/static/audio-engine/metronome-adapter.js"></script>
+  <script src="/static/audio-engine/frame-buffer.js"></script>
+  <script src="/static/audio-engine/timing-sync.js"></script>
+  <script src="/static/audio-engine/dsp/spectral-analyzer.js"></script>
+  <script src="/static/audio-engine/dsp/low-frequency-specialist.js"></script>
+  <script src="/static/audio-engine/dsp/octave-consistency-stabilizer.js"></script>
+  <script src="/static/audio-engine/dsp/pitch-detection.js"></script>
+  <script src="/static/audio-engine/audio-engine-phase3.js"></script>
+  <script src="/static/tuner/tuner-dsp-bridge.js"></script>
+
   <script>
     // 7-string guitar tuning (A1→D4)
     const NOTES = [
@@ -538,6 +551,7 @@
     
     let currentNoteIndex = 0; // Start with A1
     let tunerRunning = false;
+    let dspInitialized = false;
     let animationFrame = null;
     let currentCents = -4;
     
@@ -627,11 +641,44 @@
       };
     }
     
-    // Generate oscillating cents value
-    function generateCents() {
-      const base = Math.sin(Date.now() / 1000) * 10; // -10 to +10
-      const noise = (Math.random() - 0.5) * 4; // ±2 noise
-      return Math.round(base + noise);
+    // Get cents from DSP (real pitch detection)
+    function getCurrentCents() {
+      if (!tunerDSP || !tunerDSP.isRunning) {
+        // Mock data when DSP is not running (for testing UI)
+        const base = Math.sin(Date.now() / 1000) * 10; // -10 to +10
+        const noise = (Math.random() - 0.5) * 4; // ±2 noise
+        return Math.round(base + noise);
+      }
+      
+      // Real DSP data
+      const cents = tunerDSP.getCentOffset();
+      return cents !== null ? cents : 0;
+    }
+    
+    // Get current note from DSP
+    function getCurrentNoteFromDSP() {
+      if (!tunerDSP || !tunerDSP.isRunning) {
+        // Mock data: cycle through notes when DSP not running
+        return NOTES[currentNoteIndex];
+      }
+      
+      // Real DSP data
+      const detection = tunerDSP.getLastDetection();
+      
+      if (detection.note) {
+        // Find matching note in NOTES array
+        const noteData = NOTES.find(n => n.name === detection.note);
+        if (noteData) {
+          return {
+            name: detection.note,
+            freq: detection.frequency,
+            string: detection.string
+          };
+        }
+      }
+      
+      // Return last valid note if no current detection
+      return NOTES[currentNoteIndex];
     }
     
     // Update bars heights (subtle animation)
@@ -766,8 +813,15 @@
     
     // Update display
     function updateDisplay() {
-      const note = NOTES[currentNoteIndex];
-      currentCents = generateCents();
+      // Get real DSP data
+      const note = getCurrentNoteFromDSP();
+      currentCents = getCurrentCents();
+      
+      // Update current note index (for bar animation)
+      const noteIndex = NOTES.findIndex(n => n.name === note.name);
+      if (noteIndex !== -1) {
+        currentNoteIndex = noteIndex;
+      }
       
       noteEl.textContent = note.name;
       
@@ -807,16 +861,52 @@
     }
     
     // Toggle power
-    powerToggle.addEventListener('click', () => {
+    powerToggle.addEventListener('click', async () => {
       tunerRunning = !tunerRunning;
       
       if (tunerRunning) {
         powerToggle.classList.add('active');
+        
+        // Initialize DSP if needed
+        if (!dspInitialized) {
+          console.log('[TUNER] Initializing DSP...');
+          const initSuccess = await tunerDSP.init();
+          if (initSuccess) {
+            dspInitialized = true;
+            console.log('[TUNER] ✓ DSP initialized');
+          } else {
+            console.error('[TUNER] ✗ DSP initialization failed');
+            // Continue with mock data
+          }
+        }
+        
+        // Start DSP
+        if (dspInitialized) {
+          const startSuccess = await tunerDSP.start();
+          if (startSuccess) {
+            console.log('[TUNER] ✓ DSP started (real pitch detection)');
+          } else {
+            console.error('[TUNER] ✗ DSP start failed (using mock data)');
+          }
+        }
+        
+        // Start UI animation
         animate();
-        cycleNotes();
+        
+        // Only cycle notes if DSP is not running (mock mode)
+        if (!tunerDSP || !tunerDSP.isRunning) {
+          cycleNotes();
+        }
       } else {
         powerToggle.classList.remove('active');
         
+        // Stop DSP
+        if (tunerDSP && tunerDSP.isRunning) {
+          await tunerDSP.stop();
+          console.log('[TUNER] ✓ DSP stopped');
+        }
+        
+        // Stop UI animation
         if (animationFrame) {
           cancelAnimationFrame(animationFrame);
           animationFrame = null;
