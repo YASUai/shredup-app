@@ -1269,6 +1269,10 @@ function initBPMClick() {
             
             input.remove();
             bpmDisplay.style.display = 'block';
+            
+            // ✅ CRITICAL FIX: Restore focus to body to re-enable keyboard shortcuts
+            document.body.focus();
+            console.log('🔓 Focus restored to body after BPM input');
         };
         
         input.addEventListener('blur', validateAndUpdate);
@@ -1278,6 +1282,10 @@ function initBPMClick() {
             } else if (e.key === 'Escape') {
                 input.remove();
                 bpmDisplay.style.display = 'block';
+                
+                // ✅ CRITICAL FIX: Restore focus to body
+                document.body.focus();
+                console.log('🔓 Focus restored to body after ESC');
             }
         });
     });
@@ -1310,7 +1318,8 @@ function initTempoButtons() {
     const tapBtn = document.querySelector('.tap-btn');
     
     if (plusBtn) {
-        plusBtn.addEventListener('mousedown', async () => {
+        plusBtn.addEventListener('mousedown', async (e) => {
+            e.preventDefault();  // Prevent button from taking focus
             await playUIClick();  // Son UI click
             
             // Ajouter classe .clicking pour feedback visuel
@@ -1325,11 +1334,15 @@ function initTempoButtons() {
             if (isPlaying) {
                 restartMetronome();
             }
+            
+            // ✅ CRITICAL FIX: Keep focus on body
+            document.body.focus();
         });
     }
     
     if (minusBtn) {
-        minusBtn.addEventListener('mousedown', async () => {
+        minusBtn.addEventListener('mousedown', async (e) => {
+            e.preventDefault();  // Prevent button from taking focus
             await playUIClick();  // Son UI click
             
             // Ajouter classe .clicking pour feedback visuel
@@ -1344,6 +1357,9 @@ function initTempoButtons() {
             if (isPlaying) {
                 restartMetronome();
             }
+            
+            // ✅ CRITICAL FIX: Keep focus on body
+            document.body.focus();
         });
     }
     
@@ -1351,6 +1367,7 @@ function initTempoButtons() {
         console.log('[TAP DEBUG] Bouton TAP trouvé, ajout listener mousedown');
         
         tapBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();  // Prevent button from taking focus
             console.log('[TAP DEBUG] ===== MOUSEDOWN DÉCLENCHÉ =====');
             console.log('[TAP DEBUG] Event type:', e.type);
             console.log('[TAP DEBUG] Event target:', e.target);
@@ -1371,6 +1388,9 @@ function initTempoButtons() {
                 console.warn('[TAP DEBUG] Son indisponible:', err);
             });
             
+            // ✅ CRITICAL FIX: Keep focus on body
+            document.body.focus();
+            
             console.log('[TAP DEBUG] ===== MOUSEDOWN TERMINÉ (instant) =====');
         });
         
@@ -1389,7 +1409,8 @@ function initMaskingButton() {
     
     maskingField.style.cursor = 'pointer';
     
-    maskingField.addEventListener('click', () => {
+    maskingField.addEventListener('click', (e) => {
+        e.preventDefault();  // Prevent button from taking focus
         isMaskingOn = !isMaskingOn;
         playUIClick();
         
@@ -1399,6 +1420,9 @@ function initMaskingButton() {
         
         updateMaskingLED(isMaskingOn);
         updateMaskingText(isMaskingOn);
+        
+        // ✅ CRITICAL FIX: Keep focus on body
+        document.body.focus();
     });
 }
 
@@ -1435,12 +1459,16 @@ function initUniversalUIClick() {
     selectors.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(element => {
-            element.addEventListener('click', () => {
+            element.addEventListener('click', (e) => {
+                e.preventDefault();  // Prevent element from taking focus
                 playUIClick();
                 
                 // Add visual feedback with .clicking class
                 element.classList.add('clicking');
                 setTimeout(() => element.classList.remove('clicking'), 150);
+                
+                // ✅ CRITICAL FIX: Keep focus on body
+                document.body.focus();
             });
         });
     });
@@ -1455,7 +1483,8 @@ function initPlaybackControls() {
     const stopBtn = document.querySelector('.stop-btn');
     
     if (playBtn) {
-        playBtn.addEventListener('click', () => {
+        playBtn.addEventListener('click', (e) => {
+            e.preventDefault();  // Prevent button from taking focus
             if (!isPlaying) {
                 // Pas de son UI pour PLAY
                 startMetronome();
@@ -1465,11 +1494,15 @@ function initPlaybackControls() {
                 stopMetronome();
                 playBtn.classList.remove('active');  // Retire la classe active
             }
+            
+            // ✅ CRITICAL FIX: Keep focus on body
+            document.body.focus();
         });
     }
     
     if (stopBtn) {
-        stopBtn.addEventListener('click', () => {
+        stopBtn.addEventListener('click', (e) => {
+            e.preventDefault();  // Prevent button from taking focus
             if (isPlaying) {
                 playUIClick();  // Son de click UI
                 
@@ -1480,6 +1513,9 @@ function initPlaybackControls() {
                 stopMetronome();
                 if (playBtn) playBtn.classList.remove('active');  // Retire active du bouton PLAY
             }
+            
+            // ✅ CRITICAL FIX: Keep focus on body
+            document.body.focus();
         });
     }
 }
@@ -1957,6 +1993,28 @@ window.addEventListener('keydown', (event) => {
 });
 
 console.log('✅ PostMessage listener initialized for keyboard shortcuts');
+
+// ============================================================================
+// FOCUS MANAGEMENT - CRITICAL FIX FOR KEYBOARD SHORTCUTS
+// ============================================================================
+// 🔒 Force focus on body at page load to enable keyboard shortcuts
+document.body.setAttribute('tabindex', '-1'); // Allow body to receive focus
+document.body.focus();
+console.log('🔓 Initial focus set on body for keyboard shortcuts');
+
+// 🔒 Restore focus to body after ANY click (global safety net)
+document.addEventListener('click', (e) => {
+    // Skip if clicking on an input/textarea (they need focus)
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+    }
+    
+    // After 50ms delay (let the click finish), restore focus to body
+    setTimeout(() => {
+        document.body.focus();
+        console.log('🔓 Focus restored to body after click');
+    }, 50);
+}, true); // useCapture = true
 
 // ============================================================================
 // SERVICE WORKER POUR PWA (Progressive Web App)
