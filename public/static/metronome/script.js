@@ -800,17 +800,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ensure all beat LEDs are OFF at startup
     updateBeatIndicators();
     
-    // 🔒 CRITICAL: Remove keyboard focusability from ALL buttons
+    // 🔒 CRITICAL: Remove focus from buttons after ANY click
     // All keyboard control is centralized in parent window
-    // Buttons must not receive focus to prevent CSS :focus/:active states
+    // Buttons must blur immediately to prevent CSS :focus/:active states
     document.querySelectorAll('button').forEach(btn => {
         btn.setAttribute('tabindex', '-1');
-        // Ensure button type is explicit
         if (!btn.hasAttribute('type')) {
             btn.setAttribute('type', 'button');
         }
+        
+        // Blur immediately after mousedown (before existing handlers)
+        btn.addEventListener('mousedown', (e) => {
+            setTimeout(() => {
+                e.target.blur();
+            }, 0);
+        }, true); // useCapture to run before other handlers
     });
-    console.log('🔒 All buttons set to tabindex="-1" (not keyboard-focusable)');
+    console.log('🔒 All buttons: tabindex="-1" + auto-blur on click');
 });
 
 // ═══════════════════════════════════════════════════════════════════
