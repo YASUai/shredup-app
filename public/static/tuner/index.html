@@ -7,7 +7,18 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>SHRED UP - Tuner V3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    @font-face {
+      font-family: 'Conthrax';
+      src: url('/static/metronome/fonts/conthrax-sb.woff2') format('woff2'),
+           url('/static/metronome/fonts/conthrax-sb.woff') format('woff');
+      font-weight: 600;
+      font-style: normal;
+      font-display: swap;
+    }
     * {
       margin: 0;
       padding: 0;
@@ -21,12 +32,16 @@
       color: #666;
       margin: 0;
       overflow: hidden;
+      height: 100vh;
     }
 
     .container {
       max-width: 100%;
       width: 100%;
-      padding: 20px;
+      height: 100%;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
     }
 
     .header {
@@ -38,9 +53,13 @@
     .sample {
       background: #1a1a1a;
       border-radius: 16px;
-      padding: 30px 30px;
+      padding: 20px;
       position: relative;
       border: 1px solid #222;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
     }
 
     .sample-label {
@@ -58,11 +77,11 @@
       display: none;
     }
 
-    /* ON/OFF Toggle Button - Neumorphic */
+    /* ON/OFF Toggle Button - Neumorphic - BOTTOM RIGHT */
     .toggle-container {
       position: absolute;
-      top: 20px;
-      right: 30px;
+      bottom: 20px;
+      right: 20px;
       z-index: 100;
     }
     
@@ -139,37 +158,39 @@
     .bars-row {
       display: flex;
       justify-content: center;
-      gap: 16px;
-      margin-bottom: 30px;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
     }
     .bar-item {
       text-align: center;
     }
     .bar {
-      width: 24px;
+      width: 20px;
       background: linear-gradient(180deg, #3a3a3a, #2a2a2a);
-      margin: 0 auto 8px;
+      margin: 0 auto 6px;
       transition: height 0.3s ease;
     }
     .bar-label {
-      font-size: 9px;
+      font-size: 8px;
       color: #555;
     }
 
     .hex-area {
       position: relative;
-      height: 280px;
+      height: 220px;
       background: #1a1a1a;
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      margin-bottom: 30px;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
     }
     .hex {
-      width: 60px;
-      height: 70px;
+      width: 50px;
+      height: 58px;
       position: relative;
       transition: all 0.3s ease;
     }
@@ -182,7 +203,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 10px;
       color: #555;
       transition: all 0.3s ease;
     }
@@ -201,11 +222,13 @@
       pointer-events: none;
     }
     .v2-note {
-      font-size: 96px;
-      font-weight: 100;
+      font-size: 72px;
+      font-weight: 600;
+      font-family: 'Conthrax', 'Orbitron', sans-serif;
       color: #888;
       letter-spacing: 4px;
       transition: all 0.3s ease;
+      line-height: 1;
     }
     .v2-bottom {
       position: absolute;
@@ -216,21 +239,22 @@
       pointer-events: none;
     }
     .v2-freq {
-      font-size: 18px;
+      font-size: 14px;
       color: #555;
-      letter-spacing: 4px;
+      letter-spacing: 3px;
       transition: all 0.3s ease;
     }
 
     /* Cents line visualization */
     .cents-line {
-      height: 80px;
+      height: 70px;
       background: #1a1a1a;
       border-radius: 8px;
       position: relative;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       border: 1px solid #222;
       overflow: hidden;
+      flex-shrink: 0;
     }
     .cents-line-graph {
       position: absolute;
@@ -250,9 +274,9 @@
     }
     .cents-info {
       position: absolute;
-      top: 8px;
-      left: 16px;
-      font-size: 11px;
+      top: 6px;
+      left: 12px;
+      font-size: 10px;
       color: #555;
       letter-spacing: 2px;
       text-transform: uppercase;
@@ -264,13 +288,14 @@
 
     /* Tuning meter */
     .tuning-meter {
-      height: 60px;
+      height: 50px;
       background: #1a1a1a;
       border-radius: 8px;
       position: relative;
-      margin-bottom: 30px;
+      margin-bottom: 15px;
       border: 1px solid #222;
       overflow: hidden;
+      flex-shrink: 0;
     }
     .meter-track {
       position: absolute;
@@ -309,8 +334,8 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 3px;
-      height: 40px;
+      width: 2px;
+      height: 32px;
       background: linear-gradient(180deg, transparent 0%, #888 30%, #888 70%, transparent 100%);
       transition: left 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 10;
@@ -318,24 +343,24 @@
     .meter-needle::before {
       content: '';
       position: absolute;
-      top: -6px;
+      top: -5px;
       left: 50%;
       transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-left: 5px solid transparent;
-      border-right: 5px solid transparent;
-      border-top: 8px solid #888;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 6px solid #888;
     }
     .meter-labels {
       position: absolute;
-      bottom: 8px;
+      bottom: 6px;
       left: 0;
       right: 0;
       display: flex;
       justify-content: space-between;
-      padding: 0 40px;
-      font-size: 9px;
+      padding: 0 35px;
+      font-size: 8px;
       color: #555;
       letter-spacing: 1px;
     }
@@ -422,7 +447,7 @@
 
       <!-- Cents line visualization -->
       <div class="cents-line">
-        <canvas id="cents-canvas" class="cents-line-graph" width="720" height="80"></canvas>
+        <canvas id="cents-canvas" class="cents-line-graph" width="720" height="70"></canvas>
         <div class="cents-line-track"></div>
         <div class="cents-info">
           STRING <span class="cents-value" id="string-info">1/7</span> · 
@@ -647,7 +672,7 @@
     function resizeCentsCanvas() {
       const rect = centsCanvas.parentElement.getBoundingClientRect();
       centsCanvas.width = rect.width;
-      centsCanvas.height = 80;
+      centsCanvas.height = 70;
       drawCentsLine();
     }
     
