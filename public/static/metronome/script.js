@@ -1712,159 +1712,71 @@ function updateBeatIndicators() {
 
 
 // ============================================================================
-// KEYBOARD SHORTCUTS VIA POSTMESSAGE (Communication from parent window)
+// EXPOSE GLOBAL API FOR PARENT WINDOW
 // ============================================================================
+// ✅ NEW ARCHITECTURE: Parent calls these functions directly (no postMessage)
+// This is cleaner and avoids all focus/iframe issues
 
-window.addEventListener('message', (event) => {
-    const { action, bpm: newBpm } = event.data;
-    
-    console.log('📨 Message received from parent:', event.data);
-    
-    switch (action) {
-        case 'TOGGLE_PLAY':
-            const playBtn = document.querySelector('.play-btn');
-            if (playBtn) {
-                playBtn.click();
-            }
-            break;
-            
-        // ✅ TAP depuis AltGr (SHRED UP) - COPIE EXACTE du listener ARROW LEFT
-        case 'TAP_CLICK':
-            console.log('🎯 TAP_CLICK reçu via AltGr (postMessage)');
-            console.log('[TAP_CLICK] AudioContext state AVANT:', audioContext?.state);
-            
-            // ✅ COPIE EXACTE du code ARROW LEFT
-            (async () => {
-                try {
-                    console.log('[TAP_CLICK] Appel playUIClick()...');
-                    await playUIClick();  // SON + activation AudioContext
-                    
-                    console.log('[TAP_CLICK] playUIClick() terminé');
-                    console.log('[TAP_CLICK] AudioContext state APRÈS:', audioContext?.state);
-                    
-                    // ANIMATION
-                    const tapBtnClick = document.querySelector('.tap-btn');
-                    if (tapBtnClick) {
-                        console.log('[TAP_CLICK] Ajout classe tapping');
-                        tapBtnClick.classList.add('tapping');
-                        setTimeout(() => {
-                            tapBtnClick.classList.remove('tapping');
-                            console.log('[TAP_CLICK] Retrait classe tapping');
-                        }, 150);
-                    } else {
-                        console.error('[TAP_CLICK] ❌ Bouton TAP non trouvé');
-                    }
-                    
-                    // LOGIQUE TAP
-                    if (typeof handleTapLogic === 'function') {
-                        console.log('[TAP_CLICK] Appel handleTapLogic()...');
-                        handleTapLogic();
-                        console.log('[TAP_CLICK] handleTapLogic() terminé');
-                    } else {
-                        console.error('[TAP_CLICK] ❌ handleTapLogic non disponible');
-                    }
-                    
-                    console.log('✅ TAP_CLICK completed');
-                } catch (error) {
-                    console.error('❌ [TAP_CLICK] Erreur:', error);
-                }
-            })();
-            break;
-            
-        case 'SET_BPM':
-            // Pour CTRL (TAP tempo) - Déclenche la fonction TAP
-            const tapBtn = document.querySelector('.tap-btn');
-            if (tapBtn && typeof window.handleTapTempo === 'function') {
-                // ✅ NE PAS jouer playUIClick() ici - le bouton TAP le fera
-                // playUIClick();  ← RETIRÉ pour éviter double son
-                
-                tapBtn.classList.add('tapping');
-                setTimeout(() => tapBtn.classList.remove('tapping'), 150);
-                
-                // Appeler la fonction TAP tempo
-                window.handleTapTempo();
-                
-                console.log('🎯 TAP tempo triggered via CTRL (postMessage)');
-            } else if (newBpm && typeof newBpm === 'number') {
-                // Fallback : mettre à jour le BPM directement si fourni
-                bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, newBpm));
-                updateBPMDisplay(bpm);
-                const percentage = bpmToSliderPosition(bpm);
-                updateVerticalSliderPosition(percentage);
-                
-                if (isPlaying) {
-                    restartMetronome();
-                }
-                
-                console.log(`🎯 BPM set to ${bpm} via postMessage`);
-            }
-            break;
-            
-        case 'BPM_UP':
-            const plusBtn = document.querySelector('.plus-btn');
-            if (plusBtn) {
-                // ✅ ASYNC IIFE pour activer AudioContext au premier clic clavier
-                (async () => {
-                    await playUIClick();  // SON + activation AudioContext
-                    
-                    plusBtn.classList.add('clicking');  // ANIMATION
-                    setTimeout(() => plusBtn.classList.remove('clicking'), 150);
-                    
-                    if (bpm < MAX_BPM) {
-                        bpm++;
-                        updateBPMDisplay(bpm);
-                        const percentage = bpmToSliderPosition(bpm);
-                        updateVerticalSliderPosition(percentage);
-                        
-                        if (isPlaying) {
-                            restartMetronome();
-                        }
-                        
-                        console.log(`⬆️ BPM increased to ${bpm}`);
-                    }
-                })();
-            }
-            break;
-            
-        case 'BPM_DOWN':
-            const minusBtn = document.querySelector('.minus-btn');
-            if (minusBtn) {
-                // ✅ ASYNC IIFE pour activer AudioContext au premier clic clavier
-                (async () => {
-                    await playUIClick();  // SON + activation AudioContext
-                    
-                    minusBtn.classList.add('clicking');  // ANIMATION
-                    setTimeout(() => minusBtn.classList.remove('clicking'), 150);
-                    
-                    if (bpm > MIN_BPM) {
-                        bpm--;
-                        updateBPMDisplay(bpm);
-                        const percentage = bpmToSliderPosition(bpm);
-                        updateVerticalSliderPosition(percentage);
-                        
-                        if (isPlaying) {
-                            restartMetronome();
-                        }
-                        
-                        console.log(`⬇️ BPM decreased to ${bpm}`);
-                    }
-                })();
-            }
-            break;
-            
-        default:
-            console.warn('⚠️ Unknown action:', action);
+/**
+ * Toggle Play/Stop
+ */
+window.metronomeTogglePlay = function() {
+    const playBtn = document.querySelector('.play-btn');
+    if (!playBtn) {
+        console.warn('⚠️ Play button not found');
+        return;
     }
-});
+    
+    console.log('🎵 metronomeTogglePlay() called from parent');
+    playBtn.click();
+};
 
-// ============================================================================
-// DIRECT KEYBOARD SHORTCUTS (Native keyboard events)
-// ============================================================================
-// KEYBOARD SHORTCUTS - iframe receives ALL events via postMessage from parent
-// ============================================================================
-// ⚠️ NO direct keyboard listener in iframe - parent handles ALL keyboard events
-// and forwards them via postMessage to avoid focus issues
-console.log('✅ Keyboard shortcuts handled via postMessage only (no direct listener in iframe)');
+/**
+ * Handle TAP tempo
+ */
+window.metronomeTap = function() {
+    console.log('👆 metronomeTap() called from parent');
+    
+    if (typeof handleTapLogic === 'function') {
+        handleTapLogic();
+    }
+    
+    // Visual feedback
+    const tapBtn = document.querySelector('.tap-btn');
+    if (tapBtn) {
+        tapBtn.classList.add('tapping');
+        setTimeout(() => tapBtn.classList.remove('tapping'), 150);
+    }
+    
+    // Audio feedback
+    playUIClick();
+};
+
+/**
+ * Increase BPM by 1
+ */
+window.metronomeBPMUp = function() {
+    console.log('⬆️ metronomeBPMUp() called from parent');
+    
+    const plusBtn = document.querySelector('.plus-btn');
+    if (plusBtn) {
+        plusBtn.click();
+    }
+};
+
+/**
+ * Decrease BPM by 1
+ */
+window.metronomeBPMDown = function() {
+    console.log('⬇️ metronomeBPMDown() called from parent');
+    
+    const minusBtn = document.querySelector('.minus-btn');
+    if (minusBtn) {
+        minusBtn.click();
+    }
+};
+
+console.log('✅ Metronome API exposed on window: metronomeTogglePlay, metronomeTap, metronomeBPMUp, metronomeBPMDown');
 
 // ============================================================================
 // SERVICE WORKER POUR PWA (Progressive Web App)

@@ -695,103 +695,10 @@ app.get('/metronome-scaled', (c) => {
     </div>
 
     <script>
-        // ✅ UN SEUL listener - SANS await, juste forward
-        window.addEventListener('message', (event) => {
-            console.log('[PROXY] Message reçu:', event.data);
-            
-            const metronomeIframe = document.querySelector('.metronome-iframe');
-            
-            // Si le message vient du parent (SHRED UP) → forward vers iframe métronome
-            if (event.source === window.parent && metronomeIframe?.contentWindow) {
-                console.log('[PROXY] Forward vers métronome:', event.data);
-                // ✅ CRITIQUE: Pas de await ici, juste forward immédiatement
-                metronomeIframe.contentWindow.postMessage(event.data, '*');
-            }
-            // Si le message vient de l'iframe métronome → forward vers parent
-            else if (event.source === metronomeIframe?.contentWindow && window.parent !== window) {
-                console.log('[PROXY] Forward vers parent:', event.data);
-                window.parent.postMessage(event.data, '*');
-            }
-        });
-
-        // 🔒 ATTENDRE QUE L'IFRAME SOIT CHARGÉE avant d'ajouter le listener keydown
-        window.addEventListener('DOMContentLoaded', () => {
-            console.log('[PROXY DEBUG] DOMContentLoaded - Setting up keyboard listener');
-            
-            const metronomeIframe = document.querySelector('.metronome-iframe');
-            if (!metronomeIframe) {
-                console.error('[PROXY DEBUG] ❌ Iframe .metronome-iframe NOT FOUND in DOM!');
-                return;
-            }
-            
-            console.log('[PROXY DEBUG] ✅ Iframe found:', metronomeIframe);
-
-            // 🔒 Capturer les événements clavier DANS LE PROXY
-            // Et les forward vers l'iframe métronome via postMessage
-            window.addEventListener('keydown', (e) => {
-                // ⚠️ CRITICAL DEBUG: Log EVERY keydown at parent level
-                console.log('🔑 PARENT KEYDOWN:', e.code, 'Target:', e.target.tagName, 'Timestamp:', Date.now());
-                console.log('[PROXY DEBUG] Keydown captured:', e.code, 'target:', e.target.tagName);
-                
-                if (!metronomeIframe?.contentWindow) {
-                    console.log('[PROXY DEBUG] ❌ Iframe contentWindow not available');
-                    return;
-                }
-
-                let action = null;
-                let shouldPreventDefault = false;
-
-                switch(e.code) {
-                    case 'Space':
-                        shouldPreventDefault = true;
-                        action = 'TOGGLE_PLAY';
-                        console.log('[PROXY] ⌨️ SPACE → TOGGLE_PLAY');
-                        break;
-                        
-                    case 'ArrowLeft':
-                        shouldPreventDefault = true;
-                        action = 'TAP_CLICK';
-                        console.log('[PROXY] ⌨️ ArrowLeft → TAP_CLICK');
-                        break;
-                        
-                    case 'Equal':
-                    case 'NumpadAdd':
-                        shouldPreventDefault = true;
-                        action = 'BPM_UP';
-                        console.log('[PROXY] ⌨️ + → BPM_UP');
-                        break;
-                        
-                    case 'Minus':
-                    case 'NumpadSubtract':
-                        shouldPreventDefault = true;
-                        action = 'BPM_DOWN';
-                        console.log('[PROXY] ⌨️ - → BPM_DOWN');
-                        break;
-                        
-                    case 'ArrowUp':
-                    case 'ArrowDown':
-                        action = (e.code === 'ArrowUp') ? 'BPM_UP' : 'BPM_DOWN';
-                        console.log('[PROXY] ⌨️ Arrow (passthrough) → ' + action);
-                        break;
-                }
-
-                if (shouldPreventDefault) {
-                    console.log('[PROXY DEBUG] Preventing default for', e.code);
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                }
-
-                if (action) {
-                    console.log('[PROXY DEBUG] ✅ Sending postMessage:', action);
-                    metronomeIframe.contentWindow.postMessage({ action }, '*');
-                } else {
-                    console.log('[PROXY DEBUG] ⚠️ No action for', e.code);
-                }
-            }, true); // useCapture = true
-            
-            console.log('[PROXY DEBUG] ✅ Keyboard listener attached with useCapture=true');
-        });
+        // ✅ NO keyboard listeners needed here
+        // Parent window (app.js) handles ALL keyboard shortcuts
+        // and calls iframe functions directly (metronomeTogglePlay, metronomeTap, etc.)
+        console.log('✅ /metronome-scaled loaded - keyboard shortcuts handled by parent app.js');
     </script>
 </body>
 </html>`)
@@ -853,103 +760,10 @@ app.get('/metronome-scaled-test', (c) => {
     </div>
 
     <script>
-        // ✅ UN SEUL listener - SANS await, juste forward
-        window.addEventListener('message', (event) => {
-            console.log('[PROXY] Message reçu:', event.data);
-            
-            const metronomeIframe = document.querySelector('.metronome-iframe');
-            
-            // Si le message vient du parent (SHRED UP) → forward vers iframe métronome
-            if (event.source === window.parent && metronomeIframe?.contentWindow) {
-                console.log('[PROXY] Forward vers métronome:', event.data);
-                // ✅ CRITIQUE: Pas de await ici, juste forward immédiatement
-                metronomeIframe.contentWindow.postMessage(event.data, '*');
-            }
-            // Si le message vient de l'iframe métronome → forward vers parent
-            else if (event.source === metronomeIframe?.contentWindow && window.parent !== window) {
-                console.log('[PROXY] Forward vers parent:', event.data);
-                window.parent.postMessage(event.data, '*');
-            }
-        });
-
-        // 🔒 ATTENDRE QUE L'IFRAME SOIT CHARGÉE avant d'ajouter le listener keydown
-        window.addEventListener('DOMContentLoaded', () => {
-            console.log('[PROXY DEBUG] DOMContentLoaded - Setting up keyboard listener');
-            
-            const metronomeIframe = document.querySelector('.metronome-iframe');
-            if (!metronomeIframe) {
-                console.error('[PROXY DEBUG] ❌ Iframe .metronome-iframe NOT FOUND in DOM!');
-                return;
-            }
-            
-            console.log('[PROXY DEBUG] ✅ Iframe found:', metronomeIframe);
-
-            // 🔒 Capturer les événements clavier DANS LE PROXY
-            // Et les forward vers l'iframe métronome via postMessage
-            window.addEventListener('keydown', (e) => {
-                // ⚠️ CRITICAL DEBUG: Log EVERY keydown at parent level
-                console.log('🔑 PARENT KEYDOWN:', e.code, 'Target:', e.target.tagName, 'Timestamp:', Date.now());
-                console.log('[PROXY DEBUG] Keydown captured:', e.code, 'target:', e.target.tagName);
-                
-                if (!metronomeIframe?.contentWindow) {
-                    console.log('[PROXY DEBUG] ❌ Iframe contentWindow not available');
-                    return;
-                }
-
-                let action = null;
-                let shouldPreventDefault = false;
-
-                switch(e.code) {
-                    case 'Space':
-                        shouldPreventDefault = true;
-                        action = 'TOGGLE_PLAY';
-                        console.log('[PROXY] ⌨️ SPACE → TOGGLE_PLAY');
-                        break;
-                        
-                    case 'ArrowLeft':
-                        shouldPreventDefault = true;
-                        action = 'TAP_CLICK';
-                        console.log('[PROXY] ⌨️ ArrowLeft → TAP_CLICK');
-                        break;
-                        
-                    case 'Equal':
-                    case 'NumpadAdd':
-                        shouldPreventDefault = true;
-                        action = 'BPM_UP';
-                        console.log('[PROXY] ⌨️ + → BPM_UP');
-                        break;
-                        
-                    case 'Minus':
-                    case 'NumpadSubtract':
-                        shouldPreventDefault = true;
-                        action = 'BPM_DOWN';
-                        console.log('[PROXY] ⌨️ - → BPM_DOWN');
-                        break;
-                        
-                    case 'ArrowUp':
-                    case 'ArrowDown':
-                        action = (e.code === 'ArrowUp') ? 'BPM_UP' : 'BPM_DOWN';
-                        console.log('[PROXY] ⌨️ Arrow (passthrough) → ' + action);
-                        break;
-                }
-
-                if (shouldPreventDefault) {
-                    console.log('[PROXY DEBUG] Preventing default for', e.code);
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                }
-
-                if (action) {
-                    console.log('[PROXY DEBUG] ✅ Sending postMessage:', action);
-                    metronomeIframe.contentWindow.postMessage({ action }, '*');
-                } else {
-                    console.log('[PROXY DEBUG] ⚠️ No action for', e.code);
-                }
-            }, true); // useCapture = true
-            
-            console.log('[PROXY DEBUG] ✅ Keyboard listener attached with useCapture=true');
-        });
+        // ✅ NO keyboard listeners needed here
+        // Parent window (app.js) handles ALL keyboard shortcuts
+        // and calls iframe functions directly (metronomeTogglePlay, metronomeTap, etc.)
+        console.log('✅ /metronome-scaled loaded - keyboard shortcuts handled by parent app.js');
     </script>
 </body>
 </html>`)

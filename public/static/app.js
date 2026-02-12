@@ -269,8 +269,7 @@ function initializeDateTime() {
 
 /**
  * Initialize Keyboard Shortcuts
- * Sends postMessage to metronome iframe
- * 🔒 VERROUILLÉ: Les raccourcis fonctionnent même si l'iframe a le focus
+ * ✅ NEW CLEAN ARCHITECTURE: Direct function calls to iframe (no postMessage)
  */
 function initializeKeyboardShortcuts() {
   const metronomeIframe = document.querySelector('.metronome-iframe')
@@ -280,45 +279,39 @@ function initializeKeyboardShortcuts() {
     return
   }
   
-  console.log('✅ Keyboard shortcuts initialized (LOCKED MODE)')
+  console.log('✅ Keyboard shortcuts initialized (DIRECT CALL MODE)')
   
-  // 🔒 SOLUTION 1: Capturer les événements au niveau WINDOW (pas document)
-  // Ça permet de capturer même si le focus est dans l'iframe
+  // ✅ Single keydown listener - calls iframe functions directly
   window.addEventListener('keydown', (e) => {
     const target = e.target
     
-    // ✅ CORRECTION: Ignorer SEULEMENT si on tape dans un input/textarea de SHRED UP
-    // Ne PAS vérifier isInIframe - on veut TOUJOURS capturer les raccourcis
-    if (target && target.ownerDocument === document) {
-      // On est dans SHRED UP (pas iframe)
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-        // User est en train de taper → ignorer les raccourcis
-        return
-      }
+    // Ignore if typing in input/textarea
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+      return
     }
     
-    const iframe = metronomeIframe.contentWindow
-    if (!iframe) return
+    // Get iframe window
+    const iframeWindow = metronomeIframe.contentWindow
+    if (!iframeWindow) return
     
-    // 🔒 TRAITER TOUS LES RACCOURCIS - TOUJOURS preventDefault pour bloquer l'iframe
     let handled = false
     
     switch(e.code) {
       case 'Space':
         e.preventDefault()
-        e.stopPropagation()
-        e.stopImmediatePropagation()
-        console.log('⌨️ SPACE → Toggle Play/Stop (LOCKED)')
-        iframe.postMessage({ action: 'TOGGLE_PLAY' }, '*')
+        console.log('⌨️ SPACE → Toggle Play/Stop')
+        if (typeof iframeWindow.metronomeTogglePlay === 'function') {
+          iframeWindow.metronomeTogglePlay()
+        }
         handled = true
         break
         
-      case 'ArrowLeft': // Left Arrow key for TAP
+      case 'ArrowLeft':
         e.preventDefault()
-        e.stopPropagation()
-        e.stopImmediatePropagation()
-        console.log('⌨️ ← → TAP Tempo (LOCKED)')
-        iframe.postMessage({ action: 'TAP_CLICK' }, '*')
+        console.log('⌨️ ← → TAP Tempo')
+        if (typeof iframeWindow.metronomeTap === 'function') {
+          iframeWindow.metronomeTap()
+        }
         handled = true
         break
         
@@ -326,10 +319,10 @@ function initializeKeyboardShortcuts() {
       case 'NumpadAdd':
       case 'ArrowUp':
         e.preventDefault()
-        e.stopPropagation()
-        e.stopImmediatePropagation()
-        console.log('⌨️ + → BPM +1 (LOCKED)')
-        iframe.postMessage({ action: 'BPM_UP' }, '*')
+        console.log('⌨️ + → BPM +1')
+        if (typeof iframeWindow.metronomeBPMUp === 'function') {
+          iframeWindow.metronomeBPMUp()
+        }
         handled = true
         break
         
@@ -337,41 +330,34 @@ function initializeKeyboardShortcuts() {
       case 'NumpadSubtract':
       case 'ArrowDown':
         e.preventDefault()
-        e.stopPropagation()
-        e.stopImmediatePropagation()
-        console.log('⌨️ - → BPM -1 (LOCKED)')
-        iframe.postMessage({ action: 'BPM_DOWN' }, '*')
+        console.log('⌨️ - → BPM -1')
+        if (typeof iframeWindow.metronomeBPMDown === 'function') {
+          iframeWindow.metronomeBPMDown()
+        }
         handled = true
         break
         
       case 'NumpadMultiply':
         e.preventDefault()
-        e.stopPropagation()
-        e.stopImmediatePropagation()
-        console.log('⌨️ * → Toggle REC (LOCKED)')
+        console.log('⌨️ * → Toggle REC')
         const firstRecBtn = document.querySelector('.rec-button')
         if (firstRecBtn) firstRecBtn.click()
         handled = true
         break
     }
     
-    // Log if action was handled
     if (handled) {
-      console.log('🔒 Keyboard shortcut handled')
+      console.log('✅ Keyboard shortcut handled')
     }
-  }, true) // ✅ useCapture = true pour capturer AVANT l'iframe
+  }, true) // useCapture = true
   
-  // 🔒 CRITICAL: Prevent native Space → button click on keyup
-  // Browser activates focused buttons on keyup Space, not just keydown
-  // We must preventDefault on BOTH keydown AND keyup
+  // Prevent native Space → button activation on keyup
   window.addEventListener('keyup', (e) => {
     const target = e.target
     
     // Ignore if typing in input/textarea
-    if (target && target.ownerDocument === document) {
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-        return
-      }
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+      return
     }
     
     // Prevent native button activation for ALL keyboard shortcuts
@@ -386,38 +372,9 @@ function initializeKeyboardShortcuts() {
       case 'ArrowDown':
       case 'NumpadMultiply':
         e.preventDefault()
-        e.stopPropagation()
-        e.stopImmediatePropagation()
         break
     }
-  }, true) // ✅ useCapture = true
-  
-  // 🔒 SOLUTION 2: Forcer le focus à revenir après un clic dans l'iframe
-  metronomeIframe.addEventListener('load', () => {
-    try {
-      // Intercepter les clics dans l'iframe
-      metronomeIframe.contentWindow.document.addEventListener('click', () => {
-        // Après 100ms, forcer le focus à revenir sur SHRED UP
-        setTimeout(() => {
-          document.body.focus()
-          console.log('🔒 Focus restored to SHRED UP')
-        }, 100)
-      })
-    } catch (e) {
-      console.warn('⚠️ Cannot access iframe (cross-origin)')
-    }
-  })
-  
-  // 🔒 SOLUTION 3: Surveiller les changements de focus
-  window.addEventListener('blur', () => {
-    // Si SHRED UP perd le focus, le récupérer après 50ms
-    setTimeout(() => {
-      if (document.hasFocus()) {
-        document.body.focus()
-        console.log('🔒 Focus maintained on SHRED UP')
-      }
-    }, 50)
-  })
+  }, true) // useCapture = true
 }
 
 // Initialize shortcuts after DOM is ready
