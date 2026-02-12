@@ -161,6 +161,47 @@
       color: #666;
       letter-spacing: 4px;
       transition: all 0.3s ease;
+      margin-top: 20px;
+    }
+
+    /* Cents line visualization */
+    .cents-line {
+      height: 80px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      position: relative;
+      margin-bottom: 20px;
+      border: 1px solid #222;
+      overflow: visible;
+    }
+    .cents-line-track {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #2a2a2a;
+    }
+    .cents-line-graph {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      pointer-events: none;
+    }
+    .cents-info {
+      position: absolute;
+      top: 8px;
+      left: 16px;
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .cents-value {
+      color: #888;
+      font-weight: 400;
     }
 
     .controls {
@@ -347,6 +388,16 @@
         </div>
       </div>
 
+      <!-- Cents line visualization -->
+      <div class="cents-line">
+        <canvas id="cents-canvas" class="cents-line-graph" width="720" height="80"></canvas>
+        <div class="cents-line-track"></div>
+        <div class="cents-info">
+          STRING <span class="cents-value" id="string-info">1/7</span> · 
+          <span class="cents-value" id="cents-info">-4</span> CENTS
+        </div>
+      </div>
+
       <!-- Tuning meter -->
       <div class="tuning-meter">
         <div class="meter-track"></div>
@@ -372,7 +423,7 @@
         </div>
       </div>
 
-      <div class="info-bottom" id="info-display">STRING 3/7 · -2 CENTS</div>
+
 
       <div class="controls">
         <button class="btn" id="start-btn">Start Animation</button>
@@ -402,12 +453,19 @@
     // DOM elements
     const noteEl = document.getElementById('note-display');
     const freqEl = document.getElementById('freq-display');
-    const infoEl = document.getElementById('info-display');
+    const stringInfoEl = document.getElementById('string-info');
+    const centsInfoEl = document.getElementById('cents-info');
     const needleEl = document.getElementById('meter-needle');
     const startBtn = document.getElementById('start-btn');
     const stopBtn = document.getElementById('stop-btn');
     const bars = [];
     const hexes = [];
+    
+    // Cents line canvas
+    const centsCanvas = document.getElementById('cents-canvas');
+    const centsCtx = centsCanvas.getContext('2d');
+    const centsHistory = [];
+    const maxCentsHistory = 120;
     
     for (let i = 0; i < 7; i++) {
       bars.push(document.getElementById(`bar-${i}`));
@@ -443,6 +501,55 @@
       });
     }
     
+    // Draw cents line graph
+    function drawCentsLine() {
+      const width = centsCanvas.width;
+      const height = centsCanvas.height;
+      
+      // Clear canvas
+      centsCtx.clearRect(0, 0, width, height);
+      
+      // Draw zero line
+      centsCtx.strokeStyle = '#2a2a2a';
+      centsCtx.lineWidth = 1;
+      centsCtx.beginPath();
+      centsCtx.moveTo(0, height / 2);
+      centsCtx.lineTo(width, height / 2);
+      centsCtx.stroke();
+      
+      // Draw cents history line
+      if (centsHistory.length > 1) {
+        centsCtx.strokeStyle = '#666';
+        centsCtx.lineWidth = 2;
+        centsCtx.beginPath();
+        
+        const step = width / maxCentsHistory;
+        
+        centsHistory.forEach((cents, i) => {
+          const x = i * step;
+          // Map cents (-50 to +50) to y position
+          const y = height / 2 - (cents / 50) * (height / 2 - 10);
+          
+          if (i === 0) {
+            centsCtx.moveTo(x, y);
+          } else {
+            centsCtx.lineTo(x, y);
+          }
+        });
+        
+        centsCtx.stroke();
+      }
+    }
+    
+    // Update cents history
+    function updateCentsHistory() {
+      centsHistory.push(currentCents);
+      if (centsHistory.length > maxCentsHistory) {
+        centsHistory.shift();
+      }
+      drawCentsLine();
+    }
+    
     // Update needle position
     function updateNeedle() {
       // Map cents (-50 to +50) to position (0% to 100%)
@@ -460,10 +567,12 @@
       freqEl.textContent = `${note.freq.toFixed(2)} HZ`;
       
       const centsSign = currentCents >= 0 ? '+' : '';
-      infoEl.textContent = `STRING ${note.string}/7 · ${centsSign}${currentCents} CENTS`;
+      stringInfoEl.textContent = `${note.string}/7`;
+      centsInfoEl.textContent = `${centsSign}${currentCents}`;
       
       updateHexagons();
       updateNeedle();
+      updateCentsHistory();
     }
     
     // Animation loop
@@ -512,9 +621,21 @@
     
     // Initialize
     stopBtn.disabled = true;
-    currentCents = -2;
-    updateDisplay();
+    currentCents = -4;
+    stringInfoEl.textContent = '1/7';
+    centsInfoEl.textContent = '-4';
     updateNeedle();
+    
+    // Resize canvas to fit container
+    function resizeCentsCanvas() {
+      const rect = centsCanvas.parentElement.getBoundingClientRect();
+      centsCanvas.width = rect.width;
+      centsCanvas.height = 80;
+      drawCentsLine();
+    }
+    
+    resizeCentsCanvas();
+    window.addEventListener('resize', resizeCentsCanvas);
   </script>
 </body>
 </html>
