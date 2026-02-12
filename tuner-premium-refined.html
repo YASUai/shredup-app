@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHRED UP - Tuner Premium Concepts (Particle Field × Fluid Meter)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       RESET + GLOBAL
+    ============================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #1a1a1a, #0d0d0d);
+      color: #eaeaea;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+    }
+    h1 {
+      text-align: center;
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 2.5rem;
+      letter-spacing: 2px;
+      color: #00d9ff;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 1rem;
+      color: #888;
+      margin-bottom: 3rem;
+    }
+    .samples-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .sample-card {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      background: #1a1a1a;
+      border-radius: 16px;
+      box-shadow: 
+        12px 12px 24px rgba(0,0,0,0.7),
+        -6px -6px 16px rgba(40,40,40,0.15);
+      padding: 2rem;
+      position: relative;
+    }
+    .sample-header {
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #00d9ff;
+      margin-bottom: 1.5rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    
+    /* ============================================
+       LOCKED NEUMORPHIC SHADOWS (ENHANCED)
+    ============================================ */
+    .neomorph-out {
+      box-shadow: 
+        8px 8px 16px rgba(0,0,0,0.6),
+        -4px -4px 12px rgba(40,40,40,0.1);
+    }
+    .neomorph-in {
+      box-shadow: 
+        inset 4px 4px 8px rgba(0,0,0,0.6),
+        inset -2px -2px 6px rgba(40,40,40,0.1);
+    }
+
+    /* ============================================
+       SHARED ELEMENTS
+    ============================================ */
+    .note-value {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 5rem;
+      color: #fff;
+      line-height: 1;
+    }
+    .cents-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+    .label {
+      font-size: 0.75rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* ============================================
+       HUD DETAIL ELEMENTS
+    ============================================ */
+    .hud-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0,217,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,217,255,0.03) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+    
+    .hud-scan {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0,217,255,0.4), transparent);
+      animation: scan 5s ease-in-out infinite;
+    }
+    @keyframes scan {
+      0%, 100% { top: 10%; }
+      50% { top: 85%; }
+    }
+    
+    .hud-corner {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border: 2px solid rgba(0,217,255,0.3);
+    }
+    .hud-corner.tl { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+    .hud-corner.tr { top: 12px; right: 12px; border-left: none; border-bottom: none; }
+    .hud-corner.bl { bottom: 12px; left: 12px; border-right: none; border-top: none; }
+    .hud-corner.br { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+    
+    /* ============================================
+       PREMIUM PARTICLE FIELD V1 (SIMPLE REFINEMENT)
+    ============================================ */
+    .particle-field-v1 {
+      width: 100%;
+      height: 400px;
+      background: #0a0a0a;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .pf1-particle {
+      position: absolute;
+      border-radius: 50%;
+      background: #00d9ff;
+      animation: particle-float 8s ease-in-out infinite;
+    }
+    
+    /* Depth layers via size and opacity */
+    .pf1-particle.layer-front {
+      width: 6px;
+      height: 6px;
+      opacity: 0.9;
+      filter: blur(0px);
+    }
+    .pf1-particle.layer-mid {
+      width: 4px;
+      height: 4px;
+      opacity: 0.6;
+      filter: blur(0.5px);
+    }
+    .pf1-particle.layer-back {
+      width: 3px;
+      height: 3px;
+      opacity: 0.3;
+      filter: blur(1px);
+    }
+    
+    @keyframes particle-float {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(10px, -8px); }
+      50% { transform: translate(-5px, 8px); }
+      75% { transform: translate(8px, 5px); }
+    }
+    
+    .pf1-connection {
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,217,255,0.25), transparent);
+      transform-origin: left center;
+      pointer-events: none;
+    }
+    
+    .pf1-pulse {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid rgba(0,217,255,0.4);
+      animation: pulse-expand 3s ease-out infinite;
+    }
+    @keyframes pulse-expand {
+      0% { width: 20px; height: 20px; opacity: 0.8; }
+      100% { width: 120px; height: 120px; opacity: 0; }
+    }
+    
+    /* ============================================
+       PREMIUM PARTICLE FIELD V2 (ULTRA DETAILED)
+    ============================================ */
+    .particle-field-v2 {
+      width: 100%;
+      height: 400px;
+      background: radial-gradient(ellipse at center, #0f0f0f, #050505);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .pf2-particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    
+    /* 3 depth layers with different characteristics */
+    .pf2-particle.depth-1 {
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(circle, #00d9ff, rgba(0,217,255,0.4));
+      box-shadow: 0 0 8px rgba(0,217,255,0.6);
+      animation: float-depth-1 12s ease-in-out infinite;
+    }
+    .pf2-particle.depth-2 {
+      width: 5px;
+      height: 5px;
+      background: radial-gradient(circle, #00a3ff, rgba(0,163,255,0.4));
+      box-shadow: 0 0 5px rgba(0,163,255,0.4);
+      animation: float-depth-2 10s ease-in-out infinite;
+    }
+    .pf2-particle.depth-3 {
+      width: 3px;
+      height: 3px;
+      background: radial-gradient(circle, #8b5cf6, rgba(139,92,246,0.3));
+      box-shadow: 0 0 3px rgba(139,92,246,0.3);
+      animation: float-depth-3 8s ease-in-out infinite;
+      filter: blur(0.5px);
+    }
+    
+    @keyframes float-depth-1 {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(15px, -12px); }
+      66% { transform: translate(-10px, 15px); }
+    }
+    @keyframes float-depth-2 {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(-12px, 10px); }
+      66% { transform: translate(12px, -8px); }
+    }
+    @keyframes float-depth-3 {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(8px, 8px); }
+      66% { transform: translate(-6px, -10px); }
+    }
+    
+    .pf2-connection {
+      position: absolute;
+      height: 1px;
+      pointer-events: none;
+    }
+    .pf2-connection.strong {
+      background: linear-gradient(90deg, transparent, rgba(0,217,255,0.4), transparent);
+    }
+    .pf2-connection.weak {
+      background: linear-gradient(90deg, transparent, rgba(0,217,255,0.15), transparent);
+    }
+    
+    .pf2-glow {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,217,255,0.15), transparent);
+      animation: glow-pulse 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.2); }
+    }
+    
+    /* ============================================
+       PREMIUM FLUID METER V1 (REFINED)
+    ============================================ */
+    .fluid-meter-v1 {
+      width: 100%;
+      height: 300px;
+      background: #0a0a0a;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .fm1-gradient-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, 
+        rgba(0,163,255,0.08), 
+        rgba(0,217,255,0.15) 50%, 
+        rgba(139,92,246,0.08)
+      );
+    }
+    
+    .fm1-liquid {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 60%;
+      background: linear-gradient(180deg, 
+        rgba(0,217,255,0.5) 0%,
+        rgba(0,217,255,0.3) 50%,
+        rgba(0,217,255,0.15) 100%
+      );
+      transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .fm1-wave {
+      position: absolute;
+      top: -30px;
+      width: 200%;
+      height: 60px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 40px,
+        rgba(0,217,255,0.4) 40px,
+        rgba(0,217,255,0.4) 80px
+      );
+      animation: wave-move 4s linear infinite;
+    }
+    @keyframes wave-move {
+      0% { left: 0; }
+      100% { left: -50%; }
+    }
+    
+    .fm1-wave-2 {
+      position: absolute;
+      top: -20px;
+      width: 200%;
+      height: 40px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 60px,
+        rgba(0,163,255,0.3) 60px,
+        rgba(0,163,255,0.3) 120px
+      );
+      animation: wave-move-2 5s linear infinite;
+    }
+    @keyframes wave-move-2 {
+      0% { left: -25%; }
+      100% { left: -75%; }
+    }
+    
+    .fm1-reflection {
+      position: absolute;
+      top: 10%;
+      left: 5%;
+      width: 30%;
+      height: 20%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+      border-radius: 50%;
+      filter: blur(10px);
+    }
+    
+    .fm1-bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(0,217,255,0.2));
+      animation: bubble-rise 6s ease-in infinite;
+    }
+    @keyframes bubble-rise {
+      0% { bottom: 0; opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.3; }
+      100% { bottom: 100%; opacity: 0; }
+    }
+    
+    /* ============================================
+       PREMIUM FLUID METER V2 (ULTRA REALISTIC)
+    ============================================ */
+    .fluid-meter-v2 {
+      width: 100%;
+      height: 300px;
+      background: radial-gradient(ellipse at center top, #0f0f0f, #050505);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Glass morphism container */
+    .fm2-glass {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.02), transparent);
+      backdrop-filter: blur(2px);
+      border: 1px solid rgba(0,217,255,0.1);
+      border-radius: 12px;
+    }
+    
+    /* Multi-layer liquid */
+    .fm2-liquid-base {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 55%;
+      background: linear-gradient(180deg, 
+        rgba(0,217,255,0.6) 0%,
+        rgba(0,217,255,0.4) 30%,
+        rgba(0,163,255,0.25) 70%,
+        rgba(0,163,255,0.15) 100%
+      );
+      transition: height 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    .fm2-liquid-top {
+      position: absolute;
+      bottom: 55%;
+      width: 100%;
+      height: 8%;
+      background: linear-gradient(180deg, 
+        rgba(0,217,255,0.7),
+        rgba(0,217,255,0.4)
+      );
+    }
+    
+    /* Triple wave layers */
+    .fm2-wave-1 {
+      position: absolute;
+      top: -40px;
+      width: 300%;
+      height: 80px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 50px,
+        rgba(0,217,255,0.5) 50px,
+        rgba(0,217,255,0.5) 100px
+      );
+      animation: wave-complex-1 6s ease-in-out infinite;
+    }
+    @keyframes wave-complex-1 {
+      0%, 100% { left: 0; }
+      50% { left: -66.66%; }
+    }
+    
+    .fm2-wave-2 {
+      position: absolute;
+      top: -25px;
+      width: 300%;
+      height: 50px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 70px,
+        rgba(0,163,255,0.4) 70px,
+        rgba(0,163,255,0.4) 140px
+      );
+      animation: wave-complex-2 5s ease-in-out infinite;
+    }
+    @keyframes wave-complex-2 {
+      0%, 100% { left: -33.33%; }
+      50% { left: -100%; }
+    }
+    
+    .fm2-wave-3 {
+      position: absolute;
+      top: -15px;
+      width: 300%;
+      height: 30px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 90px,
+        rgba(139,92,246,0.3) 90px,
+        rgba(139,92,246,0.3) 180px
+      );
+      animation: wave-complex-3 7s ease-in-out infinite;
+    }
+    @keyframes wave-complex-3 {
+      0%, 100% { left: -16.66%; }
+      50% { left: -83.33%; }
+    }
+    
+    /* Enhanced reflections */
+    .fm2-reflection-1 {
+      position: absolute;
+      top: 15%;
+      left: 8%;
+      width: 25%;
+      height: 18%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.25), transparent);
+      filter: blur(15px);
+      animation: reflection-shimmer 4s ease-in-out infinite;
+    }
+    @keyframes reflection-shimmer {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    
+    .fm2-reflection-2 {
+      position: absolute;
+      top: 35%;
+      right: 12%;
+      width: 20%;
+      height: 15%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.15), transparent);
+      filter: blur(12px);
+      animation: reflection-shimmer 5s ease-in-out infinite;
+      animation-delay: 1s;
+    }
+    
+    /* Floating particles in liquid */
+    .fm2-float-particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.6), rgba(0,217,255,0.3));
+      animation: particle-float-liquid 8s ease-in-out infinite;
+    }
+    @keyframes particle-float-liquid {
+      0%, 100% { transform: translate(0, 0); opacity: 0.4; }
+      25% { transform: translate(15px, -10px); opacity: 0.7; }
+      50% { transform: translate(5px, 15px); opacity: 0.5; }
+      75% { transform: translate(-10px, 5px); opacity: 0.6; }
+    }
+    
+    /* Bubbles with varied sizes */
+    .fm2-bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 25% 25%, 
+        rgba(255,255,255,0.5), 
+        rgba(0,217,255,0.3) 50%,
+        rgba(0,217,255,0.1)
+      );
+      box-shadow: inset 0 0 5px rgba(255,255,255,0.3);
+    }
+    .fm2-bubble.small {
+      width: 6px;
+      height: 6px;
+      animation: bubble-rise-small 5s ease-in infinite;
+    }
+    .fm2-bubble.medium {
+      width: 10px;
+      height: 10px;
+      animation: bubble-rise-medium 7s ease-in infinite;
+    }
+    .fm2-bubble.large {
+      width: 14px;
+      height: 14px;
+      animation: bubble-rise-large 9s ease-in infinite;
+    }
+    @keyframes bubble-rise-small {
+      0% { bottom: 0; opacity: 0; transform: translateX(0); }
+      10% { opacity: 0.7; }
+      90% { opacity: 0.3; }
+      100% { bottom: 100%; opacity: 0; transform: translateX(20px); }
+    }
+    @keyframes bubble-rise-medium {
+      0% { bottom: 0; opacity: 0; transform: translateX(0); }
+      10% { opacity: 0.8; }
+      90% { opacity: 0.4; }
+      100% { bottom: 100%; opacity: 0; transform: translateX(-15px); }
+    }
+    @keyframes bubble-rise-large {
+      0% { bottom: 0; opacity: 0; transform: translateX(0); }
+      10% { opacity: 0.9; }
+      90% { opacity: 0.5; }
+      100% { bottom: 100%; opacity: 0; transform: translateX(25px); }
+    }
+    
+    /* Depth shadow */
+    .fm2-depth-shadow {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 20%;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.4));
+      pointer-events: none;
+    }
+    
+    /* Info stats styling */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .info-box {
+      background: #151515;
+      border-radius: 8px;
+      padding: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .info-box-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #00d9ff;
+      margin-top: 0.5rem;
+    }
+    
+  </style>
+</head>
+<body>
+  <h1>SHRED UP - Premium Tuner Concepts</h1>
+  <div class="subtitle">
+    Ultra-refined Particle Field × Fluid Meter | Cold HUD × Neumorphic
+  </div>
+
+  <div class="samples-grid">
+    
+    <!-- ====================================
+         PARTICLE FIELD V1 - SIMPLE REFINEMENT
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">PARTICLE FIELD V1 – Simple Refinement (3 Depth Layers)</div>
+      
+      <div class="particle-field-v1 neomorph-in">
+        <div class="hud-grid" style="opacity: 0.08;"></div>
+        <div class="hud-scan"></div>
+        <div class="hud-corner tl"></div>
+        <div class="hud-corner tr"></div>
+        <div class="hud-corner bl"></div>
+        <div class="hud-corner br"></div>
+        
+        <!-- Front layer particles (large, bright) -->
+        <div class="pf1-particle layer-front" style="top: 15%; left: 12%; animation-delay: 0s;"></div>
+        <div class="pf1-particle layer-front" style="top: 45%; left: 35%; animation-delay: 1s;"></div>
+        <div class="pf1-particle layer-front" style="top: 70%; left: 58%; animation-delay: 2s;"></div>
+        <div class="pf1-particle layer-front" style="top: 25%; left: 75%; animation-delay: 3s;"></div>
+        <div class="pf1-particle layer-front" style="top: 80%; left: 25%; animation-delay: 1.5s;"></div>
+        
+        <!-- Mid layer particles (medium) -->
+        <div class="pf1-particle layer-mid" style="top: 30%; left: 20%; animation-delay: 0.5s;"></div>
+        <div class="pf1-particle layer-mid" style="top: 55%; left: 48%; animation-delay: 1.5s;"></div>
+        <div class="pf1-particle layer-mid" style="top: 65%; left: 70%; animation-delay: 2.5s;"></div>
+        <div class="pf1-particle layer-mid" style="top: 20%; left: 60%; animation-delay: 3.5s;"></div>
+        <div class="pf1-particle layer-mid" style="top: 85%; left: 42%; animation-delay: 0.8s;"></div>
+        <div class="pf1-particle layer-mid" style="top: 40%; left: 82%; animation-delay: 2.2s;"></div>
+        
+        <!-- Back layer particles (small, faded) -->
+        <div class="pf1-particle layer-back" style="top: 18%; left: 28%; animation-delay: 1.2s;"></div>
+        <div class="pf1-particle layer-back" style="top: 48%; left: 15%; animation-delay: 2.8s;"></div>
+        <div class="pf1-particle layer-back" style="top: 62%; left: 38%; animation-delay: 0.3s;"></div>
+        <div class="pf1-particle layer-back" style="top: 75%; left: 65%; animation-delay: 3.2s;"></div>
+        <div class="pf1-particle layer-back" style="top: 35%; left: 52%; animation-delay: 1.8s;"></div>
+        <div class="pf1-particle layer-back" style="top: 88%; left: 78%; animation-delay: 2.5s;"></div>
+        <div class="pf1-particle layer-back" style="top: 12%; left: 88%; animation-delay: 0.6s;"></div>
+        <div class="pf1-particle layer-back" style="top: 52%; left: 92%; animation-delay: 3.8s;"></div>
+        
+        <!-- Connection lines between close particles -->
+        <div class="pf1-connection" style="top: 15%; left: 12%; width: 150px; transform: rotate(25deg);"></div>
+        <div class="pf1-connection" style="top: 45%; left: 35%; width: 180px; transform: rotate(-15deg);"></div>
+        <div class="pf1-connection" style="top: 70%; left: 58%; width: 120px; transform: rotate(35deg);"></div>
+        <div class="pf1-connection" style="top: 25%; left: 60%; width: 140px; transform: rotate(-5deg);"></div>
+        <div class="pf1-connection" style="top: 55%; left: 42%; width: 100px; transform: rotate(18deg);"></div>
+        
+        <!-- Pulse rings -->
+        <div class="pf1-pulse" style="top: 35%; left: 45%; animation-delay: 0s;"></div>
+        <div class="pf1-pulse" style="top: 65%; left: 30%; animation-delay: 1.5s;"></div>
+        
+        <!-- Center content -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 10; background: rgba(0,0,0,0.7); padding: 2rem 3rem; border-radius: 12px; backdrop-filter: blur(8px);">
+          <div class="note-value" style="font-size: 4rem;">G#</div>
+          <div class="cents-value" style="color: #00d9ff; margin-top: 0.75rem;">+18</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Frequency</div>
+          <div class="info-box-value">415.3 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">String</div>
+          <div class="info-box-value" style="color: #8b5cf6;">6/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Avg Cents</div>
+          <div class="info-box-value">+15.2</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Session</div>
+          <div class="info-box-value" style="color: #94a3b8;">11.8s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         PARTICLE FIELD V2 - ULTRA DETAILED
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">PARTICLE FIELD V2 – Ultra Detailed (50+ Particles, Dynamic Connections)</div>
+      
+      <div class="particle-field-v2 neomorph-in">
+        <div class="hud-grid" style="opacity: 0.06;"></div>
+        <div class="hud-scan"></div>
+        <div class="hud-corner tl"></div>
+        <div class="hud-corner tr"></div>
+        <div class="hud-corner bl"></div>
+        <div class="hud-corner br"></div>
+        
+        <!-- Glow areas -->
+        <div class="pf2-glow" style="top: 20%; left: 15%;"></div>
+        <div class="pf2-glow" style="top: 60%; right: 20%; animation-delay: 2s;"></div>
+        
+        <!-- Depth 1 particles (closest, largest, brightest cyan) -->
+        <div class="pf2-particle depth-1" style="top: 12%; left: 18%; animation-delay: 0s;"></div>
+        <div class="pf2-particle depth-1" style="top: 38%; left: 42%; animation-delay: 1.2s;"></div>
+        <div class="pf2-particle depth-1" style="top: 68%; left: 28%; animation-delay: 2.4s;"></div>
+        <div class="pf2-particle depth-1" style="top: 75%; left: 72%; animation-delay: 3.6s;"></div>
+        <div class="pf2-particle depth-1" style="top: 25%; left: 85%; animation-delay: 1.8s;"></div>
+        <div class="pf2-particle depth-1" style="top: 82%; left: 52%; animation-delay: 0.6s;"></div>
+        
+        <!-- Depth 2 particles (mid-distance, medium blue) -->
+        <div class="pf2-particle depth-2" style="top: 8%; left: 35%; animation-delay: 0.4s;"></div>
+        <div class="pf2-particle depth-2" style="top: 22%; left: 58%; animation-delay: 1.6s;"></div>
+        <div class="pf2-particle depth-2" style="top: 45%; left: 15%; animation-delay: 2.8s;"></div>
+        <div class="pf2-particle depth-2" style="top: 52%; left: 68%; animation-delay: 0.8s;"></div>
+        <div class="pf2-particle depth-2" style="top: 65%; left: 48%; animation-delay: 3.2s;"></div>
+        <div class="pf2-particle depth-2" style="top: 78%; left: 82%; animation-delay: 1.4s;"></div>
+        <div class="pf2-particle depth-2" style="top: 88%; left: 38%; animation-delay: 2.6s;"></div>
+        <div class="pf2-particle depth-2" style="top: 32%; left: 92%; animation-delay: 3.8s;"></div>
+        <div class="pf2-particle depth-2" style="top: 58%; left: 8%; animation-delay: 0.2s;"></div>
+        <div class="pf2-particle depth-2" style="top: 15%; left: 72%; animation-delay: 2.2s;"></div>
+        
+        <!-- Depth 3 particles (farthest, smallest, violet) -->
+        <div class="pf2-particle depth-3" style="top: 5%; left: 25%; animation-delay: 0.7s;"></div>
+        <div class="pf2-particle depth-3" style="top: 18%; left: 48%; animation-delay: 1.9s;"></div>
+        <div class="pf2-particle depth-3" style="top: 28%; left: 12%; animation-delay: 3.1s;"></div>
+        <div class="pf2-particle depth-3" style="top: 35%; left: 78%; animation-delay: 0.5s;"></div>
+        <div class="pf2-particle depth-3" style="top: 42%; left: 32%; animation-delay: 2.3s;"></div>
+        <div class="pf2-particle depth-3" style="top: 48%; left: 88%; animation-delay: 1.1s;"></div>
+        <div class="pf2-particle depth-3" style="top: 55%; left: 55%; animation-delay: 3.5s;"></div>
+        <div class="pf2-particle depth-3" style="top: 62%; left: 22%; animation-delay: 0.9s;"></div>
+        <div class="pf2-particle depth-3" style="top: 72%; left: 62%; animation-delay: 2.7s;"></div>
+        <div class="pf2-particle depth-3" style="top: 85%; left: 15%; animation-delay: 1.5s;"></div>
+        <div class="pf2-particle depth-3" style="top: 92%; left: 68%; animation-delay: 3.3s;"></div>
+        <div class="pf2-particle depth-3" style="top: 8%; left: 92%; animation-delay: 0.3s;"></div>
+        <div class="pf2-particle depth-3" style="top: 38%; left: 5%; animation-delay: 2.1s;"></div>
+        <div class="pf2-particle depth-3" style="top: 68%; left: 95%; animation-delay: 1.7s;"></div>
+        <div class="pf2-particle depth-3" style="top: 12%; left: 65%; animation-delay: 3.9s;"></div>
+        
+        <!-- Strong connections (between depth-1 particles) -->
+        <div class="pf2-connection strong" style="top: 12%; left: 18%; width: 200px; transform: rotate(32deg);"></div>
+        <div class="pf2-connection strong" style="top: 38%; left: 42%; width: 150px; transform: rotate(-28deg);"></div>
+        <div class="pf2-connection strong" style="top: 68%; left: 28%; width: 180px; transform: rotate(18deg);"></div>
+        <div class="pf2-connection strong" style="top: 75%; left: 52%; width: 170px; transform: rotate(-12deg);"></div>
+        
+        <!-- Weak connections (between depth-2/3 particles) -->
+        <div class="pf2-connection weak" style="top: 22%; left: 48%; width: 120px; transform: rotate(42deg);"></div>
+        <div class="pf2-connection weak" style="top: 45%; left: 15%; width: 140px; transform: rotate(-8deg);"></div>
+        <div class="pf2-connection weak" style="top: 52%; left: 55%; width: 100px; transform: rotate(25deg);"></div>
+        <div class="pf2-connection weak" style="top: 65%; left: 48%; width: 130px; transform: rotate(-35deg);"></div>
+        <div class="pf2-connection weak" style="top: 32%; left: 78%; width: 110px; transform: rotate(15deg);"></div>
+        
+        <!-- Center content -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 20; background: rgba(5,5,5,0.85); padding: 2.5rem 3.5rem; border-radius: 16px; backdrop-filter: blur(12px); border: 1px solid rgba(0,217,255,0.2);">
+          <div class="note-value" style="font-size: 4rem;">D#</div>
+          <div class="cents-value" style="color: #00d9ff; margin-top: 0.75rem;">-11</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Frequency</div>
+          <div class="info-box-value">311.1 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">String</div>
+          <div class="info-box-value" style="color: #8b5cf6;">4/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Avg Cents</div>
+          <div class="info-box-value">-8.7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Session</div>
+          <div class="info-box-value" style="color: #94a3b8;">16.4s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         FLUID METER V1 - REFINED
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">FLUID METER V1 – Refined (Multi-Wave + Reflection + Bubbles)</div>
+      
+      <div class="fluid-meter-v1 neomorph-in">
+        <div class="hud-grid" style="opacity: 0.08;"></div>
+        <div class="hud-scan"></div>
+        <div class="hud-corner tl"></div>
+        <div class="hud-corner tr"></div>
+        <div class="hud-corner bl"></div>
+        <div class="hud-corner br"></div>
+        
+        <!-- Background gradient -->
+        <div class="fm1-gradient-bg"></div>
+        
+        <!-- Liquid with waves -->
+        <div class="fm1-liquid">
+          <div class="fm1-wave"></div>
+          <div class="fm1-wave-2"></div>
+          
+          <!-- Reflection highlights -->
+          <div class="fm1-reflection"></div>
+          <div class="fm1-reflection" style="top: 30%; left: 60%; width: 25%; height: 15%; animation-delay: 1s;"></div>
+          
+          <!-- Bubbles -->
+          <div class="fm1-bubble" style="left: 20%; width: 8px; height: 8px; animation-delay: 0s;"></div>
+          <div class="fm1-bubble" style="left: 45%; width: 10px; height: 10px; animation-delay: 1.5s;"></div>
+          <div class="fm1-bubble" style="left: 70%; width: 6px; height: 6px; animation-delay: 3s;"></div>
+          <div class="fm1-bubble" style="left: 35%; width: 12px; height: 12px; animation-delay: 2.2s;"></div>
+          <div class="fm1-bubble" style="left: 60%; width: 7px; height: 7px; animation-delay: 4.5s;"></div>
+          <div class="fm1-bubble" style="left: 82%; width: 9px; height: 9px; animation-delay: 1.8s;"></div>
+        </div>
+        
+        <!-- Level markers -->
+        <div style="position: absolute; left: 2rem; right: 2rem; top: 25%; height: 1px; background: rgba(255,255,255,0.08); z-index: 5;"></div>
+        <div style="position: absolute; left: 2rem; right: 2rem; top: 50%; height: 1px; background: rgba(255,255,255,0.12); z-index: 5;"></div>
+        <div style="position: absolute; left: 2rem; right: 2rem; top: 75%; height: 1px; background: rgba(255,255,255,0.08); z-index: 5;"></div>
+        
+        <!-- Center content -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 10;">
+          <div class="note-value" style="font-size: 4rem; text-shadow: 0 0 20px rgba(0,0,0,0.8);">C</div>
+          <div class="cents-value" style="color: #00d9ff; margin-top: 0.75rem; text-shadow: 0 0 20px rgba(0,0,0,0.8);">+22</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Frequency</div>
+          <div class="info-box-value">261.6 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">String</div>
+          <div class="info-box-value" style="color: #8b5cf6;">4/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Avg Cents</div>
+          <div class="info-box-value">+19.3</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Session</div>
+          <div class="info-box-value" style="color: #94a3b8;">13.5s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         FLUID METER V2 - ULTRA REALISTIC
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">FLUID METER V2 – Ultra Realistic (Glass Morph + Triple Wave + Particles + Dynamic Bubbles)</div>
+      
+      <div class="fluid-meter-v2 neomorph-in">
+        <div class="hud-grid" style="opacity: 0.06;"></div>
+        <div class="hud-scan"></div>
+        <div class="hud-corner tl"></div>
+        <div class="hud-corner tr"></div>
+        <div class="hud-corner bl"></div>
+        <div class="hud-corner br"></div>
+        
+        <!-- Glass morphism container -->
+        <div class="fm2-glass"></div>
+        
+        <!-- Liquid base layer -->
+        <div class="fm2-liquid-base">
+          <!-- Liquid top edge -->
+          <div class="fm2-liquid-top">
+            <div class="fm2-wave-1"></div>
+            <div class="fm2-wave-2"></div>
+            <div class="fm2-wave-3"></div>
+          </div>
+          
+          <!-- Enhanced reflections -->
+          <div class="fm2-reflection-1"></div>
+          <div class="fm2-reflection-2"></div>
+          
+          <!-- Floating particles in liquid -->
+          <div class="fm2-float-particle" style="bottom: 15%; left: 18%; animation-delay: 0s;"></div>
+          <div class="fm2-float-particle" style="bottom: 25%; left: 42%; animation-delay: 1.5s;"></div>
+          <div class="fm2-float-particle" style="bottom: 35%; left: 68%; animation-delay: 3s;"></div>
+          <div class="fm2-float-particle" style="bottom: 20%; left: 85%; animation-delay: 2.2s;"></div>
+          <div class="fm2-float-particle" style="bottom: 40%; left: 32%; animation-delay: 4s;"></div>
+          <div class="fm2-float-particle" style="bottom: 10%; left: 58%; animation-delay: 0.8s;"></div>
+          
+          <!-- Dynamic bubbles (varied sizes) -->
+          <div class="fm2-bubble small" style="left: 15%; animation-delay: 0s;"></div>
+          <div class="fm2-bubble small" style="left: 38%; animation-delay: 1.2s;"></div>
+          <div class="fm2-bubble small" style="left: 72%; animation-delay: 2.4s;"></div>
+          <div class="fm2-bubble small" style="left: 55%; animation-delay: 3.8s;"></div>
+          
+          <div class="fm2-bubble medium" style="left: 25%; animation-delay: 0.6s;"></div>
+          <div class="fm2-bubble medium" style="left: 62%; animation-delay: 1.8s;"></div>
+          <div class="fm2-bubble medium" style="left: 82%; animation-delay: 3.2s;"></div>
+          <div class="fm2-bubble medium" style="left: 42%; animation-delay: 4.5s;"></div>
+          
+          <div class="fm2-bubble large" style="left: 32%; animation-delay: 1s;"></div>
+          <div class="fm2-bubble large" style="left: 68%; animation-delay: 2.5s;"></div>
+          <div class="fm2-bubble large" style="left: 12%; animation-delay: 4s;"></div>
+          <div class="fm2-bubble large" style="left: 88%; animation-delay: 0.3s;"></div>
+          
+          <!-- Depth shadow at bottom -->
+          <div class="fm2-depth-shadow"></div>
+        </div>
+        
+        <!-- Level markers -->
+        <div style="position: absolute; left: 2.5rem; width: 40px; top: 25%; height: 1px; background: rgba(0,217,255,0.2); z-index: 5;"></div>
+        <div style="position: absolute; left: 2.5rem; width: 50px; top: 50%; height: 1px; background: rgba(0,217,255,0.3); z-index: 5;"></div>
+        <div style="position: absolute; left: 2.5rem; width: 40px; top: 75%; height: 1px; background: rgba(0,217,255,0.2); z-index: 5;"></div>
+        
+        <!-- Level labels -->
+        <div style="position: absolute; left: 1rem; top: calc(25% - 10px); font-family: 'Orbitron', monospace; font-size: 0.625rem; color: rgba(0,217,255,0.4); z-index: 5;">75%</div>
+        <div style="position: absolute; left: 1rem; top: calc(50% - 10px); font-family: 'Orbitron', monospace; font-size: 0.625rem; color: rgba(0,217,255,0.5); z-index: 5;">50%</div>
+        <div style="position: absolute; left: 1rem; top: calc(75% - 10px); font-family: 'Orbitron', monospace; font-size: 0.625rem; color: rgba(0,217,255,0.4); z-index: 5;">25%</div>
+        
+        <!-- Center content with enhanced backdrop -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 20; background: rgba(5,5,5,0.9); padding: 2.5rem 4rem; border-radius: 16px; backdrop-filter: blur(16px); border: 2px solid rgba(0,217,255,0.25); box-shadow: 0 0 30px rgba(0,217,255,0.2);">
+          <div class="note-value" style="font-size: 4.5rem;">A</div>
+          <div class="cents-value" style="color: #00d9ff; margin-top: 1rem; font-size: 2.5rem;">-7</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Frequency</div>
+          <div class="info-box-value">220.0 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">String</div>
+          <div class="info-box-value" style="color: #8b5cf6;">6/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Avg Cents</div>
+          <div class="info-box-value">-4.8</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label">Session</div>
+          <div class="info-box-value" style="color: #94a3b8;">19.2s</div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</body>
+</html>

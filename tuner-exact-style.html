@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHRED UP - 10 Tuner Concepts (Exact Faults Statistics Style)</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #141414;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .gallery-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .gallery-header h1 {
+      font-size: 32px;
+      font-weight: 300;
+      margin-bottom: 12px;
+      color: #888;
+      letter-spacing: 3px;
+    }
+
+    .gallery-header p {
+      font-size: 13px;
+      color: #555;
+      font-weight: 300;
+    }
+
+    .samples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(650px, 1fr));
+      gap: 60px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .sample {
+      background: #1a1a1a;
+      border-radius: 16px;
+      padding: 50px 40px;
+      position: relative;
+      min-height: 700px;
+      border: 1px solid #222;
+    }
+
+    .sample-label {
+      position: absolute;
+      top: -12px;
+      left: 40px;
+      background: #1a1a1a;
+      color: #666;
+      padding: 4px 16px;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border: 1px solid #333;
+    }
+
+    /* EXACT REFERENCE COLORS */
+    :root {
+      --bg-dark: #141414;
+      --bg-card: #1a1a1a;
+      --border-subtle: #222;
+      --text-dim: #444;
+      --text-mid: #666;
+      --text-bright: #888;
+      --bar-color: #333;
+      --bar-active: #555;
+      --dot-color: #2a2a2a;
+      --line-color: #2a2a2a;
+      --accent-subtle: #3a3a3a;
+    }
+
+    /* CONCEPT 1: Top Bars + Icons + Dot Map */
+    .c1-top-bars {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      height: 120px;
+      margin-bottom: 24px;
+      padding: 0 20px;
+    }
+    .c1-bar-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    .c1-bar {
+      width: 32px;
+      background: linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%);
+      border-radius: 2px 2px 0 0;
+    }
+    .c1-bar-label {
+      font-size: 10px;
+      color: #555;
+      font-weight: 400;
+    }
+    .c1-icon-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px 30px 20px;
+      border-bottom: 1px solid #222;
+      margin-bottom: 30px;
+    }
+    .c1-icon-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .c1-icon {
+      font-size: 28px;
+      color: #444;
+      font-weight: 300;
+    }
+    .c1-icon-label {
+      font-size: 9px;
+      color: #444;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .c1-title {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 300;
+      color: #888;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .c1-subtitle {
+      text-align: center;
+      font-size: 11px;
+      color: #555;
+      font-weight: 300;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+    .c1-dot-map {
+      position: relative;
+      height: 280px;
+      background: #1a1a1a;
+      border-radius: 8px;
+    }
+    .c1-dot-grid {
+      position: absolute;
+      inset: 30px;
+      background-image: radial-gradient(circle, #2a2a2a 1.2px, transparent 1.2px);
+      background-size: 8px 8px;
+    }
+    .c1-connection-line {
+      position: absolute;
+      height: 1px;
+      background: #2a2a2a;
+    }
+    .c1-target-circle {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border: 1px solid #3a3a3a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c1-target-circle::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #3a3a3a;
+      border-radius: 50%;
+    }
+
+    /* CONCEPT 2: Vertical Bar Chart Left */
+    .c2-layout {
+      display: flex;
+      gap: 40px;
+    }
+    .c2-bars {
+      width: 140px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      height: 500px;
+      border-right: 1px solid #222;
+      padding-right: 30px;
+    }
+    .c2-bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .c2-bar {
+      width: 100%;
+      background: linear-gradient(180deg, #3a3a3a, #2a2a2a);
+      border-radius: 2px 2px 0 0;
+    }
+    .c2-bar-text {
+      font-size: 9px;
+      color: #555;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+    .c2-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    .c2-title-section {
+      text-align: center;
+      padding: 40px 0;
+    }
+    .c2-big-note {
+      font-size: 96px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 4px;
+    }
+    .c2-freq {
+      font-size: 14px;
+      color: #555;
+      margin-top: 16px;
+      letter-spacing: 2px;
+    }
+    .c2-dot-area {
+      position: relative;
+      flex: 1;
+      background: #1a1a1a;
+      border-radius: 8px;
+    }
+
+    /* CONCEPT 3: Connection Network */
+    .c3-bars {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      height: 100px;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .c3-bar {
+      width: 28px;
+      background: linear-gradient(180deg, #3a3a3a, #2a2a2a);
+    }
+    .c3-network {
+      position: relative;
+      height: 380px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .c3-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(0deg, transparent 49.5%, #222 50%, transparent 50.5%),
+        linear-gradient(90deg, transparent 49.5%, #222 50%, transparent 50.5%);
+      background-size: 50px 50px;
+    }
+    .c3-connection {
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #2a2a2a 30%, #2a2a2a 70%, transparent);
+      transform-origin: left center;
+    }
+    .c3-node {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border: 1px solid #3a3a3a;
+      border-radius: 50%;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #666;
+    }
+    .c3-title {
+      text-align: center;
+      font-size: 20px;
+      color: #888;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      font-weight: 300;
+    }
+
+    /* CONCEPT 4: Side Icons + Map */
+    .c4-layout {
+      display: flex;
+      gap: 30px;
+    }
+    .c4-sidebar {
+      width: 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-top: 80px;
+    }
+    .c4-icon-box {
+      aspect-ratio: 1;
+      border: 1px solid #222;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #1a1a1a;
+    }
+    .c4-icon-box.active {
+      border-color: #3a3a3a;
+      background: #1e1e1e;
+    }
+    .c4-main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    .c4-top-bars {
+      height: 80px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    /* CONCEPT 5: Radial Layout */
+    .c5-bars {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: flex-end;
+      height: 90px;
+      margin-bottom: 40px;
+    }
+    .c5-radial {
+      position: relative;
+      height: 400px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .c5-center-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180px;
+      height: 180px;
+      border: 1px solid #2a2a2a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c5-center-text {
+      font-size: 64px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 3px;
+    }
+    .c5-dot {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border: 1px solid #2a2a2a;
+      border-radius: 50%;
+      background: #1a1a1a;
+    }
+    .c5-dot.active {
+      background: #2a2a2a;
+      border-color: #3a3a3a;
+    }
+    .c5-subtitle {
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+      letter-spacing: 3px;
+    }
+
+    /* CONCEPT 6: Timeline Bars */
+    .c6-title {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 300;
+      color: #888;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+    }
+    .c6-timeline {
+      height: 180px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 30px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      margin-bottom: 40px;
+    }
+    .c6-bar {
+      flex: 1;
+      background: #2a2a2a;
+      transition: all 0.3s ease;
+    }
+    .c6-bar.active {
+      background: #3a3a3a;
+    }
+    .c6-info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .c6-info-box {
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 30px;
+      text-align: center;
+    }
+    .c6-info-label {
+      font-size: 10px;
+      color: #555;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .c6-info-value {
+      font-size: 32px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 2px;
+    }
+
+    /* CONCEPT 7: Hex Grid */
+    .c7-bars-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 50px;
+    }
+    .c7-bar-item {
+      text-align: center;
+    }
+    .c7-bar {
+      width: 24px;
+      height: 60px;
+      background: linear-gradient(180deg, #3a3a3a, #2a2a2a);
+      margin: 0 auto 8px;
+    }
+    .c7-bar-label {
+      font-size: 9px;
+      color: #555;
+    }
+    .c7-hex-area {
+      position: relative;
+      height: 300px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+    .c7-hex {
+      width: 60px;
+      height: 70px;
+      position: relative;
+    }
+    .c7-hex-shape {
+      width: 100%;
+      height: 100%;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #555;
+    }
+    .c7-hex.active .c7-hex-shape {
+      background: #1e1e1e;
+      border-color: #3a3a3a;
+      color: #888;
+    }
+    .c7-info {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      letter-spacing: 4px;
+    }
+
+    /* CONCEPT 8: Corner Stats */
+    .c8-container {
+      position: relative;
+      height: 600px;
+      background: #1a1a1a;
+      border-radius: 8px;
+    }
+    .c8-corner-stat {
+      position: absolute;
+      padding: 20px;
+      border: 1px solid #222;
+    }
+    .c8-corner-stat.tl {
+      top: 0;
+      left: 0;
+      border-top: none;
+      border-left: none;
+      border-radius: 0 0 8px 0;
+    }
+    .c8-corner-stat.tr {
+      top: 0;
+      right: 0;
+      border-top: none;
+      border-right: none;
+      border-radius: 0 0 0 8px;
+    }
+    .c8-corner-stat.bl {
+      bottom: 0;
+      left: 0;
+      border-bottom: none;
+      border-left: none;
+      border-radius: 0 8px 0 0;
+    }
+    .c8-corner-stat.br {
+      bottom: 0;
+      right: 0;
+      border-bottom: none;
+      border-right: none;
+      border-radius: 8px 0 0 0;
+    }
+    .c8-stat-label {
+      font-size: 9px;
+      color: #555;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .c8-stat-value {
+      font-size: 18px;
+      color: #888;
+      font-weight: 300;
+    }
+    .c8-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .c8-center-note {
+      font-size: 120px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 6px;
+    }
+    .c8-center-freq {
+      font-size: 16px;
+      color: #555;
+      margin-top: 20px;
+      letter-spacing: 3px;
+    }
+
+    /* CONCEPT 9: Dashboard Panels */
+    .c9-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 300;
+      color: #888;
+      letter-spacing: 6px;
+      margin-bottom: 40px;
+      text-transform: uppercase;
+    }
+    .c9-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 140px);
+      gap: 16px;
+    }
+    .c9-panel {
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .c9-panel.large {
+      grid-column: span 2;
+      grid-row: span 2;
+      justify-content: center;
+      align-items: center;
+    }
+    .c9-panel-label {
+      font-size: 9px;
+      color: #555;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .c9-panel-value {
+      font-size: 24px;
+      font-weight: 300;
+      color: #888;
+    }
+    .c9-big-note {
+      font-size: 96px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 4px;
+    }
+    .c9-mini-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 50px;
+      margin-top: auto;
+    }
+    .c9-mini-bar {
+      flex: 1;
+      background: linear-gradient(180deg, #3a3a3a, #2a2a2a);
+    }
+
+    /* CONCEPT 10: Split View */
+    .c10-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    .c10-left {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    .c10-bars-stack {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      height: 120px;
+    }
+    .c10-right {
+      background: #1a1a1a;
+      border-radius: 8px;
+      position: relative;
+    }
+    .c10-dot-pattern {
+      position: absolute;
+      inset: 20px;
+      background-image: radial-gradient(circle, #2a2a2a 1px, transparent 1px);
+      background-size: 10px 10px;
+    }
+    .c10-info-row {
+      display: flex;
+      gap: 20px;
+    }
+    .c10-info-card {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="gallery-header">
+    <h1>TUNER STATISTICS</h1>
+    <p>10 interface variations based on exact reference styling</p>
+  </div>
+
+  <div class="samples-grid">
+    
+    <!-- CONCEPT 1: Full Reference Style -->
+    <div class="sample">
+      <div class="sample-label">CONCEPT 1</div>
+      
+      <!-- Top bars -->
+      <div class="c1-top-bars">
+        <div class="c1-bar-group">
+          <div class="c1-bar" style="height: 35%;"></div>
+          <div class="c1-bar-label">1.</div>
+        </div>
+        <div class="c1-bar-group">
+          <div class="c1-bar" style="height: 48%;"></div>
+          <div class="c1-bar-label">2.</div>
+        </div>
+        <div class="c1-bar-group">
+          <div class="c1-bar" style="height: 62%;"></div>
+          <div class="c1-bar-label">3.</div>
+        </div>
+        <div class="c1-bar-group">
+          <div class="c1-bar" style="height: 78%;"></div>
+          <div class="c1-bar-label">4.</div>
+        </div>
+        <div class="c1-bar-group">
+          <div class="c1-bar" style="height: 92%;"></div>
+          <div class="c1-bar-label">5.</div>
+        </div>
+        <div class="c1-bar-group">
+          <div class="c1-bar" style="height: 85%;"></div>
+          <div class="c1-bar-label">6.</div>
+        </div>
+        <div class="c1-bar-group">
+          <div class="c1-bar" style="height: 70%;"></div>
+          <div class="c1-bar-label">7.</div>
+        </div>
+      </div>
+
+      <!-- Icon row -->
+      <div class="c1-icon-row">
+        <div class="c1-icon-item">
+          <div class="c1-icon">⊙</div>
+          <div class="c1-icon-label">A1</div>
+        </div>
+        <div class="c1-icon-item">
+          <div class="c1-icon">◉</div>
+          <div class="c1-icon-label">D2</div>
+        </div>
+        <div class="c1-icon-item">
+          <div class="c1-icon">◎</div>
+          <div class="c1-icon-label">G2</div>
+        </div>
+        <div class="c1-icon-item">
+          <div class="c1-icon">⊕</div>
+          <div class="c1-icon-label">C3</div>
+        </div>
+        <div class="c1-icon-item">
+          <div class="c1-icon">◈</div>
+          <div class="c1-icon-label">F3</div>
+        </div>
+        <div class="c1-icon-item">
+          <div class="c1-icon">◐</div>
+          <div class="c1-icon-label">A3</div>
+        </div>
+        <div class="c1-icon-item">
+          <div class="c1-icon">◑</div>
+          <div class="c1-icon-label">D4</div>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div class="c1-title">TUNING STATISTICS</div>
+      <div class="c1-subtitle">Real-time pitch detection and frequency analysis for 7-string guitar tuning</div>
+
+      <!-- Dot map -->
+      <div class="c1-dot-map">
+        <div class="c1-dot-grid"></div>
+        <div class="c1-connection-line" style="top: 80px; left: 60px; width: 120px; transform: rotate(15deg);"></div>
+        <div class="c1-connection-line" style="top: 140px; left: 180px; width: 140px; transform: rotate(-8deg);"></div>
+        <div class="c1-connection-line" style="top: 180px; left: 310px; width: 100px; transform: rotate(25deg);"></div>
+        
+        <div class="c1-target-circle" style="top: 70px; left: 50px;"></div>
+        <div class="c1-target-circle" style="top: 130px; left: 170px;"></div>
+        <div class="c1-target-circle" style="top: 170px; left: 300px;"></div>
+        <div class="c1-target-circle" style="top: 160px; left: 400px;"></div>
+      </div>
+    </div>
+
+    <!-- CONCEPT 2: Vertical Bars Left -->
+    <div class="sample">
+      <div class="sample-label">CONCEPT 2</div>
+      <div class="c2-layout">
+        <div class="c2-bars">
+          <div class="c2-bar-col">
+            <div class="c2-bar" style="height: 180px;"></div>
+            <div class="c2-bar-text">A1</div>
+          </div>
+          <div class="c2-bar-col">
+            <div class="c2-bar" style="height: 240px;"></div>
+            <div class="c2-bar-text">D2</div>
+          </div>
+          <div class="c2-bar-col">
+            <div class="c2-bar" style="height: 300px;"></div>
+            <div class="c2-bar-text">G2</div>
+          </div>
+          <div class="c2-bar-col">
+            <div class="c2-bar" style="height: 380px;"></div>
+            <div class="c2-bar-text">C3</div>
+          </div>
+          <div class="c2-bar-col">
+            <div class="c2-bar" style="height: 320px;"></div>
+            <div class="c2-bar-text">F3</div>
+          </div>
+          <div class="c2-bar-col">
+            <div class="c2-bar" style="height: 260px;"></div>
+            <div class="c2-bar-text">A3</div>
+          </div>
+          <div class="c2-bar-col">
+            <div class="c2-bar" style="height: 200px;"></div>
+            <div class="c2-bar-text">D4</div>
+          </div>
+        </div>
+        <div class="c2-main">
+          <div class="c2-title-section">
+            <div class="c2-big-note">C3</div>
+            <div class="c2-freq">130.81 HZ</div>
+          </div>
+          <div class="c2-dot-area">
+            <div class="c1-dot-grid"></div>
+            <div class="c1-connection-line" style="top: 60px; left: 40px; width: 160px; transform: rotate(-12deg);"></div>
+            <div class="c1-connection-line" style="top: 120px; left: 190px; width: 140px; transform: rotate(18deg);"></div>
+            <div class="c1-target-circle" style="top: 50px; left: 30px;"></div>
+            <div class="c1-target-circle" style="top: 110px; left: 180px;"></div>
+            <div class="c1-target-circle" style="top: 110px; left: 320px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONCEPT 3: Network Connection -->
+    <div class="sample">
+      <div class="sample-label">CONCEPT 3</div>
+      <div class="c3-bars">
+        <div class="c3-bar" style="height: 40%;"></div>
+        <div class="c3-bar" style="height: 55%;"></div>
+        <div class="c3-bar" style="height: 70%;"></div>
+        <div class="c3-bar" style="height: 90%;"></div>
+        <div class="c3-bar" style="height: 75%;"></div>
+        <div class="c3-bar" style="height: 60%;"></div>
+        <div class="c3-bar" style="height: 48%;"></div>
+      </div>
+      <div class="c3-network">
+        <div class="c3-grid"></div>
+        <div class="c3-connection" style="top: 100px; left: 100px; width: 180px; transform: rotate(18deg);"></div>
+        <div class="c3-connection" style="top: 200px; left: 260px; width: 160px; transform: rotate(-15deg);"></div>
+        <div class="c3-connection" style="top: 240px; left: 400px; width: 120px; transform: rotate(22deg);"></div>
+        
+        <div class="c3-node" style="top: 80px; left: 80px;">A1</div>
+        <div class="c3-node" style="top: 180px; left: 240px;">D2</div>
+        <div class="c3-node" style="top: 220px; left: 380px;">G2</div>
+        <div class="c3-node" style="top: 220px; left: 500px;">C3</div>
+      </div>
+      <div class="c3-title">PITCH NETWORK</div>
+    </div>
+
+    <!-- CONCEPT 4: Side Icons -->
+    <div class="sample">
+      <div class="sample-label">CONCEPT 4</div>
+      <div class="c4-layout">
+        <div class="c4-sidebar">
+          <div class="c4-icon-box">
+            <div class="c1-icon">⊙</div>
+            <div class="c1-icon-label">A1</div>
+          </div>
+          <div class="c4-icon-box">
+            <div class="c1-icon">◉</div>
+            <div class="c1-icon-label">D2</div>
+          </div>
+          <div class="c4-icon-box active">
+            <div class="c1-icon">◎</div>
+            <div class="c1-icon-label">G2</div>
+          </div>
+          <div class="c4-icon-box">
+            <div class="c1-icon">⊕</div>
+            <div class="c1-icon-label">C3</div>
+          </div>
+          <div class="c4-icon-box">
+            <div class="c1-icon">◈</div>
+            <div class="c1-icon-label">F3</div>
+          </div>
+        </div>
+        <div class="c4-main-area">
+          <div class="c4-top-bars">
+            <div class="c3-bar" style="height: 45%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 60%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 78%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 92%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 85%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 70%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 55%; width: 100%;"></div>
+          </div>
+          <div class="c2-title-section">
+            <div class="c2-big-note">G2</div>
+            <div class="c2-freq">98.00 HZ</div>
+          </div>
+          <div class="c2-dot-area">
+            <div class="c1-dot-grid"></div>
+            <div class="c1-target-circle" style="top: 80px; left: 100px;"></div>
+            <div class="c1-target-circle" style="top: 140px; left: 250px;"></div>
+            <div class="c1-target-circle" style="top: 100px; left: 380px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONCEPT 5: Radial -->
+    <div class="sample">
+      <div class="sample-label">CONCEPT 5</div>
+      <div class="c5-bars">
+        <div class="c1-bar" style="width: 24px; height: 38%;"></div>
+        <div class="c1-bar" style="width: 24px; height: 52%;"></div>
+        <div class="c1-bar" style="width: 24px; height: 68%;"></div>
+        <div class="c1-bar" style="width: 24px; height: 85%;"></div>
+        <div class="c1-bar" style="width: 24px; height: 72%;"></div>
+        <div class="c1-bar" style="width: 24px; height: 58%;"></div>
+        <div class="c1-bar" style="width: 24px; height: 45%;"></div>
+      </div>
+      <div class="c5-radial">
+        <div class="c5-center-ring">
+          <div class="c5-center-text">F3</div>
+        </div>
+        <div class="c5-dot" style="top: 30px; left: 50%; transform: translateX(-50%);"></div>
+        <div class="c5-dot" style="top: 40%; right: 30px;"></div>
+        <div class="c5-dot" style="bottom: 60px; right: 50px;"></div>
+        <div class="c5-dot active" style="bottom: 30px; left: 50%; transform: translateX(-50%);"></div>
+        <div class="c5-dot" style="bottom: 60px; left: 50px;"></div>
+        <div class="c5-dot" style="top: 40%; left: 30px;"></div>
+        <div class="c5-dot" style="top: 90px; left: 35%;"></div>
+      </div>
+      <div class="c5-subtitle">RADIAL STRING SELECTION</div>
+    </div>
+
+    <!-- CONCEPT 6: Timeline -->
+    <div class="sample">
+      <div class="sample-label">CONCEPT 6</div>
+      <div class="c6-title">FREQUENCY TIMELINE</div>
+      <div class="c6-timeline">
+        <div class="c6-bar" style="height: 35%;"></div>
+        <div class="c6-bar" style="height: 48%;"></div>
+        <div class="c6-bar" style="height: 62%;"></div>
+        <div class="c6-bar" style="height: 75%;"></div>
+        <div class="c6-bar active" style="height: 88%;"></div>
+        <div class="c6-bar active" style="height: 92%;"></div>
+        <div class="c6-bar active" style="height: 85%;"></div>
+        <div class="c6-bar" style="height: 70%;"></div>
+        <div class="c6-bar" style="height: 55%;"></div>
+        <div class="c6-bar" style="height: 42%;"></div>
+        <div class="c6-bar" style="height: 38%;"></div>
+        <div class="c6-bar" style="height: 50%;"></div>
+        <div class="c6-bar" style="height: 65%;"></div>
+        <div class="c6-bar" style="height: 58%;"></div>
+        <div class="c6-bar" style="height: 45%;"></div>
+      </div>
+      <div class="c6-info-grid">
+        <div class="c6-info-box">
+          <div class="c6-info-label">Frequency</div>
+          <div class="c6-info-value">220.0</div>
+        </div>
+        <div class="c6-info-box">
+          <div class="c6-info-label">Note</div>
+          <div class="c6-info-value">A3</div>
+        </div>
+        <div class="c6-info-box">
+          <div class="c6-info-label">Cents</div>
+          <div class="c6-info-value">-3</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONCEPT 7: Hexagons -->
+    <div class="sample">
+      <div class="sample-label">CONCEPT 7</div>
+      <div class="c7-bars-row">
+        <div class="c7-bar-item">
+          <div class="c7-bar"></div>
+          <div class="c7-bar-label">A1</div>
+        </div>
+        <div class="c7-bar-item">
+          <div class="c7-bar" style="height: 75px;"></div>
+          <div class="c7-bar-label">D2</div>
+        </div>
+        <div class="c7-bar-item">
+          <div class="c7-bar" style="height: 90px;"></div>
+          <div class="c7-bar-label">G2</div>
+        </div>
+        <div class="c7-bar-item">
+          <div class="c7-bar" style="height: 78px;"></div>
+          <div class="c7-bar-label">C3</div>
+        </div>
+        <div class="c7-bar-item">
+          <div class="c7-bar" style="height: 68px;"></div>
+          <div class="c7-bar-label">F3</div>
+        </div>
+        <div class="c7-bar-item">
+          <div class="c7-bar" style="height: 58px;"></div>
+          <div class="c7-bar-label">A3</div>
+        </div>
+        <div class="c7-bar-item">
+          <div class="c7-bar" style="height: 48px;"></div>
+          <div class="c7-bar-label">D4</div>
+        </div>
+      </div>
+      <div class="c7-hex-area">
+        <div class="c7-hex">
+          <div class="c7-hex-shape">A1</div>
+        </div>
+        <div class="c7-hex">
+          <div class="c7-hex-shape">D2</div>
+        </div>
+        <div class="c7-hex active">
+          <div class="c7-hex-shape">G2</div>
+        </div>
+        <div class="c7-hex">
+          <div class="c7-hex-shape">C3</div>
+        </div>
+        <div class="c7-hex">
+          <div class="c7-hex-shape">F3</div>
+        </div>
+        <div class="c7-hex">
+          <div class="c7-hex-shape">A3</div>
+        </div>
+        <div class="c7-hex">
+          <div class="c7-hex-shape">D4</div>
+        </div>
+      </div>
+      <div class="c7-info">HEXAGONAL STRING SELECT</div>
+    </div>
+
+    <!-- CONCEPT 8: Corner Stats -->
+    <div class="sample">
+      <div class="sample-label">CONCEPT 8</div>
+      <div class="c8-container">
+        <div class="c8-corner-stat tl">
+          <div class="c8-stat-label">Frequency</div>
+          <div class="c8-stat-value">293.66 HZ</div>
+        </div>
+        <div class="c8-corner-stat tr">
+          <div class="c8-stat-label">String</div>
+          <div class="c8-stat-value">7/7</div>
+        </div>
+        <div class="c8-center">
+          <div class="c8-center-note">D4</div>
+          <div class="c8-center-freq">-2 CENTS</div>
+        </div>
+        <div class="c8-corner-stat bl">
+          <div class="c8-stat-label">Avg Cents</div>
+          <div class="c8-stat-value">-1.5</div>
+        </div>
+        <div class="c8-corner-stat br">
+          <div class="c8-stat-label">Samples</div>
+          <div class="c8-stat-value">1843</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONCEPT 9: Dashboard Grid -->
+    <div class="sample">
+      <div class="sample-label">CONCEPT 9</div>
+      <div class="c9-title">DASHBOARD VIEW</div>
+      <div class="c9-grid">
+        <div class="c9-panel large">
+          <div class="c9-big-note">F3</div>
+        </div>
+        <div class="c9-panel">
+          <div class="c9-panel-label">Frequency</div>
+          <div class="c9-panel-value">174.61</div>
+        </div>
+        <div class="c9-panel">
+          <div class="c9-panel-label">String</div>
+          <div class="c9-panel-value">5/7</div>
+        </div>
+        <div class="c9-panel">
+          <div class="c9-panel-label">Cents</div>
+          <div class="c9-panel-value">-4</div>
+        </div>
+        <div class="c9-panel">
+          <div class="c9-panel-label">Avg Cents</div>
+          <div class="c9-panel-value">-2.8</div>
+        </div>
+        <div class="c9-panel">
+          <div class="c9-panel-label">Waveform</div>
+          <div class="c9-mini-bars">
+            <div class="c9-mini-bar" style="height: 45%;"></div>
+            <div class="c9-mini-bar" style="height: 62%;"></div>
+            <div class="c9-mini-bar" style="height: 78%;"></div>
+            <div class="c9-mini-bar" style="height: 85%;"></div>
+            <div class="c9-mini-bar" style="height: 72%;"></div>
+            <div class="c9-mini-bar" style="height: 58%;"></div>
+            <div class="c9-mini-bar" style="height: 48%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONCEPT 10: Split View -->
+    <div class="sample">
+      <div class="sample-label">CONCEPT 10</div>
+      <div class="c10-split">
+        <div class="c10-left">
+          <div class="c10-bars-stack">
+            <div class="c3-bar" style="height: 42%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 58%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 72%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 88%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 78%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 62%; width: 100%;"></div>
+            <div class="c3-bar" style="height: 48%; width: 100%;"></div>
+          </div>
+          <div class="c2-title-section">
+            <div class="c2-big-note" style="font-size: 72px;">A3</div>
+            <div class="c2-freq">220.00 HZ</div>
+          </div>
+        </div>
+        <div class="c10-right">
+          <div class="c10-dot-pattern"></div>
+          <div class="c1-connection-line" style="top: 100px; left: 50px; width: 140px; transform: rotate(-10deg);"></div>
+          <div class="c1-connection-line" style="top: 180px; left: 180px; width: 120px; transform: rotate(15deg);"></div>
+          <div class="c1-target-circle" style="top: 90px; left: 40px;"></div>
+          <div class="c1-target-circle" style="top: 170px; left: 170px;"></div>
+          <div class="c1-target-circle" style="top: 170px; left: 290px;"></div>
+        </div>
+      </div>
+      <div class="c10-info-row">
+        <div class="c10-info-card">
+          <div class="c9-panel-label">Cents</div>
+          <div class="c9-panel-value">-2</div>
+        </div>
+        <div class="c10-info-card">
+          <div class="c9-panel-label">String</div>
+          <div class="c9-panel-value">6/7</div>
+        </div>
+        <div class="c10-info-card">
+          <div class="c9-panel-label">Avg</div>
+          <div class="c9-panel-value">-1.5</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

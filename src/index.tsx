@@ -11,6 +11,12 @@ app.get('/metronome-local', (c) => {
   return c.redirect('/static/metronome/index.html')
 })
 
+// 🎸 Route pour le TUNER (intégré same-origin)
+// Redirige vers le fichier statique
+app.get('/tuner', (c) => {
+  return c.redirect('/static/tuner/index.html')
+})
+
 // 🎸 Route TEST: Audio Engine Phase 2A (Audio Scaffolding)
 app.get('/audio-test', (c) => {
   return c.html(`<!DOCTYPE html>
@@ -424,14 +430,12 @@ app.get('/test-local', (c) => {
 
         {/* TUNER - Bottom */}
         <div class="zone-tuner">
-          <div class="tuner-container">
-            <div class="block-title">TUNER</div>
-            <div class="tuner-display">A4</div>
-            <div class="tuner-indicator">
-              <div class="tuner-needle"></div>
-            </div>
-            <div class="tuner-frequency">440 Hz</div>
-          </div>
+          <iframe 
+            src="/static/tuner/index.html" 
+            class="tuner-iframe"
+            title="SHRED-UP Tuner"
+            scrolling="no"
+          ></iframe>
         </div>
       </div>
 
@@ -1033,14 +1037,12 @@ app.get('/', (c) => {
 
         {/* TUNER - Bottom */}
         <div class="zone-tuner">
-          <div class="tuner-container">
-            <div class="block-title">TUNER</div>
-            <div class="tuner-display">A4</div>
-            <div class="tuner-indicator">
-              <div class="tuner-needle"></div>
-            </div>
-            <div class="tuner-frequency">440 Hz</div>
-          </div>
+          <iframe 
+            src="/static/tuner/index.html" 
+            class="tuner-iframe"
+            title="SHRED-UP Tuner"
+            scrolling="no"
+          ></iframe>
         </div>
       </div>
 

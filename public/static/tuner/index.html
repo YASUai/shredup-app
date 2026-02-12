@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHRED UP - Variant 2 Animated</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #141414;
+      padding: 0;
+      color: #666;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .container {
+      max-width: 100%;
+      width: 100%;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 300;
+      margin-bottom: 12px;
+      color: #888;
+      letter-spacing: 3px;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: #555;
+      font-weight: 300;
+    }
+
+    .sample {
+      background: #1a1a1a;
+      border-radius: 16px;
+      padding: 30px 30px;
+      position: relative;
+      border: 1px solid #222;
+    }
+
+    .sample-label {
+      position: absolute;
+      top: -12px;
+      left: 40px;
+      background: #1a1a1a;
+      color: #666;
+      padding: 4px 16px;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border: 1px solid #333;
+      display: none;
+    }
+
+    .bars-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+    .bar-item {
+      text-align: center;
+    }
+    .bar {
+      width: 24px;
+      background: linear-gradient(180deg, #3a3a3a, #2a2a2a);
+      margin: 0 auto 8px;
+      transition: height 0.3s ease;
+    }
+    .bar-label {
+      font-size: 9px;
+      color: #555;
+    }
+
+    .hex-area {
+      position: relative;
+      height: 280px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    .hex {
+      width: 60px;
+      height: 70px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .hex-shape {
+      width: 100%;
+      height: 100%;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #555;
+      transition: all 0.3s ease;
+    }
+    .hex.active .hex-shape {
+      background: #1e1e1e;
+      border-color: #3a3a3a;
+      color: #888;
+    }
+
+    .v2-top {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .v2-note {
+      font-size: 96px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 4px;
+      transition: all 0.3s ease;
+    }
+    .v2-bottom {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .v2-freq {
+      font-size: 18px;
+      color: #555;
+      letter-spacing: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .info-bottom {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      letter-spacing: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .controls {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+    .btn {
+      background: #2a2a2a;
+      color: #888;
+      border: 1px solid #333;
+      padding: 12px 32px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: #333;
+      border-color: #3a3a3a;
+    }
+    .btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .btn.stop {
+      background: #3a2a2a;
+      border-color: #3a3a3a;
+    }
+
+    /* Tuning meter */
+    .tuning-meter {
+      height: 60px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      position: relative;
+      margin-bottom: 30px;
+      border: 1px solid #222;
+      overflow: hidden;
+    }
+    .meter-track {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #2a2a2a;
+    }
+    .meter-center-mark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 24px;
+      background: #3a3a3a;
+    }
+    .meter-marks {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      display: flex;
+      justify-content: space-between;
+      padding: 0 40px;
+    }
+    .meter-mark {
+      width: 1px;
+      height: 12px;
+      background: #2a2a2a;
+    }
+    .meter-needle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 3px;
+      height: 40px;
+      background: linear-gradient(180deg, transparent 0%, #888 30%, #888 70%, transparent 100%);
+      transition: left 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 10;
+    }
+    .meter-needle::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 8px solid #888;
+    }
+    .meter-labels {
+      position: absolute;
+      bottom: 8px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 40px;
+      font-size: 9px;
+      color: #555;
+      letter-spacing: 1px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>VARIANT 2 ANIMATED</h1>
+      <p>Real-time pitch detection simulation</p>
+    </div>
+
+    <div class="sample">
+      <div class="sample-label">VARIANT 2 - LIVE</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar" id="bar-0" style="height: 60px;"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" id="bar-1" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" id="bar-2" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" id="bar-3" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" id="bar-4" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" id="bar-5" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" id="bar-6" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex" id="hex-0">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex" id="hex-1">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active" id="hex-2">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex" id="hex-3">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex" id="hex-4">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex" id="hex-5">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex" id="hex-6">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v2-top">
+          <div class="v2-note" id="note-display">G2</div>
+        </div>
+        <div class="v2-bottom">
+          <div class="v2-freq" id="freq-display">98.00 HZ</div>
+        </div>
+      </div>
+
+      <!-- Tuning meter -->
+      <div class="tuning-meter">
+        <div class="meter-track"></div>
+        <div class="meter-center-mark"></div>
+        <div class="meter-marks">
+          <div class="meter-mark"></div>
+          <div class="meter-mark"></div>
+          <div class="meter-mark"></div>
+          <div class="meter-mark"></div>
+          <div class="meter-mark"></div>
+          <div class="meter-mark"></div>
+          <div class="meter-mark"></div>
+          <div class="meter-mark"></div>
+          <div class="meter-mark"></div>
+        </div>
+        <div class="meter-needle" id="meter-needle"></div>
+        <div class="meter-labels">
+          <span>-50</span>
+          <span>-25</span>
+          <span style="color: #888;">0</span>
+          <span>+25</span>
+          <span>+50</span>
+        </div>
+      </div>
+
+      <div class="info-bottom" id="info-display">STRING 3/7 · -2 CENTS</div>
+
+      <div class="controls">
+        <button class="btn" id="start-btn">Start Animation</button>
+        <button class="btn stop" id="stop-btn">Stop Animation</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 7-string guitar tuning (A1→D4)
+    const NOTES = [
+      { name: 'A1', freq: 55.0, string: 1 },
+      { name: 'D2', freq: 73.42, string: 2 },
+      { name: 'G2', freq: 98.0, string: 3 },
+      { name: 'C3', freq: 130.81, string: 4 },
+      { name: 'F3', freq: 174.61, string: 5 },
+      { name: 'A3', freq: 220.0, string: 6 },
+      { name: 'D4', freq: 293.66, string: 7 }
+    ];
+    
+    let currentNoteIndex = 2; // Start with G2
+    let animationRunning = false;
+    let animationFrame = null;
+    
+    let currentCents = 0;
+    
+    // DOM elements
+    const noteEl = document.getElementById('note-display');
+    const freqEl = document.getElementById('freq-display');
+    const infoEl = document.getElementById('info-display');
+    const needleEl = document.getElementById('meter-needle');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const bars = [];
+    const hexes = [];
+    
+    for (let i = 0; i < 7; i++) {
+      bars.push(document.getElementById(`bar-${i}`));
+      hexes.push(document.getElementById(`hex-${i}`));
+    }
+    
+    // Generate oscillating cents value
+    function generateCents() {
+      const base = Math.sin(Date.now() / 1000) * 10; // -10 to +10
+      const noise = (Math.random() - 0.5) * 4; // ±2 noise
+      return Math.round(base + noise);
+    }
+    
+    // Update bars heights (subtle animation)
+    function updateBars() {
+      bars.forEach((bar, i) => {
+        const baseHeight = 48 + i * 6; // Base heights: 48, 54, 60, 66, 72, 78, 84
+        const activeBoost = (i === currentNoteIndex) ? 15 : 0;
+        const oscillation = Math.sin(Date.now() / 800 + i * 0.5) * 8;
+        const height = baseHeight + activeBoost + oscillation;
+        bar.style.height = `${Math.max(40, Math.min(100, height))}px`;
+      });
+    }
+    
+    // Update active hexagon
+    function updateHexagons() {
+      hexes.forEach((hex, i) => {
+        if (i === currentNoteIndex) {
+          hex.classList.add('active');
+        } else {
+          hex.classList.remove('active');
+        }
+      });
+    }
+    
+    // Update needle position
+    function updateNeedle() {
+      // Map cents (-50 to +50) to position (0% to 100%)
+      const normalizedCents = (currentCents + 50) / 100; // 0 to 1
+      const position = normalizedCents * 100;
+      needleEl.style.left = `${position}%`;
+    }
+    
+    // Update display
+    function updateDisplay() {
+      const note = NOTES[currentNoteIndex];
+      currentCents = generateCents();
+      
+      noteEl.textContent = note.name;
+      freqEl.textContent = `${note.freq.toFixed(2)} HZ`;
+      
+      const centsSign = currentCents >= 0 ? '+' : '';
+      infoEl.textContent = `STRING ${note.string}/7 · ${centsSign}${currentCents} CENTS`;
+      
+      updateHexagons();
+      updateNeedle();
+    }
+    
+    // Animation loop
+    function animate() {
+      if (!animationRunning) return;
+      
+      updateBars();
+      updateDisplay();
+      
+      animationFrame = requestAnimationFrame(animate);
+    }
+    
+    // Change note every 3 seconds
+    function cycleNotes() {
+      if (!animationRunning) return;
+      
+      currentNoteIndex = (currentNoteIndex + 1) % NOTES.length;
+      
+      setTimeout(cycleNotes, 3000);
+    }
+    
+    // Start animation
+    startBtn.addEventListener('click', () => {
+      if (animationRunning) return;
+      
+      animationRunning = true;
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      
+      animate();
+      cycleNotes();
+    });
+    
+    // Stop animation
+    stopBtn.addEventListener('click', () => {
+      animationRunning = false;
+      
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = null;
+      }
+      
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    });
+    
+    // Initialize
+    stopBtn.disabled = true;
+    currentCents = -2;
+    updateDisplay();
+    updateNeedle();
+  </script>
+</body>
+</html>

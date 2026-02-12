@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHRED UP - Tuner Final (Samples 19 × 20 - V2 Style)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      padding: 40px 20px;
+      color: #ffffff;
+    }
+
+    .gallery-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .gallery-header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(90deg, #00d9ff, #00ffff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gallery-header p {
+      font-size: 16px;
+      color: #888;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .samples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(900px, 1fr));
+      gap: 80px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    .sample-container {
+      background: linear-gradient(180deg, 
+        #141414 0%, 
+        #161616 15%, 
+        #181818 30%, 
+        #1a1a1a 45%, 
+        #1b1b1b 50%, 
+        #1a1a1a 55%, 
+        #181818 70%, 
+        #161616 85%, 
+        #151515 100%);
+      border-radius: 20px;
+      padding: 40px;
+      position: relative;
+    }
+
+    .sample-label {
+      position: absolute;
+      top: -14px;
+      left: 40px;
+      background: #00d9ff;
+      color: #000;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      box-shadow: 0 0 20px rgba(0, 217, 255, 0.6);
+      text-transform: uppercase;
+    }
+
+    .sample-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 32px;
+      color: #00d9ff;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(0, 217, 255, 0.6);
+    }
+
+    /* Locked neumorphic shadows */
+    .neomorph-card {
+      background: #1a1a1a;
+      border-radius: 16px;
+      box-shadow: 
+        8px 8px 16px rgba(0, 0, 0, 0.6),
+        -4px -4px 12px rgba(40, 40, 40, 0.1);
+    }
+
+    .neomorph-inset {
+      box-shadow: 
+        inset 4px 4px 8px rgba(0, 0, 0, 0.6),
+        inset -2px -2px 6px rgba(40, 40, 40, 0.1);
+    }
+
+    /* Cyan neon glow */
+    .cyan-glow {
+      text-shadow: 0 0 10px #fff, 0 0 20px #00d9ff, 0 0 30px #00d9ff, 0 0 40px rgba(0, 217, 255, 0.5);
+    }
+
+    .cyan-glow-subtle {
+      text-shadow: 0 0 10px rgba(0, 217, 255, 0.6);
+    }
+
+    /* Label styling */
+    .label {
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    /* ============================================
+       SAMPLE 19 - WAVEFORM PEAKS (V2 STYLE)
+    ============================================ */
+    .s19-peaks {
+      width: 100%;
+      height: 160px;
+      background: #151515;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 2rem;
+    }
+    .s19-peak {
+      width: 6px;
+      background: linear-gradient(180deg, #00d9ff, #006d80);
+      border-radius: 3px 3px 0 0;
+      transition: height 0.2s ease;
+      box-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
+    }
+    .s19-peak:nth-child(1) { height: 25%; }
+    .s19-peak:nth-child(2) { height: 45%; }
+    .s19-peak:nth-child(3) { height: 65%; }
+    .s19-peak:nth-child(4) { height: 85%; }
+    .s19-peak:nth-child(5) { height: 90%; }
+    .s19-peak:nth-child(6) { height: 75%; }
+    .s19-peak:nth-child(7) { height: 55%; }
+    .s19-peak:nth-child(8) { height: 35%; }
+    .s19-peak:nth-child(9) { height: 50%; }
+    .s19-peak:nth-child(10) { height: 70%; }
+    .s19-peak:nth-child(11) { height: 85%; }
+    .s19-peak:nth-child(12) { height: 60%; }
+    .s19-peak:nth-child(13) { height: 40%; }
+    .s19-peak:nth-child(14) { height: 55%; }
+    .s19-peak:nth-child(15) { height: 75%; }
+    .s19-peak:nth-child(16) { height: 80%; }
+    .s19-peak:nth-child(17) { height: 65%; }
+    .s19-peak:nth-child(18) { height: 45%; }
+    .s19-peak:nth-child(19) { height: 30%; }
+    .s19-peak:nth-child(20) { height: 50%; }
+    
+    .s19-info-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .s19-info-box {
+      flex: 1;
+      background: #151515;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .s19-info-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00d9ff, transparent);
+    }
+    .s19-info-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 2.5rem;
+      font-weight: 900;
+      margin-top: 12px;
+    }
+    
+    /* ============================================
+       SAMPLE 20 - NESTED BOXES (V2 STYLE)
+    ============================================ */
+    .s20-nested {
+      padding: 32px;
+      background: #151515;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .s20-nested::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      border: 1px solid rgba(0, 217, 255, 0.1);
+      pointer-events: none;
+    }
+    .s20-layer2 {
+      padding: 28px;
+      background: #1a1a1a;
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .s20-layer2::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      border: 1px solid rgba(0, 217, 255, 0.15);
+      pointer-events: none;
+    }
+    .s20-layer3 {
+      padding: 32px;
+      background: #202020;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      min-height: 240px;
+    }
+    .s20-layer3::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 217, 255, 0.2);
+      pointer-events: none;
+    }
+    .s20-nested-note {
+      font-family: 'Orbitron', monospace;
+      font-size: 5rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    .s20-nested-cents {
+      font-family: 'Orbitron', monospace;
+      font-size: 2.5rem;
+      color: #00d9ff;
+      margin-top: 16px;
+    }
+    
+    /* Info grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .info-box {
+      background: #151515;
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .info-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00d9ff, transparent);
+    }
+    .info-box-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #00d9ff;
+      margin-top: 8px;
+    }
+    
+    /* Graph container */
+    .graph-container {
+      width: 100%;
+      height: 140px;
+      background: #151515;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    .graph-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0, 217, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 217, 255, 0.05) 1px, transparent 1px);
+      background-size: 40px 35px;
+    }
+    .graph-line {
+      position: absolute;
+      bottom: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00d9ff, transparent);
+      box-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
+    }
+    
+  </style>
+</head>
+<body>
+  <div class="gallery-header">
+    <h1>SHRED UP - Tuner Final</h1>
+    <p>Samples 19 (Waveform Peaks) × 20 (Nested Boxes) | V2 Style (Cyan Neon × Neumorphic)</p>
+  </div>
+
+  <div class="samples-grid">
+    
+    <!-- ====================================
+         SAMPLE 19 - WAVEFORM PEAKS (V2 STYLE)
+    ==================================== -->
+    <div class="sample-container">
+      <div class="sample-label">SAMPLE 19</div>
+      <div class="sample-title">Waveform Peaks – Peak Visualizer</div>
+      
+      <div class="s19-peaks neomorph-card neomorph-inset">
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+      </div>
+      
+      <!-- Info Row: LEFT = Freq, CENTER = Note, RIGHT = Cents -->
+      <div class="s19-info-row">
+        <!-- LEFT BOX: Frequency -->
+        <div class="s19-info-box neomorph-card neomorph-inset">
+          <div class="label">Frequency</div>
+          <div class="s19-info-value" style="color: #94a3b8; font-size: 2rem;">261.6 Hz</div>
+        </div>
+        
+        <!-- CENTER BOX: Note (PRIMARY) -->
+        <div class="s19-info-box neomorph-card neomorph-inset" style="flex: 1.5;">
+          <div class="label">Note</div>
+          <div class="s19-info-value cyan-glow" style="color: #fff; font-size: 4rem;">C</div>
+        </div>
+        
+        <!-- RIGHT BOX: Cents -->
+        <div class="s19-info-box neomorph-card neomorph-inset">
+          <div class="label">Cents</div>
+          <div class="s19-info-value cyan-glow-subtle" style="color: #00d9ff; font-size: 2rem;">-11</div>
+        </div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container neomorph-card neomorph-inset">
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+      </div>
+      
+      <!-- Bottom Info Grid -->
+      <div class="info-grid">
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">String</div>
+          <div class="info-box-value" style="color: #8b5cf6;">4/7</div>
+        </div>
+        <div class="info-box neomorph-in neomorph-card neomorph-insetset">
+          <div class="label">Avg Cents</div>
+          <div class="info-box-value">-8.3</div>
+        </div>
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">Samples</div>
+          <div class="info-box-value" style="color: #00a3ff;">1247</div>
+        </div>
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">Session</div>
+          <div class="info-box-value" style="color: #94a3b8;">18.6s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 20 - NESTED BOXES (V2 STYLE)
+    ==================================== -->
+    <div class="sample-container">
+      <div class="sample-label">SAMPLE 20</div>
+      <div class="sample-title">Nested Boxes – 3 Depth Layers</div>
+      
+      <div class="s20-nested neomorph-card neomorph-inset">
+        <div class="s20-layer2">
+          <div class="s20-layer3">
+            <div class="label">Current Note</div>
+            <div class="s20-nested-note cyan-glow">F</div>
+            <div class="s20-nested-cents cyan-glow-subtle">+6</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Info Grid -->
+      <div class="info-grid">
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">Frequency</div>
+          <div class="info-box-value" style="color: #94a3b8;">349.2 Hz</div>
+        </div>
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">String</div>
+          <div class="info-box-value" style="color: #8b5cf6;">5/7</div>
+        </div>
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">Avg Cents</div>
+          <div class="info-box-value">+4.8</div>
+        </div>
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">Session</div>
+          <div class="info-box-value" style="color: #94a3b8;">22.1s</div>
+        </div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container neomorph-card neomorph-inset">
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+      </div>
+    </div>
+    
+  </div>
+</body>
+</html>

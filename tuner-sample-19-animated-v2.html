@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHRED UP - Tuner Sample 19 Animated V2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      padding: 40px 20px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    .gallery-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .gallery-header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(90deg, #00d9ff, #00ffff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gallery-header p {
+      font-size: 16px;
+      color: #888;
+    }
+
+    .sample-container {
+      background: linear-gradient(180deg, 
+        #141414 0%, 
+        #161616 15%, 
+        #181818 30%, 
+        #1a1a1a 45%, 
+        #1b1b1b 50%, 
+        #1a1a1a 55%, 
+        #181818 70%, 
+        #161616 85%, 
+        #151515 100%);
+      border-radius: 20px;
+      padding: 40px;
+      position: relative;
+    }
+
+    .sample-label {
+      position: absolute;
+      top: -14px;
+      left: 40px;
+      background: #00d9ff;
+      color: #000;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .sample-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 32px;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .neomorph-card {
+      background: #1a1a1a;
+      border-radius: 16px;
+      box-shadow: 
+        8px 8px 16px rgba(0, 0, 0, 0.6),
+        -4px -4px 12px rgba(40, 40, 40, 0.1);
+    }
+
+    .neomorph-inset {
+      box-shadow: 
+        inset 4px 4px 8px rgba(0, 0, 0, 0.6),
+        inset -2px -2px 6px rgba(40, 40, 40, 0.1);
+    }
+
+    .label {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    /* Waveform Peaks - 100 bars */
+    .s19-peaks {
+      width: 100%;
+      height: 160px;
+      background: #151515;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 0;
+      padding: 0 0 1rem 0;
+    }
+    .s19-peak {
+      flex: 1;
+      background: linear-gradient(180deg, #00d9ff, #006d80);
+      transition: height 0.15s ease-out;
+    }
+    
+    .s19-info-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .s19-info-box {
+      flex: 1;
+      background: #151515;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .s19-info-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00d9ff, transparent);
+    }
+    .s19-info-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 2.5rem;
+      font-weight: 900;
+      margin-top: 12px;
+      transition: all 0.3s ease;
+      color: #ffffff; /* ALL WHITE */
+    }
+    
+    /* Info grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .info-box {
+      background: #151515;
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .info-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00d9ff, transparent);
+    }
+    .info-box-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff; /* ALL WHITE */
+      margin-top: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    /* Graph container with needle */
+    .graph-container {
+      width: 100%;
+      height: 140px;
+      background: #151515;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    .graph-canvas {
+      width: 100%;
+      height: 100%;
+    }
+    .graph-needle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(255,255,255,0), #ffffff, rgba(255,255,255,0));
+      transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .graph-needle::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 8px solid #ffffff;
+    }
+    
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 32px;
+    }
+    .btn {
+      background: #00d9ff;
+      color: #000;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: #00ffff;
+      transform: translateY(-2px);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .btn.stop {
+      background: #ff0040;
+    }
+    .btn.stop:hover {
+      background: #ff3366;
+    }
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="gallery-header">
+      <h1>SHRED UP - Sample 19 Animated V2</h1>
+      <p>100 Bars Waveform | Fluid Needle | White Text | No Glow</p>
+    </div>
+
+    <div class="sample-container">
+      <div class="sample-label">SAMPLE 19 - LIVE V2</div>
+      <div class="sample-title">Waveform Peaks – 100 Bars + Fluid Needle</div>
+      
+      <div class="s19-peaks neomorph-card neomorph-inset">
+        <!-- 100 bars will be generated by JS -->
+      </div>
+      
+      <!-- Info Row: LEFT = Freq, CENTER = Note, RIGHT = Cents -->
+      <div class="s19-info-row">
+        <!-- LEFT BOX: Frequency -->
+        <div class="s19-info-box neomorph-card neomorph-inset">
+          <div class="label">Frequency</div>
+          <div class="s19-info-value" style="font-size: 2rem;" id="freq-value">261.6 Hz</div>
+        </div>
+        
+        <!-- CENTER BOX: Note (PRIMARY) -->
+        <div class="s19-info-box neomorph-card neomorph-inset" style="flex: 1.5;">
+          <div class="label">Note</div>
+          <div class="s19-info-value" style="font-size: 4rem;" id="note-value">C</div>
+        </div>
+        
+        <!-- RIGHT BOX: Cents -->
+        <div class="s19-info-box neomorph-card neomorph-inset">
+          <div class="label">Cents</div>
+          <div class="s19-info-value" style="font-size: 2rem;" id="cents-value">-11</div>
+        </div>
+      </div>
+      
+      <!-- Graph with Needle -->
+      <div class="graph-container neomorph-card neomorph-inset">
+        <canvas class="graph-canvas" id="graph-canvas"></canvas>
+        <div class="graph-needle" id="graph-needle"></div>
+      </div>
+      
+      <!-- Bottom Info Grid -->
+      <div class="info-grid">
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">String</div>
+          <div class="info-box-value" id="string-value">4/7</div>
+        </div>
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">Avg Cents</div>
+          <div class="info-box-value" id="avg-value">-8.3</div>
+        </div>
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">Samples</div>
+          <div class="info-box-value" id="samples-value">1247</div>
+        </div>
+        <div class="info-box neomorph-card neomorph-inset">
+          <div class="label">Session</div>
+          <div class="info-box-value" id="session-value">18.6s</div>
+        </div>
+      </div>
+      
+      <!-- Controls -->
+      <div class="controls">
+        <button class="btn" id="start-btn">Start Animation</button>
+        <button class="btn stop" id="stop-btn">Stop Animation</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 7-string guitar tuning (A1→D4)
+    const NOTES = [
+      { name: 'A', octave: 1, freq: 55.0, string: 1 },
+      { name: 'D', octave: 2, freq: 73.42, string: 2 },
+      { name: 'G', octave: 2, freq: 98.0, string: 3 },
+      { name: 'C', octave: 3, freq: 130.81, string: 4 },
+      { name: 'F', octave: 3, freq: 174.61, string: 5 },
+      { name: 'A', octave: 3, freq: 220.0, string: 6 },
+      { name: 'D', octave: 4, freq: 293.66, string: 7 }
+    ];
+    
+    let currentNoteIndex = 0;
+    let animationRunning = false;
+    let animationFrame = null;
+    let startTime = null;
+    let sampleCount = 0;
+    let centsHistory = [];
+    let currentCents = 0;
+    
+    // DOM elements
+    const freqEl = document.getElementById('freq-value');
+    const noteEl = document.getElementById('note-value');
+    const centsEl = document.getElementById('cents-value');
+    const stringEl = document.getElementById('string-value');
+    const avgEl = document.getElementById('avg-value');
+    const samplesEl = document.getElementById('samples-value');
+    const sessionEl = document.getElementById('session-value');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const peaksContainer = document.querySelector('.s19-peaks');
+    const needleEl = document.getElementById('graph-needle');
+    
+    // Create 100 bars
+    const bars = [];
+    for (let i = 0; i < 100; i++) {
+      const bar = document.createElement('div');
+      bar.className = 's19-peak';
+      bar.style.height = '30%';
+      peaksContainer.appendChild(bar);
+      bars.push(bar);
+    }
+    
+    // Canvas setup
+    const canvas = document.getElementById('graph-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    
+    const graphData = [];
+    const maxGraphPoints = 100;
+    
+    // Generate oscillating cents value
+    function generateCents() {
+      const base = Math.sin(Date.now() / 1000) * 15; // -15 to +15
+      const noise = (Math.random() - 0.5) * 6; // ±3 noise
+      return Math.round(base + noise);
+    }
+    
+    // Update waveform bars (100 bars, animate heights)
+    function updateWaveform() {
+      bars.forEach((bar, i) => {
+        const phase = (Date.now() / 100 + i * 0.05) % (Math.PI * 2);
+        const height = 30 + Math.sin(phase) * 30 + Math.random() * 20;
+        bar.style.height = `${Math.max(20, Math.min(95, height))}%`;
+      });
+    }
+    
+    // Update needle position (fluid motion)
+    function updateNeedle() {
+      const graphWidth = canvas.offsetWidth;
+      // Map cents (-50 to +50) to position (0 to width)
+      const normalizedCents = (currentCents + 50) / 100; // 0 to 1
+      const position = normalizedCents * graphWidth;
+      needleEl.style.left = `${position}px`;
+    }
+    
+    // Draw graph
+    function drawGraph() {
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      
+      // Clear
+      ctx.fillStyle = '#151515';
+      ctx.fillRect(0, 0, w, h);
+      
+      // Grid
+      ctx.strokeStyle = 'rgba(0, 217, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 35) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      
+      // Center line
+      ctx.strokeStyle = 'rgba(0, 217, 255, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, h / 2);
+      ctx.lineTo(w, h / 2);
+      ctx.stroke();
+      
+      // Data line
+      if (graphData.length > 1) {
+        ctx.strokeStyle = '#00d9ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        graphData.forEach((point, i) => {
+          const x = (i / maxGraphPoints) * w;
+          const y = h / 2 - (point / 50) * (h / 2);
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        
+        ctx.stroke();
+      }
+    }
+    
+    // Update display
+    function updateDisplay() {
+      const note = NOTES[currentNoteIndex];
+      currentCents = generateCents();
+      
+      // Update note info (ALL WHITE, NO GLOW)
+      const noteDisplay = note.octave ? `${note.name}${note.octave}` : note.name;
+      noteEl.textContent = noteDisplay;
+      freqEl.textContent = `${note.freq.toFixed(2)} Hz`;
+      centsEl.textContent = currentCents >= 0 ? `+${currentCents}` : `${currentCents}`;
+      stringEl.textContent = `${note.string}/7`;
+      
+      // Update stats
+      sampleCount++;
+      samplesEl.textContent = sampleCount;
+      
+      centsHistory.push(currentCents);
+      if (centsHistory.length > 50) centsHistory.shift();
+      const avg = centsHistory.reduce((a, b) => a + b, 0) / centsHistory.length;
+      avgEl.textContent = avg >= 0 ? `+${avg.toFixed(1)}` : `${avg.toFixed(1)}`;
+      
+      if (startTime) {
+        const elapsed = (Date.now() - startTime) / 1000;
+        sessionEl.textContent = `${elapsed.toFixed(1)}s`;
+      }
+      
+      // Update graph data
+      graphData.push(currentCents);
+      if (graphData.length > maxGraphPoints) {
+        graphData.shift();
+      }
+    }
+    
+    // Animation loop
+    function animate() {
+      if (!animationRunning) return;
+      
+      updateWaveform();
+      updateDisplay();
+      updateNeedle();
+      drawGraph();
+      
+      animationFrame = requestAnimationFrame(animate);
+    }
+    
+    // Change note every 3 seconds
+    function cycleNotes() {
+      if (!animationRunning) return;
+      
+      currentNoteIndex = (currentNoteIndex + 1) % NOTES.length;
+      
+      setTimeout(cycleNotes, 3000);
+    }
+    
+    // Start animation
+    startBtn.addEventListener('click', () => {
+      if (animationRunning) return;
+      
+      animationRunning = true;
+      startTime = Date.now();
+      sampleCount = 0;
+      centsHistory = [];
+      graphData.length = 0;
+      
+      startBtn.disabled = true;
+      startBtn.style.opacity = '0.5';
+      stopBtn.disabled = false;
+      stopBtn.style.opacity = '1';
+      
+      animate();
+      cycleNotes();
+    });
+    
+    // Stop animation
+    stopBtn.addEventListener('click', () => {
+      animationRunning = false;
+      
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = null;
+      }
+      
+      startBtn.disabled = false;
+      startBtn.style.opacity = '1';
+      stopBtn.disabled = true;
+      stopBtn.style.opacity = '0.5';
+    });
+    
+    // Initialize
+    stopBtn.disabled = true;
+    stopBtn.style.opacity = '0.5';
+    
+    // Initial draw
+    drawGraph();
+    updateNeedle();
+  </script>
+</body>
+</html>

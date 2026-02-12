@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHRED UP - 20 Innovative Tuner Concepts V5</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       RESET + GLOBAL
+    ============================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #1a1a1a, #0d0d0d);
+      color: #eaeaea;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+    }
+    h1 {
+      text-align: center;
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 2rem;
+      letter-spacing: 2px;
+      color: #00d9ff;
+      margin-bottom: 1rem;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 0.875rem;
+      color: #888;
+      margin-bottom: 3rem;
+    }
+    .samples-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .sample-card {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      background: #1a1a1a;
+      border-radius: 12px;
+      box-shadow: 
+        8px 8px 16px rgba(0,0,0,0.6),
+        -4px -4px 12px rgba(40,40,40,0.1);
+      padding: 1.5rem;
+      position: relative;
+    }
+    .sample-header {
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      font-size: 0.875rem;
+      color: #00d9ff;
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    
+    /* ============================================
+       LOCKED NEUMORPHIC SHADOWS
+    ============================================ */
+    .neomorph-out {
+      box-shadow: 
+        8px 8px 16px rgba(0,0,0,0.6),
+        -4px -4px 12px rgba(40,40,40,0.1);
+    }
+    .neomorph-in {
+      box-shadow: 
+        inset 4px 4px 8px rgba(0,0,0,0.6),
+        inset -2px -2px 6px rgba(40,40,40,0.1);
+    }
+
+    /* ============================================
+       SHARED ELEMENTS
+    ============================================ */
+    .note-value {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 4rem;
+      color: #fff;
+      line-height: 1;
+    }
+    .cents-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .label {
+      font-size: 0.75rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* ============================================
+       HUD DETAIL ELEMENTS (COLD COLORS ONLY)
+    ============================================ */
+    .hud-line-h, .hud-line-v {
+      position: absolute;
+      background: linear-gradient(90deg, transparent, rgba(0,217,255,0.15), transparent);
+      pointer-events: none;
+    }
+    .hud-line-h {
+      left: 0;
+      right: 0;
+      height: 1px;
+    }
+    .hud-line-v {
+      top: 0;
+      bottom: 0;
+      width: 1px;
+    }
+    .hud-corner {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border: 1px solid rgba(0,217,255,0.2);
+    }
+    .hud-corner.tl { top: 8px; left: 8px; border-right: none; border-bottom: none; }
+    .hud-corner.tr { top: 8px; right: 8px; border-left: none; border-bottom: none; }
+    .hud-corner.bl { bottom: 8px; left: 8px; border-right: none; border-top: none; }
+    .hud-corner.br { bottom: 8px; right: 8px; border-left: none; border-top: none; }
+    
+    .hud-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0,217,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,217,255,0.03) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+    
+    .hud-scan {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0,217,255,0.3), transparent);
+      animation: scan 4s ease-in-out infinite;
+    }
+    @keyframes scan {
+      0%, 100% { top: 10%; }
+      50% { top: 80%; }
+    }
+    
+    /* ============================================
+       COLD COLOR PALETTE
+    ============================================ */
+    .color-cyan { color: #00d9ff; }
+    .color-blue { color: #00a3ff; }
+    .color-violet { color: #8b5cf6; }
+    .color-steel { color: #94a3b8; }
+    
+    /* ============================================
+       CONCEPT 1 - CIRCULAR WAVEFORM (INSPIRED BY 10)
+    ============================================ */
+    .c1-container {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+    .c1-circular {
+      flex: 0 0 280px;
+      height: 280px;
+      background: #151515;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+    }
+    .c1-rings {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c1-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(0,217,255,0.1);
+    }
+    .c1-ring:nth-child(1) { width: 90%; height: 90%; }
+    .c1-ring:nth-child(2) { width: 70%; height: 70%; }
+    .c1-ring:nth-child(3) { width: 50%; height: 50%; }
+    .c1-ring:nth-child(4) { width: 30%; height: 30%; }
+    .c1-wave-point {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #00d9ff;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+    }
+    .c1-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 10;
+    }
+    .c1-stats {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .c1-stat-row {
+      background: #151515;
+      border-radius: 6px;
+      padding: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* ============================================
+       CONCEPT 2 - TUNNEL DEPTH (NESTED + GRADIENT)
+    ============================================ */
+    .c2-tunnel {
+      position: relative;
+      height: 300px;
+      background: #151515;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c2-layer {
+      position: absolute;
+      background: linear-gradient(135deg, rgba(0,217,255,0.05), rgba(139,92,246,0.05));
+      border: 1px solid rgba(0,217,255,0.15);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    .c2-layer:nth-child(1) { width: 100%; height: 100%; }
+    .c2-layer:nth-child(2) { width: 80%; height: 80%; }
+    .c2-layer:nth-child(3) { width: 60%; height: 60%; }
+    .c2-layer:nth-child(4) { width: 40%; height: 40%; }
+    .c2-layer:nth-child(5) { width: 20%; height: 20%; z-index: 5; }
+    
+    /* ============================================
+       CONCEPT 3 - OSCILLOSCOPE DUAL TRACE
+    ============================================ */
+    .c3-scope {
+      width: 100%;
+      height: 200px;
+      background: #0a0a0a;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .c3-grid-lines {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0,217,255,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,217,255,0.08) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .c3-trace {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00d9ff, #00a3ff, transparent);
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .c3-trace-2 {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #8b5cf6, #00a3ff, transparent);
+      top: 60%;
+      transform: translateY(-50%);
+      opacity: 0.6;
+    }
+    
+    /* ============================================
+       CONCEPT 4 - FREQUENCY SPECTRUM BARS (RADIAL)
+    ============================================ */
+    .c4-radial-bars {
+      width: 300px;
+      height: 300px;
+      margin: 0 auto;
+      background: #151515;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c4-bar {
+      position: absolute;
+      width: 4px;
+      background: linear-gradient(180deg, #00d9ff, transparent);
+      bottom: 50%;
+      left: 50%;
+      transform-origin: bottom center;
+      border-radius: 2px 2px 0 0;
+    }
+    .c4-bar:nth-child(1) { height: 30%; transform: translateX(-50%) rotate(0deg); }
+    .c4-bar:nth-child(2) { height: 50%; transform: translateX(-50%) rotate(22.5deg); }
+    .c4-bar:nth-child(3) { height: 70%; transform: translateX(-50%) rotate(45deg); }
+    .c4-bar:nth-child(4) { height: 60%; transform: translateX(-50%) rotate(67.5deg); }
+    .c4-bar:nth-child(5) { height: 80%; transform: translateX(-50%) rotate(90deg); }
+    .c4-bar:nth-child(6) { height: 65%; transform: translateX(-50%) rotate(112.5deg); }
+    .c4-bar:nth-child(7) { height: 75%; transform: translateX(-50%) rotate(135deg); }
+    .c4-bar:nth-child(8) { height: 55%; transform: translateX(-50%) rotate(157.5deg); }
+    .c4-bar:nth-child(9) { height: 40%; transform: translateX(-50%) rotate(180deg); }
+    .c4-bar:nth-child(10) { height: 60%; transform: translateX(-50%) rotate(202.5deg); }
+    .c4-bar:nth-child(11) { height: 70%; transform: translateX(-50%) rotate(225deg); }
+    .c4-bar:nth-child(12) { height: 50%; transform: translateX(-50%) rotate(247.5deg); }
+    .c4-bar:nth-child(13) { height: 65%; transform: translateX(-50%) rotate(270deg); }
+    .c4-bar:nth-child(14) { height: 75%; transform: translateX(-50%) rotate(292.5deg); }
+    .c4-bar:nth-child(15) { height: 55%; transform: translateX(-50%) rotate(315deg); }
+    .c4-bar:nth-child(16) { height: 45%; transform: translateX(-50%) rotate(337.5deg); }
+    
+    /* ============================================
+       CONCEPT 5 - DNA HELIX METER
+    ============================================ */
+    .c5-helix {
+      width: 100%;
+      height: 180px;
+      background: #151515;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      padding: 0 2rem;
+    }
+    .c5-strand {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      left: 0;
+    }
+    .c5-strand-top {
+      background: linear-gradient(90deg, transparent, #00d9ff, #00a3ff, transparent);
+      top: 35%;
+      animation: helix-top 3s ease-in-out infinite;
+    }
+    .c5-strand-bottom {
+      background: linear-gradient(90deg, transparent, #8b5cf6, #00a3ff, transparent);
+      top: 65%;
+      animation: helix-bottom 3s ease-in-out infinite;
+    }
+    @keyframes helix-top {
+      0%, 100% { transform: translateY(-10px); }
+      50% { transform: translateY(10px); }
+    }
+    @keyframes helix-bottom {
+      0%, 100% { transform: translateY(10px); }
+      50% { transform: translateY(-10px); }
+    }
+    .c5-bridge {
+      position: absolute;
+      width: 1px;
+      height: 30%;
+      background: rgba(0,217,255,0.3);
+      top: 35%;
+    }
+    .c5-bridge:nth-child(3) { left: 10%; }
+    .c5-bridge:nth-child(4) { left: 25%; }
+    .c5-bridge:nth-child(5) { left: 40%; }
+    .c5-bridge:nth-child(6) { left: 55%; }
+    .c5-bridge:nth-child(7) { left: 70%; }
+    .c5-bridge:nth-child(8) { left: 85%; }
+    
+    /* ============================================
+       CONCEPT 6 - HOLOGRAPHIC LAYERS (INSPIRED BY 20)
+    ============================================ */
+    .c6-holo {
+      position: relative;
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c6-holo-layer {
+      position: absolute;
+      background: linear-gradient(135deg, rgba(0,217,255,0.03), rgba(139,92,246,0.03));
+      border: 1px solid rgba(0,217,255,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c6-holo-layer:nth-child(1) { width: 100%; height: 100%; transform: translateZ(0px); }
+    .c6-holo-layer:nth-child(2) { width: 85%; height: 85%; transform: translateY(-8px); opacity: 0.8; }
+    .c6-holo-layer:nth-child(3) { width: 70%; height: 70%; transform: translateY(-16px); opacity: 0.6; }
+    .c6-holo-layer:nth-child(4) { width: 55%; height: 55%; transform: translateY(-24px); opacity: 0.4; z-index: 5; }
+    
+    /* ============================================
+       CONCEPT 7 - PARTICLE FIELD
+    ============================================ */
+    .c7-field {
+      width: 100%;
+      height: 240px;
+      background: #0a0a0a;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .c7-particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: #00d9ff;
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+    .c7-particle:nth-child(1) { top: 20%; left: 15%; }
+    .c7-particle:nth-child(2) { top: 35%; left: 30%; }
+    .c7-particle:nth-child(3) { top: 50%; left: 45%; }
+    .c7-particle:nth-child(4) { top: 65%; left: 60%; }
+    .c7-particle:nth-child(5) { top: 80%; left: 75%; }
+    .c7-particle:nth-child(6) { top: 25%; left: 70%; }
+    .c7-particle:nth-child(7) { top: 60%; left: 25%; }
+    .c7-particle:nth-child(8) { top: 40%; left: 80%; }
+    .c7-particle:nth-child(9) { top: 75%; left: 40%; }
+    .c7-particle:nth-child(10) { top: 15%; left: 55%; }
+    .c7-line {
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,217,255,0.2), transparent);
+    }
+    .c7-line:nth-child(11) { top: 20%; left: 15%; width: 15%; transform: rotate(25deg); }
+    .c7-line:nth-child(12) { top: 35%; left: 30%; width: 15%; transform: rotate(-15deg); }
+    .c7-line:nth-child(13) { top: 50%; left: 45%; width: 15%; transform: rotate(35deg); }
+    
+    /* ============================================
+       CONCEPT 8 - GEOMETRIC MORPH (HEXAGON → CIRCLE)
+    ============================================ */
+    .c8-morph {
+      width: 260px;
+      height: 260px;
+      margin: 0 auto;
+      background: #151515;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: clip-path 0.5s ease;
+    }
+    .c8-morph:hover {
+      clip-path: circle(50%);
+    }
+    .c8-inner {
+      width: 70%;
+      height: 70%;
+      background: #1a1a1a;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      transition: clip-path 0.5s ease;
+    }
+    .c8-morph:hover .c8-inner {
+      clip-path: circle(50%);
+    }
+    
+    /* ============================================
+       CONCEPT 9 - STEREO METER (DUAL BARS)
+    ============================================ */
+    .c9-stereo {
+      display: flex;
+      gap: 1rem;
+      height: 200px;
+    }
+    .c9-channel {
+      flex: 1;
+      background: #151515;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column-reverse;
+      padding: 1rem 0.5rem;
+    }
+    .c9-segment {
+      width: 100%;
+      height: 8px;
+      margin: 2px 0;
+      border-radius: 2px;
+      transition: background 0.2s ease;
+    }
+    .c9-segment.active { background: #00d9ff; }
+    .c9-segment.inactive { background: rgba(0,217,255,0.1); }
+    
+    /* ============================================
+       CONCEPT 10 - WAVE INTERFERENCE (DUAL CIRCLES)
+    ============================================ */
+    .c10-interference {
+      width: 100%;
+      height: 260px;
+      background: #0a0a0a;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c10-wave {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid rgba(0,217,255,0.3);
+      animation: ripple 3s ease-out infinite;
+    }
+    .c10-wave:nth-child(1) { width: 80px; height: 80px; left: 35%; top: 50%; transform: translate(-50%, -50%); }
+    .c10-wave:nth-child(2) { width: 80px; height: 80px; left: 65%; top: 50%; transform: translate(-50%, -50%); animation-delay: 1.5s; }
+    @keyframes ripple {
+      0% { width: 80px; height: 80px; opacity: 1; }
+      100% { width: 240px; height: 240px; opacity: 0; }
+    }
+    
+    /* ============================================
+       CONCEPT 11 - CROSS-FADE GRADIENT (INSPIRED BY 15)
+    ============================================ */
+    .c11-xfade {
+      width: 100%;
+      height: 160px;
+      background: linear-gradient(90deg, 
+        rgba(0,163,255,0.15), 
+        rgba(0,217,255,0.3) 50%, 
+        rgba(139,92,246,0.15)
+      );
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c11-cursor {
+      position: absolute;
+      width: 4px;
+      height: 100%;
+      background: #fff;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: cursor-move 4s ease-in-out infinite;
+    }
+    @keyframes cursor-move {
+      0%, 100% { left: 20%; }
+      50% { left: 80%; }
+    }
+    
+    /* ============================================
+       CONCEPT 12 - TRIANGULAR METER (3-SIDED)
+    ============================================ */
+    .c12-triangle {
+      width: 280px;
+      height: 240px;
+      margin: 0 auto;
+      background: #151515;
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 2rem;
+    }
+    .c12-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(180deg, transparent, rgba(0,217,255,0.3));
+      clip-path: polygon(50% 20%, 90% 100%, 10% 100%);
+      height: 60%;
+      transition: height 0.3s ease;
+    }
+    
+    /* ============================================
+       CONCEPT 13 - SINE WAVE LIVE
+    ============================================ */
+    .c13-sine {
+      width: 100%;
+      height: 140px;
+      background: #0a0a0a;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .c13-wave-line {
+      position: absolute;
+      width: 200%;
+      height: 3px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 20px,
+        #00d9ff 20px,
+        #00d9ff 40px
+      );
+      top: 50%;
+      transform: translateY(-50%);
+      animation: wave-scroll 4s linear infinite;
+    }
+    @keyframes wave-scroll {
+      0% { left: 0; }
+      100% { left: -50%; }
+    }
+    
+    /* ============================================
+       CONCEPT 14 - VORTEX SPIRAL
+    ============================================ */
+    .c14-vortex {
+      width: 280px;
+      height: 280px;
+      margin: 0 auto;
+      background: #151515;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c14-spiral {
+      position: absolute;
+      width: 80%;
+      height: 80%;
+      border: 2px solid rgba(0,217,255,0.2);
+      border-radius: 50%;
+      animation: rotate 6s linear infinite;
+    }
+    .c14-spiral:nth-child(2) { width: 60%; height: 60%; animation-duration: 5s; }
+    .c14-spiral:nth-child(3) { width: 40%; height: 40%; animation-duration: 4s; }
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* ============================================
+       CONCEPT 15 - PYRAMID LAYERS (3D EFFECT)
+    ============================================ */
+    .c15-pyramid {
+      width: 300px;
+      height: 240px;
+      margin: 0 auto;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .c15-level {
+      background: #151515;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 50px;
+    }
+    .c15-level:nth-child(1) { width: 100%; }
+    .c15-level:nth-child(2) { width: 80%; }
+    .c15-level:nth-child(3) { width: 60%; }
+    .c15-level:nth-child(4) { width: 40%; }
+    
+    /* ============================================
+       CONCEPT 16 - RADAR SWEEP
+    ============================================ */
+    .c16-radar {
+      width: 280px;
+      height: 280px;
+      margin: 0 auto;
+      background: #0a0a0a;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c16-grid {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(0,217,255,0.1);
+    }
+    .c16-grid:nth-child(1) { width: 90%; height: 90%; }
+    .c16-grid:nth-child(2) { width: 70%; height: 70%; }
+    .c16-grid:nth-child(3) { width: 50%; height: 50%; }
+    .c16-grid:nth-child(4) { width: 30%; height: 30%; }
+    .c16-sweep {
+      position: absolute;
+      width: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(0,217,255,0.8), transparent);
+      top: 50%;
+      left: 50%;
+      transform-origin: left center;
+      animation: sweep 4s linear infinite;
+    }
+    @keyframes sweep {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* ============================================
+       CONCEPT 17 - LIQUID METER (FLUID FILL)
+    ============================================ */
+    .c17-liquid {
+      width: 100%;
+      height: 180px;
+      background: #151515;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .c17-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 60%;
+      background: linear-gradient(180deg, rgba(0,217,255,0.4), rgba(0,217,255,0.1));
+      transition: height 0.5s ease;
+    }
+    .c17-wave-top {
+      position: absolute;
+      top: 0;
+      width: 200%;
+      height: 20px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 30px,
+        rgba(0,217,255,0.3) 30px,
+        rgba(0,217,255,0.3) 60px
+      );
+      animation: wave-liquid 3s ease-in-out infinite;
+    }
+    @keyframes wave-liquid {
+      0%, 100% { left: 0; }
+      50% { left: -50%; }
+    }
+    
+    /* ============================================
+       CONCEPT 18 - MATRIX GRID (CODE STYLE)
+    ============================================ */
+    .c18-matrix {
+      width: 100%;
+      height: 200px;
+      background: #0a0a0a;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: #00d9ff;
+      padding: 1rem;
+    }
+    .c18-column {
+      position: absolute;
+      width: 20px;
+      background: linear-gradient(180deg, transparent, #00d9ff);
+      opacity: 0.3;
+      animation: matrix-fall 3s linear infinite;
+    }
+    .c18-column:nth-child(1) { left: 5%; animation-duration: 2s; }
+    .c18-column:nth-child(2) { left: 15%; animation-duration: 3s; animation-delay: 0.5s; }
+    .c18-column:nth-child(3) { left: 25%; animation-duration: 2.5s; animation-delay: 1s; }
+    .c18-column:nth-child(4) { left: 35%; animation-duration: 3.5s; }
+    .c18-column:nth-child(5) { left: 45%; animation-duration: 2.8s; animation-delay: 0.8s; }
+    .c18-column:nth-child(6) { left: 55%; animation-duration: 3.2s; animation-delay: 0.3s; }
+    .c18-column:nth-child(7) { left: 65%; animation-duration: 2.6s; animation-delay: 1.2s; }
+    .c18-column:nth-child(8) { left: 75%; animation-duration: 3.3s; animation-delay: 0.6s; }
+    .c18-column:nth-child(9) { left: 85%; animation-duration: 2.9s; animation-delay: 0.9s; }
+    .c18-column:nth-child(10) { left: 95%; animation-duration: 3.1s; animation-delay: 0.2s; }
+    @keyframes matrix-fall {
+      0% { top: -100px; height: 60px; }
+      100% { top: 100%; height: 80px; }
+    }
+    
+    /* ============================================
+       CONCEPT 19 - ORBIT RINGS (PLANETARY)
+    ============================================ */
+    .c19-orbit {
+      width: 300px;
+      height: 300px;
+      margin: 0 auto;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c19-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(0,217,255,0.15);
+    }
+    .c19-ring:nth-child(1) { width: 100%; height: 100%; }
+    .c19-ring:nth-child(2) { width: 75%; height: 75%; animation: rotate 8s linear infinite; }
+    .c19-ring:nth-child(3) { width: 50%; height: 50%; animation: rotate 6s linear infinite reverse; }
+    .c19-planet {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #00d9ff;
+      border-radius: 50%;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    /* ============================================
+       CONCEPT 20 - CRYSTAL FACETS (GEOMETRIC)
+    ============================================ */
+    .c20-crystal {
+      width: 300px;
+      height: 260px;
+      margin: 0 auto;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .c20-facet {
+      position: absolute;
+      background: linear-gradient(135deg, rgba(0,217,255,0.1), rgba(139,92,246,0.05));
+      border: 1px solid rgba(0,217,255,0.2);
+    }
+    .c20-facet:nth-child(1) { 
+      width: 100px; 
+      height: 100px; 
+      top: 30%; 
+      left: 50%; 
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    .c20-facet:nth-child(2) { 
+      width: 80px; 
+      height: 80px; 
+      top: 50%; 
+      left: 35%; 
+      transform: translate(-50%, -50%) rotate(30deg);
+    }
+    .c20-facet:nth-child(3) { 
+      width: 80px; 
+      height: 80px; 
+      top: 50%; 
+      right: 35%; 
+      transform: translate(50%, -50%) rotate(-30deg);
+    }
+    .c20-facet:nth-child(4) { 
+      width: 90px; 
+      height: 90px; 
+      bottom: 25%; 
+      left: 50%; 
+      transform: translate(-50%, 50%) rotate(15deg);
+    }
+    
+    /* ============================================
+       INFO STATS SHARED
+    ============================================ */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .info-box {
+      background: #151515;
+      border-radius: 6px;
+      padding: 0.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .info-box-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #00d9ff;
+      margin-top: 0.25rem;
+    }
+    
+  </style>
+</head>
+<body>
+  <h1>SHRED UP - 20 Innovative Tuner Concepts V5</h1>
+  <div class="subtitle">
+    Combining Best of 20/15/10 + New Visual Innovation × Cold HUD × Neumorphic
+  </div>
+
+  <div class="samples-grid">
+    
+    <!-- ====================================
+         CONCEPT 1 - CIRCULAR WAVEFORM
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 1 – Circular Waveform (Radial Audio Visualization)</div>
+      
+      <div class="c1-container">
+        <div class="c1-circular neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="c1-rings">
+            <div class="c1-ring"></div>
+            <div class="c1-ring"></div>
+            <div class="c1-ring"></div>
+            <div class="c1-ring"></div>
+          </div>
+          
+          <!-- Radial crosshair -->
+          <div style="position: absolute; width: 1px; height: 100%; background: rgba(0,217,255,0.1); left: 50%;"></div>
+          <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.1); top: 50%;"></div>
+          <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.1); top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg);"></div>
+          <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.1); top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);"></div>
+          
+          <div class="c1-center">
+            <div class="note-value" style="font-size: 3rem;">G#</div>
+            <div class="cents-value color-cyan" style="margin-top: 0.5rem;">+12</div>
+          </div>
+        </div>
+        
+        <div class="c1-stats">
+          <div class="c1-stat-row neomorph-in">
+            <div class="hud-grid" style="opacity: 0.1;"></div>
+            <div class="label">Frequency</div>
+            <div style="font-family: 'Orbitron', monospace; font-size: 1.5rem; font-weight: 700; color: #00d9ff; margin-top: 0.25rem;">415.30 Hz</div>
+          </div>
+          <div class="c1-stat-row neomorph-in">
+            <div class="hud-grid" style="opacity: 0.1;"></div>
+            <div class="label">String</div>
+            <div style="font-family: 'Orbitron', monospace; font-size: 1.5rem; font-weight: 700; color: #8b5cf6; margin-top: 0.25rem;">6/7</div>
+          </div>
+          <div class="c1-stat-row neomorph-in">
+            <div class="hud-grid" style="opacity: 0.1;"></div>
+            <div class="label">Avg Cents</div>
+            <div style="font-family: 'Orbitron', monospace; font-size: 1.5rem; font-weight: 700; color: #94a3b8; margin-top: 0.25rem;">+9.8</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 2 - TUNNEL DEPTH
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 2 – Tunnel Depth (Nested Layers + Gradient)</div>
+      
+      <div class="c2-tunnel neomorph-in">
+        <div class="hud-scan"></div>
+        <div class="c2-layer"></div>
+        <div class="c2-layer"></div>
+        <div class="c2-layer"></div>
+        <div class="c2-layer"></div>
+        <div class="c2-layer">
+          <div class="note-value" style="font-size: 2.5rem;">D</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">-8</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="hud-corner tl"></div>
+          <div class="label">Freq</div>
+          <div class="info-box-value">293.7 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">7/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">-5.2</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="hud-corner br"></div>
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">14.3s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 3 - OSCILLOSCOPE DUAL TRACE
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 3 – Oscilloscope Dual Trace (Signal Monitor)</div>
+      
+      <div class="c3-scope neomorph-in">
+        <div class="c3-grid-lines"></div>
+        <div class="c3-trace"></div>
+        <div class="c3-trace-2"></div>
+        <div class="hud-scan"></div>
+        
+        <!-- Center crosshair -->
+        <div style="position: absolute; width: 1px; height: 100%; background: rgba(0,217,255,0.15); left: 50%;"></div>
+        <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.15); top: 50%;"></div>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; margin-top: 1rem; align-items: center;">
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 1rem; display: flex; flex-direction: column; align-items: center;" class="neomorph-in">
+          <div class="label">Note</div>
+          <div class="note-value" style="font-size: 2.5rem; margin-top: 0.5rem;">C#</div>
+        </div>
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 1rem; display: flex; flex-direction: column; align-items: center;" class="neomorph-in">
+          <div class="label">Cents</div>
+          <div class="cents-value color-cyan" style="font-size: 2.5rem; margin-top: 0.5rem;">+19</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 4 - FREQUENCY SPECTRUM BARS (RADIAL)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 4 – Radial Frequency Spectrum (360° Bars)</div>
+      
+      <div class="c4-radial-bars neomorph-in">
+        <div class="hud-grid" style="opacity: 0.1;"></div>
+        
+        <!-- Concentric rings -->
+        <div style="position: absolute; width: 80%; height: 80%; border-radius: 50%; border: 1px solid rgba(0,217,255,0.08);"></div>
+        <div style="position: absolute; width: 60%; height: 60%; border-radius: 50%; border: 1px solid rgba(0,217,255,0.08);"></div>
+        <div style="position: absolute; width: 40%; height: 40%; border-radius: 50%; border: 1px solid rgba(0,217,255,0.08);"></div>
+        
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        <div class="c4-bar"></div>
+        
+        <div style="z-index: 10; text-align: center;">
+          <div class="note-value" style="font-size: 2.5rem;">F</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">-14</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">349.2 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">5/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">-11.6</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">18.7s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 5 - DNA HELIX METER
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 5 – DNA Helix Meter (Double Strand Animation)</div>
+      
+      <div class="c5-helix neomorph-in">
+        <div class="hud-grid" style="opacity: 0.1;"></div>
+        <div class="c5-strand c5-strand-top"></div>
+        <div class="c5-strand c5-strand-bottom"></div>
+        <div class="c5-bridge"></div>
+        <div class="c5-bridge"></div>
+        <div class="c5-bridge"></div>
+        <div class="c5-bridge"></div>
+        <div class="c5-bridge"></div>
+        <div class="c5-bridge"></div>
+        
+        <div style="z-index: 10; display: flex; gap: 3rem; align-items: center;">
+          <div style="text-align: center;">
+            <div class="label">Note</div>
+            <div class="note-value" style="font-size: 2.5rem; margin-top: 0.5rem;">A</div>
+          </div>
+          <div style="width: 2px; height: 60px; background: rgba(255,255,255,0.1);"></div>
+          <div style="text-align: center;">
+            <div class="label">Cents</div>
+            <div class="cents-value color-cyan" style="font-size: 2.5rem; margin-top: 0.5rem;">+7</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">220.0 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">6/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">+5.3</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">11.2s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 6 - HOLOGRAPHIC LAYERS
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 6 – Holographic Layers (Parallax Depth)</div>
+      
+      <div class="c6-holo">
+        <div class="c6-holo-layer"></div>
+        <div class="c6-holo-layer"></div>
+        <div class="c6-holo-layer"></div>
+        <div class="c6-holo-layer">
+          <div class="note-value" style="font-size: 3rem;">E</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">-22</div>
+        </div>
+        <div class="hud-scan"></div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">164.8 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">2/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">-19.4</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">16.8s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 7 - PARTICLE FIELD
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 7 – Particle Field (Connected Nodes)</div>
+      
+      <div class="c7-field neomorph-in">
+        <div class="hud-grid" style="opacity: 0.08;"></div>
+        <div class="c7-particle"></div>
+        <div class="c7-particle"></div>
+        <div class="c7-particle"></div>
+        <div class="c7-particle"></div>
+        <div class="c7-particle"></div>
+        <div class="c7-particle"></div>
+        <div class="c7-particle"></div>
+        <div class="c7-particle"></div>
+        <div class="c7-particle"></div>
+        <div class="c7-particle"></div>
+        <div class="c7-line"></div>
+        <div class="c7-line"></div>
+        <div class="c7-line"></div>
+        
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 10;">
+          <div class="note-value" style="font-size: 3rem;">B</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">+28</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">246.9 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">7/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">+25.1</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">9.4s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 8 - GEOMETRIC MORPH
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 8 – Geometric Morph (Hexagon ↔ Circle)</div>
+      
+      <div class="c8-morph neomorph-in">
+        <div class="hud-grid" style="opacity: 0.15;"></div>
+        
+        <!-- Radial lines -->
+        <div style="position: absolute; width: 1px; height: 100%; background: rgba(0,217,255,0.1); left: 50%;"></div>
+        <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.1); top: 50%;"></div>
+        <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.1); top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(60deg);"></div>
+        <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.1); top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-60deg);"></div>
+        
+        <div class="c8-inner">
+          <div class="note-value" style="font-size: 2.5rem;">G</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">-11</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">196.0 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">3/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">-8.7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">13.9s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 9 - STEREO METER
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 9 – Stereo Meter (Dual Channel Bars)</div>
+      
+      <div class="c9-stereo">
+        <div class="c9-channel neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label" style="position: absolute; top: 0.75rem; left: 50%; transform: translateX(-50%);">L</div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment inactive"></div>
+          <div class="c9-segment inactive"></div>
+          <div class="c9-segment inactive"></div>
+          <div class="c9-segment inactive"></div>
+        </div>
+        
+        <div style="flex: 0 0 200px; display: flex; align-items: center; justify-content: center; flex-direction: column; background: #151515; border-radius: 8px;" class="neomorph-in">
+          <div class="note-value" style="font-size: 3rem;">C</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">+15</div>
+        </div>
+        
+        <div class="c9-channel neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label" style="position: absolute; top: 0.75rem; left: 50%; transform: translateX(-50%);">R</div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment active"></div>
+          <div class="c9-segment inactive"></div>
+          <div class="c9-segment inactive"></div>
+          <div class="c9-segment inactive"></div>
+          <div class="c9-segment inactive"></div>
+          <div class="c9-segment inactive"></div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">261.6 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">4/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">+12.3</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">10.6s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 10 - WAVE INTERFERENCE
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 10 – Wave Interference (Dual Ripple)</div>
+      
+      <div class="c10-interference neomorph-in">
+        <div class="hud-grid" style="opacity: 0.08;"></div>
+        <div class="c10-wave"></div>
+        <div class="c10-wave"></div>
+        
+        <div style="z-index: 10; text-align: center;">
+          <div class="note-value" style="font-size: 3rem;">D#</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">-17</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">311.1 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">4/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">-14.8</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">15.1s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 11 - CROSS-FADE GRADIENT
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 11 – Cross-Fade Gradient (Fluid Meter)</div>
+      
+      <div class="c11-xfade neomorph-in">
+        <div class="hud-grid" style="opacity: 0.1;"></div>
+        <div class="c11-cursor"></div>
+        <div class="hud-scan"></div>
+        
+        <div style="z-index: 10; display: flex; gap: 3rem; align-items: center;">
+          <div style="text-align: center;">
+            <div class="label">Note</div>
+            <div class="note-value" style="font-size: 2.5rem; margin-top: 0.5rem;">A#</div>
+          </div>
+          <div style="width: 2px; height: 60px; background: rgba(255,255,255,0.2);"></div>
+          <div style="text-align: center;">
+            <div class="label">Cents</div>
+            <div class="cents-value color-cyan" style="font-size: 2.5rem; margin-top: 0.5rem;">+21</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">233.1 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">6/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">+18.6</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">12.7s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 12 - TRIANGULAR METER
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 12 – Triangular Meter (3-Sided Fill)</div>
+      
+      <div class="c12-triangle neomorph-in">
+        <div class="hud-grid" style="opacity: 0.15;"></div>
+        <div class="c12-fill"></div>
+        
+        <!-- Triangle guides -->
+        <div style="position: absolute; width: 1px; height: 50%; background: rgba(0,217,255,0.1); top: 0; left: 50%;"></div>
+        <div style="position: absolute; width: 50%; height: 1px; background: rgba(0,217,255,0.1); bottom: 25%; left: 25%;"></div>
+        
+        <div style="z-index: 10; text-align: center;">
+          <div class="note-value" style="font-size: 2.5rem;">F#</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">-9</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">185.0 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">3/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">-6.4</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">17.2s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 13 - SINE WAVE LIVE
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 13 – Sine Wave Live (Scrolling Waveform)</div>
+      
+      <div class="c13-sine neomorph-in">
+        <div class="hud-grid" style="opacity: 0.08;"></div>
+        <div class="c13-wave-line"></div>
+        
+        <!-- Center guides -->
+        <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.15); top: 25%;"></div>
+        <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.15); top: 50%;"></div>
+        <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.15); top: 75%;"></div>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 1rem; text-align: center;" class="neomorph-in">
+          <div class="label">Note</div>
+          <div class="note-value" style="font-size: 2rem; margin-top: 0.5rem;">B♭</div>
+        </div>
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 1rem; text-align: center;" class="neomorph-in">
+          <div class="label">Cents</div>
+          <div class="cents-value color-cyan" style="font-size: 2rem; margin-top: 0.5rem;">-25</div>
+        </div>
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 1rem; text-align: center;" class="neomorph-in">
+          <div class="label">Freq</div>
+          <div class="cents-value color-steel" style="font-size: 1.5rem; margin-top: 0.5rem;">233.1 Hz</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 14 - VORTEX SPIRAL
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 14 – Vortex Spiral (Rotating Rings)</div>
+      
+      <div class="c14-vortex neomorph-in">
+        <div class="hud-grid" style="opacity: 0.08;"></div>
+        <div class="c14-spiral"></div>
+        <div class="c14-spiral"></div>
+        <div class="c14-spiral"></div>
+        
+        <div style="z-index: 10; text-align: center;">
+          <div class="note-value" style="font-size: 3rem;">E♭</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">+33</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">155.6 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">2/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">+30.2</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">8.9s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 15 - PYRAMID LAYERS
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 15 – Pyramid Layers (Stacked 3D Effect)</div>
+      
+      <div class="c15-pyramid">
+        <div class="c15-level neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label" style="margin-right: 1rem;">Freq</div>
+          <div style="font-family: 'Orbitron', monospace; font-size: 1.25rem; font-weight: 700; color: #00d9ff;">130.8 Hz</div>
+        </div>
+        <div class="c15-level neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label" style="margin-right: 1rem;">Note</div>
+          <div class="note-value" style="font-size: 2rem;">C</div>
+        </div>
+        <div class="c15-level neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label" style="margin-right: 1rem;">Cents</div>
+          <div class="cents-value color-cyan" style="font-size: 1.75rem;">-13</div>
+        </div>
+        <div class="c15-level neomorph-in">
+          <div class="hud-grid" style="opacity: 0.1;"></div>
+          <div class="label" style="margin-right: 1rem;">String</div>
+          <div style="font-family: 'Orbitron', monospace; font-size: 1.25rem; font-weight: 700; color: #8b5cf6;">4/7</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 16 - RADAR SWEEP
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 16 – Radar Sweep (Rotating Scan)</div>
+      
+      <div class="c16-radar neomorph-in">
+        <div class="hud-grid" style="opacity: 0.08;"></div>
+        <div class="c16-grid"></div>
+        <div class="c16-grid"></div>
+        <div class="c16-grid"></div>
+        <div class="c16-grid"></div>
+        <div class="c16-sweep"></div>
+        
+        <!-- Crosshair -->
+        <div style="position: absolute; width: 1px; height: 100%; background: rgba(0,217,255,0.15); left: 50%;"></div>
+        <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.15); top: 50%;"></div>
+        
+        <div style="z-index: 10; text-align: center;">
+          <div class="note-value" style="font-size: 2.5rem;">A</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">+4</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">55.0 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">1/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">+2.1</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">19.5s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 17 - LIQUID METER
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 17 – Liquid Meter (Fluid Fill Animation)</div>
+      
+      <div class="c17-liquid neomorph-in">
+        <div class="hud-grid" style="opacity: 0.1;"></div>
+        <div class="c17-fill">
+          <div class="c17-wave-top"></div>
+        </div>
+        
+        <!-- Level marks -->
+        <div style="position: absolute; left: 1rem; right: 1rem; top: 25%; height: 1px; background: rgba(255,255,255,0.1);"></div>
+        <div style="position: absolute; left: 1rem; right: 1rem; top: 50%; height: 1px; background: rgba(255,255,255,0.15);"></div>
+        <div style="position: absolute; left: 1rem; right: 1rem; top: 75%; height: 1px; background: rgba(255,255,255,0.1);"></div>
+        
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 10;">
+          <div class="note-value" style="font-size: 3rem;">D</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">-6</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">73.4 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">2/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">-4.3</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">14.8s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 18 - MATRIX GRID
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 18 – Matrix Grid (Code Rain Style)</div>
+      
+      <div class="c18-matrix neomorph-in">
+        <div class="c18-column"></div>
+        <div class="c18-column"></div>
+        <div class="c18-column"></div>
+        <div class="c18-column"></div>
+        <div class="c18-column"></div>
+        <div class="c18-column"></div>
+        <div class="c18-column"></div>
+        <div class="c18-column"></div>
+        <div class="c18-column"></div>
+        <div class="c18-column"></div>
+        
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 10; background: rgba(0,0,0,0.7); padding: 1rem 2rem; border-radius: 8px;">
+          <div class="note-value" style="font-size: 2.5rem;">G</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">+16</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">98.0 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">3/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">+13.7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">11.6s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 19 - ORBIT RINGS
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 19 – Orbit Rings (Planetary System)</div>
+      
+      <div class="c19-orbit">
+        <div class="c19-ring"></div>
+        <div class="c19-ring">
+          <div class="c19-planet"></div>
+        </div>
+        <div class="c19-ring">
+          <div class="c19-planet" style="animation: rotate 6s linear infinite reverse;"></div>
+        </div>
+        
+        <div style="z-index: 10; text-align: center; background: #1a1a1a; padding: 1.5rem; border-radius: 50%; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; flex-direction: column;" class="neomorph-out">
+          <div class="note-value" style="font-size: 2.5rem;">F</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">-18</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">174.6 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">5/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">-15.3</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">16.2s</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         CONCEPT 20 - CRYSTAL FACETS
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">CONCEPT 20 – Crystal Facets (Geometric Shards)</div>
+      
+      <div class="c20-crystal">
+        <div class="c20-facet neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+        </div>
+        <div class="c20-facet neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+        </div>
+        <div class="c20-facet neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+        </div>
+        <div class="c20-facet neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+        </div>
+        
+        <div style="z-index: 10; text-align: center; background: #1a1a1a; padding: 1.5rem; border-radius: 8px;" class="neomorph-out">
+          <div class="note-value" style="font-size: 2.5rem;">C#</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">+26</div>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-box neomorph-in">
+          <div class="label">Freq</div>
+          <div class="info-box-value">138.6 Hz</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">String</div>
+          <div class="info-box-value color-violet">4/7</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Avg</div>
+          <div class="info-box-value">+23.4</div>
+        </div>
+        <div class="info-box neomorph-in">
+          <div class="label">Time</div>
+          <div class="info-box-value color-steel">13.1s</div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</body>
+</html>

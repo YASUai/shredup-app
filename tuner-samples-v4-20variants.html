@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHRED UP - 20 Tuner Samples V4 (Dashboard/Mini × Cold HUD)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       RESET + GLOBAL
+    ============================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #1a1a1a, #0d0d0d);
+      color: #eaeaea;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+    }
+    h1 {
+      text-align: center;
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 2rem;
+      letter-spacing: 2px;
+      color: #00d9ff;
+      margin-bottom: 1rem;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 0.875rem;
+      color: #888;
+      margin-bottom: 3rem;
+    }
+    .samples-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .sample-card {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      background: #1a1a1a;
+      border-radius: 12px;
+      box-shadow: 
+        8px 8px 16px rgba(0,0,0,0.6),
+        -4px -4px 12px rgba(40,40,40,0.1);
+      padding: 1.5rem;
+      position: relative;
+    }
+    .sample-header {
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      font-size: 0.875rem;
+      color: #00d9ff;
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    
+    /* ============================================
+       LOCKED NEUMORPHIC SHADOWS
+    ============================================ */
+    .neomorph-out {
+      box-shadow: 
+        8px 8px 16px rgba(0,0,0,0.6),
+        -4px -4px 12px rgba(40,40,40,0.1);
+    }
+    .neomorph-in {
+      box-shadow: 
+        inset 4px 4px 8px rgba(0,0,0,0.6),
+        inset -2px -2px 6px rgba(40,40,40,0.1);
+    }
+
+    /* ============================================
+       SHARED ELEMENTS
+    ============================================ */
+    .note-value {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 4rem;
+      color: #fff;
+      line-height: 1;
+      /* NO glow */
+    }
+    .cents-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      /* Color based on state */
+    }
+    .label {
+      font-size: 0.75rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* ============================================
+       HUD DETAIL ELEMENTS (COLD COLORS ONLY)
+    ============================================ */
+    .hud-line-h, .hud-line-v {
+      position: absolute;
+      background: linear-gradient(90deg, transparent, rgba(0,217,255,0.15), transparent);
+      pointer-events: none;
+    }
+    .hud-line-h {
+      left: 0;
+      right: 0;
+      height: 1px;
+    }
+    .hud-line-v {
+      top: 0;
+      bottom: 0;
+      width: 1px;
+    }
+    .hud-corner {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border: 1px solid rgba(0,217,255,0.2);
+    }
+    .hud-corner.tl { top: 8px; left: 8px; border-right: none; border-bottom: none; }
+    .hud-corner.tr { top: 8px; right: 8px; border-left: none; border-bottom: none; }
+    .hud-corner.bl { bottom: 8px; left: 8px; border-right: none; border-top: none; }
+    .hud-corner.br { bottom: 8px; right: 8px; border-left: none; border-top: none; }
+    
+    .hud-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0,217,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,217,255,0.03) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+    
+    .hud-scan {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0,217,255,0.3), transparent);
+      animation: scan 4s ease-in-out infinite;
+    }
+    @keyframes scan {
+      0%, 100% { top: 10%; }
+      50% { top: 80%; }
+    }
+    
+    .hud-brackets {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border: 2px solid rgba(0,217,255,0.25);
+    }
+    .hud-brackets.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+    .hud-brackets.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+    .hud-brackets.bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+    .hud-brackets.br { bottom: 0; right: 0; border-left: none; border-top: none; }
+    
+    /* ============================================
+       COLD COLOR PALETTE (NO WARM COLORS)
+    ============================================ */
+    .color-cyan { color: #00d9ff; }
+    .color-blue { color: #00a3ff; }
+    .color-violet { color: #8b5cf6; }
+    .color-steel { color: #94a3b8; }
+    .bg-cyan { background: rgba(0,217,255,0.1); }
+    .bg-blue { background: rgba(0,163,255,0.1); }
+    .bg-violet { background: rgba(139,92,246,0.1); }
+    
+    /* ============================================
+       HORIZONTAL METER (LOCKED DESIGN)
+    ============================================ */
+    .meter-container {
+      width: 100%;
+      height: 60px;
+      background: #151515;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .meter-container .neomorph-in {
+      position: absolute;
+      inset: 0;
+    }
+    .meter-zones {
+      position: absolute;
+      inset: 0;
+      display: flex;
+    }
+    .meter-zone {
+      flex: 1;
+      border-right: 1px solid rgba(255,255,255,0.05);
+    }
+    .meter-ticks {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 12px;
+    }
+    .meter-tick {
+      width: 1px;
+      height: 50%;
+      background: rgba(255,255,255,0.2);
+    }
+    .meter-tick.major {
+      height: 70%;
+      background: rgba(255,255,255,0.4);
+    }
+    .meter-indicator {
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: linear-gradient(180deg, #00d9ff, #006d80);
+      left: 50%;
+      transform: translateX(-50%);
+      transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    /* ============================================
+       INTEGRATED GRAPH (120PX, UNDER METER)
+    ============================================ */
+    .graph-container {
+      width: 100%;
+      height: 120px;
+      background: #151515;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+    .graph-container .neomorph-in {
+      position: absolute;
+      inset: 0;
+    }
+    .graph-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 40px 30px;
+    }
+    .graph-line {
+      position: absolute;
+      bottom: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00d9ff, transparent);
+      /* NO box-shadow glow */
+    }
+    
+    /* ============================================
+       SAMPLE 1 - DASHBOARD EXTREME GRID (9 PANELS)
+    ============================================ */
+    .s1-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      position: relative;
+    }
+    .s1-panel {
+      background: #151515;
+      border-radius: 6px;
+      padding: 0.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .s1-panel .hud-grid { opacity: 0.2; }
+    .s1-panel-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 0.25rem;
+    }
+    
+    /* ============================================
+       SAMPLE 2 - HYBRID MINI ULTRA-COMPACT
+    ============================================ */
+    .s2-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: relative;
+    }
+    .s2-note-compact {
+      font-family: 'Orbitron', monospace;
+      font-size: 3rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    .s2-bar {
+      flex: 1;
+      height: 40px;
+      background: #151515;
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .s2-bar-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 50%;
+      background: linear-gradient(90deg, rgba(0,217,255,0.2), rgba(0,217,255,0.4));
+      transition: width 0.3s ease;
+    }
+    .s2-cents {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #00d9ff;
+      min-width: 60px;
+      text-align: right;
+    }
+    
+    /* ============================================
+       SAMPLE 3 - VERTICAL SPLIT (LEFT NOTE / RIGHT DATA)
+    ============================================ */
+    .s3-split {
+      display: flex;
+      gap: 1.5rem;
+      position: relative;
+    }
+    .s3-left {
+      flex: 0 0 40%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #151515;
+      border-radius: 8px;
+      padding: 2rem 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .s3-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .s3-stat {
+      background: #151515;
+      border-radius: 6px;
+      padding: 0.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .s3-stat-label {
+      font-size: 0.75rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .s3-stat-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #00d9ff;
+      margin-top: 0.25rem;
+    }
+    
+    /* ============================================
+       SAMPLE 4 - CIRCULAR GAUGE + MINI STATS
+    ============================================ */
+    .s4-layout {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      position: relative;
+    }
+    .s4-gauge {
+      flex: 0 0 200px;
+      height: 200px;
+      background: #151515;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+    }
+    .s4-gauge-inner {
+      position: absolute;
+      inset: 20px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .s4-gauge-note {
+      font-family: 'Orbitron', monospace;
+      font-size: 3rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    .s4-gauge-cents {
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      color: #00d9ff;
+      margin-top: 0.25rem;
+    }
+    .s4-stats {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    .s4-stat-box {
+      background: #151515;
+      border-radius: 6px;
+      padding: 0.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* ============================================
+       SAMPLE 5 - FULL-WIDTH NOTE + INLINE GRAPH
+    ============================================ */
+    .s5-note-row {
+      background: #151515;
+      border-radius: 8px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .s5-graph-inline {
+      width: 100%;
+      height: 100px;
+      background: #151515;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* ============================================
+       SAMPLE 6 - HEXAGON CLUSTER (3 HEXAGONS)
+    ============================================ */
+    .s6-hexagons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      position: relative;
+    }
+    .s6-hex {
+      width: 120px;
+      height: 138px;
+      background: #151515;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .s6-hex-label {
+      font-size: 0.625rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.25rem;
+    }
+    .s6-hex-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #00d9ff;
+    }
+    
+    /* ============================================
+       SAMPLE 7 - TERMINAL STYLE (MONOSPACE LOG)
+    ============================================ */
+    .s7-terminal {
+      background: #0a0a0a;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: #00d9ff;
+      position: relative;
+      overflow: hidden;
+    }
+    .s7-line {
+      margin-bottom: 0.5rem;
+      display: flex;
+      gap: 1rem;
+    }
+    .s7-line-label {
+      color: #666;
+      min-width: 120px;
+    }
+    .s7-line-value {
+      color: #fff;
+      font-weight: 700;
+    }
+    
+    /* ============================================
+       SAMPLE 8 - STACKED CARDS (4 LAYERS)
+    ============================================ */
+    .s8-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      position: relative;
+    }
+    .s8-card {
+      background: #151515;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .s8-card-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    
+    /* ============================================
+       SAMPLE 9 - SPLIT METER (2 HALF-METERS)
+    ============================================ */
+    .s9-meters {
+      display: flex;
+      gap: 1rem;
+      position: relative;
+    }
+    .s9-meter-half {
+      flex: 1;
+      height: 80px;
+      background: #151515;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .s9-meter-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 2rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    
+    /* ============================================
+       SAMPLE 10 - RADAR CHART (VISUAL ONLY)
+    ============================================ */
+    .s10-radar {
+      width: 100%;
+      max-width: 300px;
+      height: 300px;
+      margin: 0 auto;
+      background: #151515;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .s10-radar-inner {
+      width: 80%;
+      height: 80%;
+      border-radius: 50%;
+      border: 2px solid rgba(0,217,255,0.2);
+      position: relative;
+    }
+    .s10-radar-line {
+      position: absolute;
+      width: 1px;
+      height: 50%;
+      background: rgba(0,217,255,0.15);
+      bottom: 50%;
+      left: 50%;
+      transform-origin: bottom center;
+    }
+    .s10-radar-line:nth-child(1) { transform: rotate(0deg); }
+    .s10-radar-line:nth-child(2) { transform: rotate(45deg); }
+    .s10-radar-line:nth-child(3) { transform: rotate(90deg); }
+    .s10-radar-line:nth-child(4) { transform: rotate(135deg); }
+    .s10-radar-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 3rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    
+    /* ============================================
+       SAMPLE 11 - TRIANGLE SEGMENTS (3 TRIANGLES)
+    ============================================ */
+    .s11-triangles {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      position: relative;
+    }
+    .s11-tri {
+      width: 140px;
+      height: 120px;
+      background: #151515;
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .s11-tri-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #00d9ff;
+    }
+    
+    /* ============================================
+       SAMPLE 12 - DIAGONAL SPLIT (2 PANELS)
+    ============================================ */
+    .s12-diagonal {
+      display: flex;
+      gap: 1rem;
+      position: relative;
+    }
+    .s12-panel {
+      flex: 1;
+      height: 160px;
+      background: #151515;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .s12-panel:nth-child(1) {
+      clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
+    }
+    .s12-panel:nth-child(2) {
+      clip-path: polygon(15% 0, 100% 0, 100% 100%, 0 100%);
+    }
+    
+    /* ============================================
+       SAMPLE 13 - VERTICAL BAR ARRAY (5 BARS)
+    ============================================ */
+    .s13-bars {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+      height: 140px;
+      padding: 1rem;
+      background: #151515;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .s13-bar {
+      flex: 1;
+      background: linear-gradient(180deg, #00d9ff, #006d80);
+      border-radius: 4px 4px 0 0;
+      transition: height 0.3s ease;
+    }
+    .s13-bar:nth-child(1) { height: 40%; }
+    .s13-bar:nth-child(2) { height: 65%; }
+    .s13-bar:nth-child(3) { height: 90%; }
+    .s13-bar:nth-child(4) { height: 70%; }
+    .s13-bar:nth-child(5) { height: 45%; }
+    
+    /* ============================================
+       SAMPLE 14 - OCTAGON CENTER (1 OCTAGON)
+    ============================================ */
+    .s14-octagon {
+      width: 240px;
+      height: 240px;
+      margin: 0 auto;
+      background: #151515;
+      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* ============================================
+       SAMPLE 15 - GRADIENT FADE METER (HORIZONTAL)
+    ============================================ */
+    .s15-fade-meter {
+      width: 100%;
+      height: 60px;
+      background: linear-gradient(90deg, rgba(0,163,255,0.1), rgba(0,217,255,0.3), rgba(139,92,246,0.1));
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .s15-fade-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 2rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    
+    /* ============================================
+       SAMPLE 16 - CORNER ANCHORS (4 CORNERS + CENTER)
+    ============================================ */
+    .s16-anchors {
+      position: relative;
+      height: 200px;
+      background: #151515;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .s16-corner {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background: rgba(0,217,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      color: #00d9ff;
+      font-weight: 700;
+    }
+    .s16-corner.tl { top: 0; left: 0; border-radius: 8px 0 0 0; }
+    .s16-corner.tr { top: 0; right: 0; border-radius: 0 8px 0 0; }
+    .s16-corner.bl { bottom: 0; left: 0; border-radius: 0 0 0 8px; }
+    .s16-corner.br { bottom: 0; right: 0; border-radius: 0 0 8px 0; }
+    .s16-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Orbitron', monospace;
+      font-size: 3rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    
+    /* ============================================
+       SAMPLE 17 - HORIZONTAL SEGMENTS (3 ROWS)
+    ============================================ */
+    .s17-segments {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: relative;
+    }
+    .s17-seg {
+      height: 50px;
+      background: #151515;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      gap: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .s17-seg-label {
+      font-size: 0.75rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      min-width: 80px;
+    }
+    .s17-seg-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #00d9ff;
+    }
+    
+    /* ============================================
+       SAMPLE 18 - DUAL CIRCULAR METERS (2 CIRCLES)
+    ============================================ */
+    .s18-circles {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      position: relative;
+    }
+    .s18-circle {
+      width: 180px;
+      height: 180px;
+      background: #151515;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .s18-circle-border {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid rgba(0,217,255,0.2);
+    }
+    .s18-circle-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 2rem;
+      font-weight: 900;
+      color: #fff;
+      z-index: 1;
+    }
+    .s18-circle-label {
+      font-size: 0.75rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 0.5rem;
+      z-index: 1;
+    }
+    
+    /* ============================================
+       SAMPLE 19 - WAVEFORM PEAKS (INLINE SVG STYLE)
+    ============================================ */
+    .s19-peaks {
+      width: 100%;
+      height: 100px;
+      background: #151515;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 0 1rem;
+    }
+    .s19-peak {
+      width: 4px;
+      background: linear-gradient(180deg, #00d9ff, #006d80);
+      border-radius: 2px;
+      transition: height 0.2s ease;
+    }
+    .s19-peak:nth-child(1) { height: 30%; }
+    .s19-peak:nth-child(2) { height: 50%; }
+    .s19-peak:nth-child(3) { height: 70%; }
+    .s19-peak:nth-child(4) { height: 90%; }
+    .s19-peak:nth-child(5) { height: 75%; }
+    .s19-peak:nth-child(6) { height: 55%; }
+    .s19-peak:nth-child(7) { height: 35%; }
+    .s19-peak:nth-child(8) { height: 60%; }
+    .s19-peak:nth-child(9) { height: 80%; }
+    .s19-peak:nth-child(10) { height: 50%; }
+    .s19-peak:nth-child(11) { height: 40%; }
+    .s19-peak:nth-child(12) { height: 65%; }
+    .s19-peak:nth-child(13) { height: 85%; }
+    .s19-peak:nth-child(14) { height: 70%; }
+    .s19-peak:nth-child(15) { height: 45%; }
+    
+    /* ============================================
+       SAMPLE 20 - NESTED BOXES (3 DEPTH LAYERS)
+    ============================================ */
+    .s20-nested {
+      padding: 1.5rem;
+      background: #151515;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .s20-layer2 {
+      padding: 1.5rem;
+      background: #1a1a1a;
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .s20-layer3 {
+      padding: 1.5rem;
+      background: #202020;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .s20-nested-note {
+      font-family: 'Orbitron', monospace;
+      font-size: 3rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    .s20-nested-cents {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.25rem;
+      color: #00d9ff;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>SHRED UP - 20 Tuner Samples V4</h1>
+  <div class="subtitle">
+    Dashboard/Mini Hybrid × Cold HUD Details × No Glow × Complex Layout
+  </div>
+
+  <div class="samples-grid">
+    
+    <!-- ====================================
+         SAMPLE 1 - DASHBOARD EXTREME GRID (9 PANELS)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 1 – Dashboard Extreme Grid (9 Panels)</div>
+      
+      <div class="s1-grid">
+        <!-- HUD background elements -->
+        <div class="hud-line-h" style="top: 25%;"></div>
+        <div class="hud-line-h" style="top: 50%;"></div>
+        <div class="hud-line-h" style="top: 75%;"></div>
+        <div class="hud-line-v" style="left: 33%;"></div>
+        <div class="hud-line-v" style="left: 66%;"></div>
+        
+        <!-- Panel 1 - Note -->
+        <div class="s1-panel neomorph-in">
+          <div class="hud-grid"></div>
+          <div class="hud-corner tl"></div>
+          <div class="hud-corner br"></div>
+          <div class="label">Note</div>
+          <div class="s1-panel-value">A#</div>
+        </div>
+        
+        <!-- Panel 2 - Cents -->
+        <div class="s1-panel neomorph-in">
+          <div class="hud-grid"></div>
+          <div class="hud-corner tr"></div>
+          <div class="hud-corner bl"></div>
+          <div class="label">Cents</div>
+          <div class="s1-panel-value color-cyan">-12</div>
+        </div>
+        
+        <!-- Panel 3 - Frequency -->
+        <div class="s1-panel neomorph-in">
+          <div class="hud-grid"></div>
+          <div class="hud-corner tl"></div>
+          <div class="hud-corner br"></div>
+          <div class="label">Frequency</div>
+          <div class="s1-panel-value color-steel">58.27 Hz</div>
+        </div>
+        
+        <!-- Panel 4 - String -->
+        <div class="s1-panel neomorph-in">
+          <div class="hud-grid"></div>
+          <div class="hud-brackets tl"></div>
+          <div class="hud-brackets br"></div>
+          <div class="label">String</div>
+          <div class="s1-panel-value color-violet">1/7</div>
+        </div>
+        
+        <!-- Panel 5 - Avg Cents -->
+        <div class="s1-panel neomorph-in">
+          <div class="hud-grid"></div>
+          <div class="hud-scan" style="top: 30%;"></div>
+          <div class="label">Avg Cents</div>
+          <div class="s1-panel-value color-cyan">-8.5</div>
+        </div>
+        
+        <!-- Panel 6 - Session -->
+        <div class="s1-panel neomorph-in">
+          <div class="hud-grid"></div>
+          <div class="hud-corner tr"></div>
+          <div class="hud-corner bl"></div>
+          <div class="label">Session</div>
+          <div class="s1-panel-value color-steel">12.1s</div>
+        </div>
+        
+        <!-- Panel 7 - Samples -->
+        <div class="s1-panel neomorph-in">
+          <div class="hud-grid"></div>
+          <div class="hud-brackets bl"></div>
+          <div class="label">Samples</div>
+          <div class="s1-panel-value color-blue">978</div>
+        </div>
+        
+        <!-- Panel 8 - Confidence -->
+        <div class="s1-panel neomorph-in">
+          <div class="hud-grid"></div>
+          <div class="hud-scan" style="top: 60%;"></div>
+          <div class="label">Confidence</div>
+          <div class="s1-panel-value color-cyan">94%</div>
+        </div>
+        
+        <!-- Panel 9 - Octave -->
+        <div class="s1-panel neomorph-in">
+          <div class="hud-grid"></div>
+          <div class="hud-corner tr"></div>
+          <div class="hud-corner bl"></div>
+          <div class="label">Octave</div>
+          <div class="s1-panel-value color-violet">1</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 2 - HYBRID MINI ULTRA-COMPACT
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 2 – Hybrid Mini Ultra-Compact</div>
+      
+      <div class="s2-row">
+        <div class="hud-brackets tl"></div>
+        <div class="hud-brackets br"></div>
+        <div class="hud-line-h" style="top: 50%;"></div>
+        
+        <div class="s2-note-compact">D#</div>
+        <div class="s2-bar neomorph-in">
+          <div class="hud-grid" style="opacity: 0.2;"></div>
+          <div class="s2-bar-fill"></div>
+        </div>
+        <div class="s2-cents">+18</div>
+      </div>
+      
+      <!-- Mini Graph -->
+      <div class="graph-container" style="margin-top: 1rem;">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 3 - VERTICAL SPLIT (LEFT NOTE / RIGHT DATA)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 3 – Vertical Split (Left Note / Right Data)</div>
+      
+      <div class="s3-split">
+        <div class="hud-line-v" style="left: 40%;"></div>
+        
+        <!-- Left Panel - Note -->
+        <div class="s3-left neomorph-in">
+          <div class="hud-grid" style="opacity: 0.25;"></div>
+          <div class="hud-brackets tl"></div>
+          <div class="hud-brackets tr"></div>
+          <div class="hud-brackets bl"></div>
+          <div class="hud-brackets br"></div>
+          <div class="note-value">G</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.5rem;">-5</div>
+        </div>
+        
+        <!-- Right Panel - Stats -->
+        <div class="s3-right">
+          <div class="s3-stat neomorph-in">
+            <div class="hud-grid" style="opacity: 0.15;"></div>
+            <div class="s3-stat-label">Frequency</div>
+            <div class="s3-stat-value">196.00 Hz</div>
+          </div>
+          <div class="s3-stat neomorph-in">
+            <div class="hud-grid" style="opacity: 0.15;"></div>
+            <div class="s3-stat-label">String</div>
+            <div class="s3-stat-value color-violet">3/7</div>
+          </div>
+          <div class="s3-stat neomorph-in">
+            <div class="hud-grid" style="opacity: 0.15;"></div>
+            <div class="s3-stat-label">Avg Cents</div>
+            <div class="s3-stat-value">-3.2</div>
+          </div>
+          <div class="s3-stat neomorph-in">
+            <div class="hud-grid" style="opacity: 0.15;"></div>
+            <div class="s3-stat-label">Session</div>
+            <div class="s3-stat-value color-steel">15.3s</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 4 - CIRCULAR GAUGE + MINI STATS
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 4 – Circular Gauge + Mini Stats</div>
+      
+      <div class="s4-layout">
+        <div class="hud-line-v" style="left: 240px;"></div>
+        
+        <!-- Circular Gauge -->
+        <div class="s4-gauge neomorph-in">
+          <div class="hud-grid" style="opacity: 0.2;"></div>
+          <div class="s4-gauge-inner neomorph-out">
+            <div class="s4-gauge-note">C</div>
+            <div class="s4-gauge-cents">+22</div>
+          </div>
+          
+          <!-- 8 radial lines -->
+          <div style="position: absolute; inset: 20px;">
+            <div style="position: absolute; top: 0; left: 50%; width: 1px; height: 100%; background: rgba(0,217,255,0.1); transform: translateX(-50%);"></div>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: rgba(0,217,255,0.1); top: 50%; transform: translateY(-50%);"></div>
+            <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.1); top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(45deg); transform-origin: center;"></div>
+            <div style="position: absolute; width: 100%; height: 1px; background: rgba(0,217,255,0.1); top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); transform-origin: center;"></div>
+          </div>
+        </div>
+        
+        <!-- Mini Stats Grid -->
+        <div class="s4-stats">
+          <div class="s4-stat-box neomorph-in">
+            <div class="hud-corner tl"></div>
+            <div class="label">Freq</div>
+            <div class="s3-stat-value color-cyan" style="font-size: 1rem; margin-top: 0.25rem;">261.6 Hz</div>
+          </div>
+          <div class="s4-stat-box neomorph-in">
+            <div class="hud-corner tr"></div>
+            <div class="label">String</div>
+            <div class="s3-stat-value color-violet" style="font-size: 1rem; margin-top: 0.25rem;">4/7</div>
+          </div>
+          <div class="s4-stat-box neomorph-in">
+            <div class="hud-corner bl"></div>
+            <div class="label">Avg</div>
+            <div class="s3-stat-value" style="font-size: 1rem; margin-top: 0.25rem;">+19.8</div>
+          </div>
+          <div class="s4-stat-box neomorph-in">
+            <div class="hud-corner br"></div>
+            <div class="label">Time</div>
+            <div class="s3-stat-value color-steel" style="font-size: 1rem; margin-top: 0.25rem;">9.7s</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Integrated Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 5 - FULL-WIDTH NOTE + INLINE GRAPH
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 5 – Full-Width Note + Inline Graph</div>
+      
+      <div class="s5-note-row neomorph-in">
+        <div class="hud-grid" style="opacity: 0.25;"></div>
+        <div class="hud-scan"></div>
+        <div class="hud-brackets tl"></div>
+        <div class="hud-brackets br"></div>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+          <div class="label">Current Note</div>
+          <div class="note-value" style="font-size: 3rem;">F#</div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-end;">
+          <div class="label">Deviation</div>
+          <div class="cents-value color-cyan" style="font-size: 2rem;">-9</div>
+        </div>
+      </div>
+      
+      <div class="s5-graph-inline neomorph-in">
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-line-h" style="top: 50%;"></div>
+        
+        <!-- 3 vertical scan lines -->
+        <div class="hud-line-v" style="left: 25%; opacity: 0.5;"></div>
+        <div class="hud-line-v" style="left: 50%; opacity: 0.5;"></div>
+        <div class="hud-line-v" style="left: 75%; opacity: 0.5;"></div>
+      </div>
+      
+      <!-- Horizontal Meter -->
+      <div class="meter-container" style="margin-top: 1rem;">
+        <div class="neomorph-in"></div>
+        <div class="meter-zones">
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.15);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05); border-right: none;"></div>
+        </div>
+        <div class="meter-ticks">
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+        </div>
+        <div class="meter-indicator" style="left: 42%;"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 6 - HEXAGON CLUSTER (3 HEXAGONS)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 6 – Hexagon Cluster (3 Data Cells)</div>
+      
+      <div class="s6-hexagons">
+        <div class="hud-line-h" style="top: 50%;"></div>
+        
+        <div class="s6-hex neomorph-in">
+          <div class="hud-grid" style="opacity: 0.2;"></div>
+          <div class="s6-hex-label">Note</div>
+          <div class="s6-hex-value" style="font-size: 2rem; color: #fff;">A</div>
+        </div>
+        
+        <div class="s6-hex neomorph-in">
+          <div class="hud-grid" style="opacity: 0.2;"></div>
+          <div class="s6-hex-label">Cents</div>
+          <div class="s6-hex-value">+7</div>
+        </div>
+        
+        <div class="s6-hex neomorph-in">
+          <div class="hud-grid" style="opacity: 0.2;"></div>
+          <div class="s6-hex-label">String</div>
+          <div class="s6-hex-value color-violet">6/7</div>
+        </div>
+      </div>
+      
+      <!-- Horizontal Meter -->
+      <div class="meter-container" style="margin-top: 1.5rem;">
+        <div class="neomorph-in"></div>
+        <div class="meter-zones">
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.15);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05); border-right: none;"></div>
+        </div>
+        <div class="meter-ticks">
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+        </div>
+        <div class="meter-indicator" style="left: 58%;"></div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 7 - TERMINAL STYLE (MONOSPACE LOG)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 7 – Terminal Style (Monospace Log)</div>
+      
+      <div class="s7-terminal neomorph-in">
+        <div class="hud-grid" style="opacity: 0.15;"></div>
+        <div class="hud-scan"></div>
+        
+        <div class="s7-line">
+          <div class="s7-line-label">PITCH_DETECTED:</div>
+          <div class="s7-line-value">E2</div>
+        </div>
+        <div class="s7-line">
+          <div class="s7-line-label">FREQUENCY:</div>
+          <div class="s7-line-value">82.41 Hz</div>
+        </div>
+        <div class="s7-line">
+          <div class="s7-line-label">DEVIATION:</div>
+          <div class="s7-line-value">-14 cents</div>
+        </div>
+        <div class="s7-line">
+          <div class="s7-line-label">STRING_INDEX:</div>
+          <div class="s7-line-value">2/7</div>
+        </div>
+        <div class="s7-line">
+          <div class="s7-line-label">AVG_DEVIATION:</div>
+          <div class="s7-line-value">-11.3 cents</div>
+        </div>
+        <div class="s7-line">
+          <div class="s7-line-label">SESSION_TIME:</div>
+          <div class="s7-line-value">18.9s</div>
+        </div>
+        <div class="s7-line">
+          <div class="s7-line-label">CONFIDENCE:</div>
+          <div class="s7-line-value">97%</div>
+        </div>
+        <div class="s7-line">
+          <div class="s7-line-label">OCTAVE:</div>
+          <div class="s7-line-value">2</div>
+        </div>
+      </div>
+      
+      <!-- Mini Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 8 - STACKED CARDS (4 LAYERS)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 8 – Stacked Cards (4 Data Layers)</div>
+      
+      <div class="s8-stack">
+        <div class="hud-line-h" style="top: 12%;"></div>
+        <div class="hud-line-h" style="top: 38%;"></div>
+        <div class="hud-line-h" style="top: 64%;"></div>
+        <div class="hud-line-h" style="top: 90%;"></div>
+        
+        <div class="s8-card neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="hud-corner tl"></div>
+          <div class="hud-corner br"></div>
+          <div class="label">Current Note</div>
+          <div class="s8-card-value">B</div>
+        </div>
+        
+        <div class="s8-card neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="label">Cents Deviation</div>
+          <div class="s8-card-value color-cyan">+31</div>
+        </div>
+        
+        <div class="s8-card neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="label">Frequency (Hz)</div>
+          <div class="s8-card-value color-steel">246.94</div>
+        </div>
+        
+        <div class="s8-card neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="hud-corner bl"></div>
+          <div class="hud-corner tr"></div>
+          <div class="label">String</div>
+          <div class="s8-card-value color-violet">7/7</div>
+        </div>
+      </div>
+      
+      <!-- Horizontal Meter -->
+      <div class="meter-container" style="margin-top: 1rem;">
+        <div class="neomorph-in"></div>
+        <div class="meter-zones">
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.15);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05); border-right: none;"></div>
+        </div>
+        <div class="meter-ticks">
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+        </div>
+        <div class="meter-indicator" style="left: 68%;"></div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 9 - SPLIT METER (2 HALF-METERS)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 9 – Split Meter (Dual Half-Meters)</div>
+      
+      <div class="s9-meters">
+        <div class="hud-line-v" style="left: 50%;"></div>
+        
+        <div class="s9-meter-half neomorph-in">
+          <div class="hud-grid" style="opacity: 0.2;"></div>
+          <div class="hud-brackets tl"></div>
+          <div class="hud-brackets bl"></div>
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="label">Note</div>
+            <div class="s9-meter-value">D</div>
+          </div>
+        </div>
+        
+        <div class="s9-meter-half neomorph-in">
+          <div class="hud-grid" style="opacity: 0.2;"></div>
+          <div class="hud-brackets tr"></div>
+          <div class="hud-brackets br"></div>
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="label">Cents</div>
+            <div class="s9-meter-value color-cyan">-6</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Horizontal Meter -->
+      <div class="meter-container" style="margin-top: 1rem;">
+        <div class="neomorph-in"></div>
+        <div class="meter-zones">
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.15);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05); border-right: none;"></div>
+        </div>
+        <div class="meter-ticks">
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+        </div>
+        <div class="meter-indicator" style="left: 44%;"></div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 10 - RADAR CHART (VISUAL ONLY)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 10 – Radar Chart (Circular Display)</div>
+      
+      <div class="s10-radar neomorph-in">
+        <div class="hud-grid" style="opacity: 0.15;"></div>
+        
+        <!-- Concentric circles -->
+        <div style="position: absolute; inset: 20%; border-radius: 50%; border: 1px solid rgba(0,217,255,0.1);"></div>
+        <div style="position: absolute; inset: 40%; border-radius: 50%; border: 1px solid rgba(0,217,255,0.15);"></div>
+        
+        <div class="s10-radar-inner">
+          <div class="s10-radar-line"></div>
+          <div class="s10-radar-line"></div>
+          <div class="s10-radar-line"></div>
+          <div class="s10-radar-line"></div>
+        </div>
+        
+        <div class="s10-radar-value">F</div>
+      </div>
+      
+      <!-- Info Row -->
+      <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="label">Cents</div>
+          <div class="cents-value color-cyan" style="margin-top: 0.25rem; font-size: 1.25rem;">+11</div>
+        </div>
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="label">Frequency</div>
+          <div class="cents-value color-steel" style="margin-top: 0.25rem; font-size: 1.25rem;">349.23 Hz</div>
+        </div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 11 - TRIANGLE SEGMENTS (3 TRIANGLES)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 11 – Triangle Segments (3 Data Cells)</div>
+      
+      <div class="s11-triangles">
+        <div class="hud-line-h" style="top: 60%;"></div>
+        
+        <div class="s11-tri neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="label" style="margin-bottom: 0.25rem;">Note</div>
+            <div class="s11-tri-value" style="font-size: 2rem; color: #fff;">C#</div>
+          </div>
+        </div>
+        
+        <div class="s11-tri neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="label" style="margin-bottom: 0.25rem;">Cents</div>
+            <div class="s11-tri-value">-23</div>
+          </div>
+        </div>
+        
+        <div class="s11-tri neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="label" style="margin-bottom: 0.25rem;">String</div>
+            <div class="s11-tri-value color-violet">5/7</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Horizontal Meter -->
+      <div class="meter-container" style="margin-top: 1.5rem;">
+        <div class="neomorph-in"></div>
+        <div class="meter-zones">
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.15);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05); border-right: none;"></div>
+        </div>
+        <div class="meter-ticks">
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+        </div>
+        <div class="meter-indicator" style="left: 31%;"></div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 12 - DIAGONAL SPLIT (2 PANELS)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 12 – Diagonal Split (Angled Panels)</div>
+      
+      <div class="s12-diagonal">
+        <!-- Diagonal HUD line -->
+        <div style="position: absolute; width: 2px; height: 100%; background: linear-gradient(180deg, rgba(0,217,255,0.15), rgba(0,217,255,0.05)); left: 50%; transform: rotate(15deg); transform-origin: top center;"></div>
+        
+        <div class="s12-panel neomorph-in">
+          <div class="hud-grid" style="opacity: 0.2;"></div>
+          <div class="hud-brackets tl"></div>
+          <div class="hud-brackets bl"></div>
+          <div class="label">Current Note</div>
+          <div class="note-value" style="font-size: 3rem; margin-top: 0.5rem;">G#</div>
+        </div>
+        
+        <div class="s12-panel neomorph-in">
+          <div class="hud-grid" style="opacity: 0.2;"></div>
+          <div class="hud-brackets tr"></div>
+          <div class="hud-brackets br"></div>
+          <div class="label">Cents</div>
+          <div class="cents-value color-cyan" style="font-size: 3rem; margin-top: 0.5rem;">+16</div>
+        </div>
+      </div>
+      
+      <!-- Horizontal Meter -->
+      <div class="meter-container" style="margin-top: 1rem;">
+        <div class="neomorph-in"></div>
+        <div class="meter-zones">
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.15);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05); border-right: none;"></div>
+        </div>
+        <div class="meter-ticks">
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+        </div>
+        <div class="meter-indicator" style="left: 62%;"></div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 13 - VERTICAL BAR ARRAY (5 BARS)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 13 – Vertical Bar Array (VU-Meter Style)</div>
+      
+      <div class="s13-bars neomorph-in">
+        <div class="hud-grid" style="opacity: 0.15;"></div>
+        <div class="hud-line-h" style="top: 25%;"></div>
+        <div class="hud-line-h" style="top: 50%;"></div>
+        <div class="hud-line-h" style="top: 75%;"></div>
+        
+        <div class="s13-bar"></div>
+        <div class="s13-bar"></div>
+        <div class="s13-bar"></div>
+        <div class="s13-bar"></div>
+        <div class="s13-bar"></div>
+      </div>
+      
+      <!-- Info Row -->
+      <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">Note</div>
+          <div class="note-value" style="font-size: 2rem; margin-top: 0.25rem;">A</div>
+        </div>
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">Cents</div>
+          <div class="cents-value color-cyan" style="font-size: 2rem; margin-top: 0.25rem;">-4</div>
+        </div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 14 - OCTAGON CENTER (1 OCTAGON)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 14 – Octagon Center (8-Sided Display)</div>
+      
+      <div class="s14-octagon neomorph-in">
+        <div class="hud-grid" style="opacity: 0.2;"></div>
+        
+        <!-- 8 corner brackets -->
+        <div style="position: absolute; top: 5%; left: 35%; width: 20px; height: 20px; border-top: 2px solid rgba(0,217,255,0.2); border-left: 2px solid rgba(0,217,255,0.2);"></div>
+        <div style="position: absolute; top: 5%; right: 35%; width: 20px; height: 20px; border-top: 2px solid rgba(0,217,255,0.2); border-right: 2px solid rgba(0,217,255,0.2);"></div>
+        <div style="position: absolute; bottom: 5%; left: 35%; width: 20px; height: 20px; border-bottom: 2px solid rgba(0,217,255,0.2); border-left: 2px solid rgba(0,217,255,0.2);"></div>
+        <div style="position: absolute; bottom: 5%; right: 35%; width: 20px; height: 20px; border-bottom: 2px solid rgba(0,217,255,0.2); border-right: 2px solid rgba(0,217,255,0.2);"></div>
+        
+        <div class="label">Current Note</div>
+        <div class="note-value" style="margin-top: 0.5rem;">E</div>
+        <div class="cents-value color-cyan" style="margin-top: 0.75rem;">+29</div>
+      </div>
+      
+      <!-- Info Grid -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 1rem;">
+        <div style="background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">Freq</div>
+          <div class="s3-stat-value color-cyan" style="font-size: 1rem; margin-top: 0.25rem;">164.8 Hz</div>
+        </div>
+        <div style="background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">String</div>
+          <div class="s3-stat-value color-violet" style="font-size: 1rem; margin-top: 0.25rem;">2/7</div>
+        </div>
+        <div style="background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">Avg</div>
+          <div class="s3-stat-value" style="font-size: 1rem; margin-top: 0.25rem;">+27.1</div>
+        </div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 15 - GRADIENT FADE METER (HORIZONTAL)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 15 – Gradient Fade Meter (Fluid Display)</div>
+      
+      <div class="s15-fade-meter neomorph-in">
+        <div class="hud-grid" style="opacity: 0.15;"></div>
+        <div class="hud-scan"></div>
+        
+        <div style="display: flex; align-items: center; gap: 2rem;">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="label">Note</div>
+            <div class="s15-fade-value">B♭</div>
+          </div>
+          <div style="width: 2px; height: 60px; background: rgba(255,255,255,0.1);"></div>
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="label">Cents</div>
+            <div class="s15-fade-value color-cyan">-19</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Horizontal Meter -->
+      <div class="meter-container" style="margin-top: 1rem;">
+        <div class="neomorph-in"></div>
+        <div class="meter-zones">
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.15);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05); border-right: none;"></div>
+        </div>
+        <div class="meter-ticks">
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+        </div>
+        <div class="meter-indicator" style="left: 36%;"></div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 16 - CORNER ANCHORS (4 CORNERS + CENTER)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 16 – Corner Anchors (Quadrant Display)</div>
+      
+      <div class="s16-anchors neomorph-in">
+        <div class="hud-grid" style="opacity: 0.15;"></div>
+        <div class="hud-line-h" style="top: 50%;"></div>
+        <div class="hud-line-v" style="left: 50%;"></div>
+        <div class="hud-scan"></div>
+        
+        <div class="s16-corner tl">55.0 Hz</div>
+        <div class="s16-corner tr">String 1</div>
+        <div class="s16-corner bl">AVG -8</div>
+        <div class="s16-corner br">12.5s</div>
+        
+        <div class="s16-center">A♯</div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 17 - HORIZONTAL SEGMENTS (3 ROWS)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 17 – Horizontal Segments (3 Data Rows)</div>
+      
+      <div class="s17-segments">
+        <div class="hud-line-h" style="top: 16%;"></div>
+        <div class="hud-line-h" style="top: 50%;"></div>
+        <div class="hud-line-h" style="top: 84%;"></div>
+        
+        <div class="s17-seg neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="hud-corner tl"></div>
+          <div class="hud-corner br"></div>
+          <div class="s17-seg-label">Note</div>
+          <div class="s17-seg-value" style="font-size: 2rem; color: #fff;">D#</div>
+        </div>
+        
+        <div class="s17-seg neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="s17-seg-label">Cents</div>
+          <div class="s17-seg-value" style="font-size: 1.75rem;">+13</div>
+        </div>
+        
+        <div class="s17-seg neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="hud-corner bl"></div>
+          <div class="hud-corner tr"></div>
+          <div class="s17-seg-label">Frequency</div>
+          <div class="s17-seg-value color-steel" style="font-size: 1.5rem;">311.13 Hz</div>
+        </div>
+      </div>
+      
+      <!-- Horizontal Meter -->
+      <div class="meter-container" style="margin-top: 1rem;">
+        <div class="neomorph-in"></div>
+        <div class="meter-zones">
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.15);"></div>
+          <div class="meter-zone" style="background: rgba(0,217,255,0.1);"></div>
+          <div class="meter-zone" style="background: rgba(0,163,255,0.05); border-right: none;"></div>
+        </div>
+        <div class="meter-ticks">
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+          <div class="meter-tick"></div>
+          <div class="meter-tick major"></div>
+        </div>
+        <div class="meter-indicator" style="left: 59%;"></div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 18 - DUAL CIRCULAR METERS (2 CIRCLES)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 18 – Dual Circular Meters (2 Gauges)</div>
+      
+      <div class="s18-circles">
+        <div class="hud-line-v" style="left: 50%;"></div>
+        
+        <div class="s18-circle neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="s18-circle-border"></div>
+          
+          <!-- Radial lines -->
+          <div style="position: absolute; width: 1px; height: 50%; background: rgba(0,217,255,0.1); top: 0; left: 50%; transform: translateX(-50%);"></div>
+          <div style="position: absolute; width: 50%; height: 1px; background: rgba(0,217,255,0.1); top: 50%; left: 50%; transform: translateX(-50%);"></div>
+          
+          <div class="s18-circle-value">G♯</div>
+          <div class="s18-circle-label">Note</div>
+        </div>
+        
+        <div class="s18-circle neomorph-in">
+          <div class="hud-grid" style="opacity: 0.15;"></div>
+          <div class="s18-circle-border"></div>
+          
+          <!-- Radial lines -->
+          <div style="position: absolute; width: 1px; height: 50%; background: rgba(0,217,255,0.1); top: 0; left: 50%; transform: translateX(-50%);"></div>
+          <div style="position: absolute; width: 50%; height: 1px; background: rgba(0,217,255,0.1); top: 50%; left: 50%; transform: translateX(-50%);"></div>
+          
+          <div class="s18-circle-value color-cyan">+24</div>
+          <div class="s18-circle-label">Cents</div>
+        </div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container" style="margin-top: 1rem;">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 19 - WAVEFORM PEAKS (INLINE SVG STYLE)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 19 – Waveform Peaks (Peak Visualizer)</div>
+      
+      <div class="s19-peaks neomorph-in">
+        <div class="hud-grid" style="opacity: 0.1;"></div>
+        <div class="hud-line-h" style="top: 50%;"></div>
+        <div class="hud-scan"></div>
+        
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+        <div class="s19-peak"></div>
+      </div>
+      
+      <!-- Info Row -->
+      <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">Note</div>
+          <div class="note-value" style="font-size: 2rem; margin-top: 0.25rem;">C</div>
+        </div>
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">Cents</div>
+          <div class="cents-value color-cyan" style="font-size: 2rem; margin-top: 0.25rem;">-11</div>
+        </div>
+        <div style="flex: 1; background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">Freq</div>
+          <div class="cents-value color-steel" style="font-size: 1.5rem; margin-top: 0.25rem;">261.6 Hz</div>
+        </div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+    <!-- ====================================
+         SAMPLE 20 - NESTED BOXES (3 DEPTH LAYERS)
+    ==================================== -->
+    <div class="sample-card neomorph-out">
+      <div class="sample-header">SAMPLE 20 – Nested Boxes (3 Depth Layers)</div>
+      
+      <div class="s20-nested neomorph-in">
+        <div class="hud-grid" style="opacity: 0.1;"></div>
+        <div class="hud-brackets tl"></div>
+        <div class="hud-brackets tr"></div>
+        <div class="hud-brackets bl"></div>
+        <div class="hud-brackets br"></div>
+        
+        <div class="s20-layer2">
+          <div class="hud-corner tl"></div>
+          <div class="hud-corner tr"></div>
+          <div class="hud-corner bl"></div>
+          <div class="hud-corner br"></div>
+          
+          <div class="s20-layer3">
+            <div class="hud-scan"></div>
+            <div class="label">Current Note</div>
+            <div class="s20-nested-note">F</div>
+            <div class="s20-nested-cents">+6</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Info Grid -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-top: 1rem;">
+        <div style="background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">Freq</div>
+          <div class="s3-stat-value color-cyan" style="font-size: 1rem; margin-top: 0.25rem;">349.2 Hz</div>
+        </div>
+        <div style="background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">String</div>
+          <div class="s3-stat-value color-violet" style="font-size: 1rem; margin-top: 0.25rem;">5/7</div>
+        </div>
+        <div style="background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">Avg</div>
+          <div class="s3-stat-value" style="font-size: 1rem; margin-top: 0.25rem;">+4.8</div>
+        </div>
+        <div style="background: #151515; border-radius: 6px; padding: 0.75rem;" class="neomorph-in">
+          <div class="label">Time</div>
+          <div class="s3-stat-value color-steel" style="font-size: 1rem; margin-top: 0.25rem;">22.1s</div>
+        </div>
+      </div>
+      
+      <!-- Graph -->
+      <div class="graph-container">
+        <div class="neomorph-in"></div>
+        <div class="graph-grid"></div>
+        <div class="graph-line"></div>
+        <div class="hud-scan"></div>
+      </div>
+    </div>
+    
+  </div>
+</body>
+</html>

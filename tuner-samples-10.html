@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED UP - 10 Tuner Samples (HUD × Neumorphic)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            padding: 40px 20px;
+            color: #ffffff;
+        }
+
+        .gallery-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .gallery-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(90deg, #4CAF50, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gallery-header p {
+            font-size: 14px;
+            color: #888;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .samples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(800px, 1fr));
+            gap: 60px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .sample-container {
+            background: linear-gradient(180deg, 
+                #141414 0%, 
+                #161616 15%, 
+                #181818 30%, 
+                #1a1a1a 45%, 
+                #1b1b1b 50%, 
+                #1a1a1a 55%, 
+                #181818 70%, 
+                #161616 85%, 
+                #151515 100%);
+            border-radius: 20px;
+            padding: 32px;
+            position: relative;
+        }
+
+        .sample-label {
+            position: absolute;
+            top: -12px;
+            left: 32px;
+            background: #4CAF50;
+            color: #000;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .sample-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #4CAF50;
+            text-align: center;
+        }
+
+        /* Common neumorphic styles */
+        .neomorph-card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .neomorph-inset {
+            box-shadow: 
+                inset 4px 4px 8px rgba(0, 0, 0, 0.6),
+                inset -2px -2px 6px rgba(40, 40, 40, 0.1);
+        }
+
+        /* ===================================
+           SAMPLE 1: Classic Neumorphic + Tech Labels
+           =================================== */
+        .sample-1 .note-display {
+            text-align: center;
+            padding: 40px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            margin-bottom: 24px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-1 .tech-label {
+            font-size: 10px;
+            color: #4CAF50;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .sample-1 .note-letter {
+            font-size: 72px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .sample-1 .cents-value {
+            font-size: 24px;
+            color: #4CAF50;
+            font-family: 'Courier New', monospace;
+            margin-top: 12px;
+        }
+
+        .sample-1 .meter-container {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 
+                inset 4px 4px 8px rgba(0, 0, 0, 0.6),
+                inset -2px -2px 6px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-1 .meter-track {
+            height: 40px;
+            background: linear-gradient(90deg, #ff4444, #ffcc00, #4CAF50, #ffcc00, #ff4444);
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .sample-1 .meter-indicator {
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            width: 4px;
+            height: 48px;
+            background: #ffffff;
+            border-radius: 2px;
+            box-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
+            transform: translateX(-50%);
+        }
+
+        /* ===================================
+           SAMPLE 2: Minimal Tech Grid
+           =================================== */
+        .sample-2 .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .sample-2 .side-panel {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+            border-top: 2px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .sample-2 .panel-label {
+            font-size: 10px;
+            color: #888;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .sample-2 .panel-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #4CAF50;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .sample-2 .center-note {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-2 .note-large {
+            font-size: 64px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 24px rgba(76, 175, 80, 0.5);
+        }
+
+        /* ===================================
+           SAMPLE 3: LED Bars Style
+           =================================== */
+        .sample-3 .note-card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 20px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+            text-align: center;
+        }
+
+        .sample-3 .note-text {
+            font-size: 56px;
+            font-weight: 900;
+            color: #ffffff;
+            margin-bottom: 16px;
+        }
+
+        .sample-3 .led-bars {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            height: 60px;
+            align-items: flex-end;
+        }
+
+        .sample-3 .led-bar {
+            width: 12px;
+            background: #2f2f2f;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .sample-3 .led-bar.active-red {
+            background: linear-gradient(180deg, #ff4444, #ff6666);
+            box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+        }
+
+        .sample-3 .led-bar.active-yellow {
+            background: linear-gradient(180deg, #ffcc00, #ffdd44);
+            box-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+        }
+
+        .sample-3 .led-bar.active-green {
+            background: linear-gradient(180deg, #4CAF50, #66bb6a);
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+        }
+
+        /* ===================================
+           SAMPLE 4: Circular Gauge
+           =================================== */
+        .sample-4 .gauge-container {
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+            position: relative;
+        }
+
+        .sample-4 .gauge-circle {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 24px;
+            position: relative;
+            border-radius: 50%;
+            background: #1a1a1a;
+            box-shadow: 
+                inset 6px 6px 12px rgba(0, 0, 0, 0.6),
+                inset -3px -3px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-4 .gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .sample-4 .gauge-note {
+            font-size: 48px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 16px rgba(76, 175, 80, 0.6);
+        }
+
+        .sample-4 .gauge-cents {
+            font-size: 18px;
+            color: #4CAF50;
+            margin-top: 8px;
+        }
+
+        /* ===================================
+           SAMPLE 5: Split Panel Design
+           =================================== */
+        .sample-5 .split-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .sample-5 .left-panel {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-5 .note-huge {
+            font-size: 80px;
+            font-weight: 900;
+            color: #4CAF50;
+            text-align: center;
+            text-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+        }
+
+        .sample-5 .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sample-5 .info-row {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sample-5 .info-label {
+            font-size: 12px;
+            color: #888;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .sample-5 .info-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #4CAF50;
+        }
+
+        /* ===================================
+           SAMPLE 6: Waveform Compact
+           =================================== */
+        .sample-6 .compact-layout {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-6 .note-inline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .sample-6 .note-big {
+            font-size: 56px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .sample-6 .cents-big {
+            font-size: 32px;
+            font-weight: 700;
+            color: #4CAF50;
+            font-family: 'Courier New', monospace;
+        }
+
+        .sample-6 .waveform-mini {
+            height: 60px;
+            background: #151515;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                inset 4px 4px 8px rgba(0, 0, 0, 0.6),
+                inset -2px -2px 6px rgba(40, 40, 40, 0.1);
+        }
+
+        /* ===================================
+           SAMPLE 7: Tech Segmented
+           =================================== */
+        .sample-7 .segmented-display {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+            border-left: 4px solid #4CAF50;
+        }
+
+        .sample-7 .segments {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .sample-7 .segment {
+            text-align: center;
+            padding: 16px;
+            background: #151515;
+            border-radius: 8px;
+            box-shadow: 
+                inset 2px 2px 6px rgba(0, 0, 0, 0.6),
+                inset -1px -1px 4px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-7 .segment-label {
+            font-size: 9px;
+            color: #666;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .sample-7 .segment-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4CAF50;
+        }
+
+        .sample-7 .note-center {
+            font-size: 64px;
+            font-weight: 900;
+            text-align: center;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+        }
+
+        /* ===================================
+           SAMPLE 8: Vertical Stack
+           =================================== */
+        .sample-8 .vertical-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sample-8 .note-section {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-8 .note-xl {
+            font-size: 72px;
+            font-weight: 900;
+            color: #4CAF50;
+            text-shadow: 0 0 24px rgba(76, 175, 80, 0.6);
+        }
+
+        .sample-8 .meter-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-8 .meter-bar {
+            height: 32px;
+            background: #151515;
+            border-radius: 16px;
+            position: relative;
+            box-shadow: 
+                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
+                inset -2px -2px 4px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-8 .meter-fill {
+            position: absolute;
+            left: 25%;
+            top: 2px;
+            bottom: 2px;
+            width: 50%;
+            background: linear-gradient(90deg, #ffcc00, #4CAF50, #ffcc00);
+            border-radius: 14px;
+            box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
+        }
+
+        /* ===================================
+           SAMPLE 9: Dashboard Style
+           =================================== */
+        .sample-9 .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .sample-9 .dash-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-9 .dash-label {
+            font-size: 9px;
+            color: #666;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .sample-9 .dash-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #4CAF50;
+        }
+
+        .sample-9 .main-display {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-9 .note-massive {
+            font-size: 80px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 30px rgba(76, 175, 80, 0.6);
+        }
+
+        /* ===================================
+           SAMPLE 10: Hybrid Mini
+           =================================== */
+        .sample-10 .hybrid-container {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-10 .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .sample-10 .note-medium {
+            font-size: 56px;
+            font-weight: 900;
+            color: #4CAF50;
+            text-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+        }
+
+        .sample-10 .cents-display {
+            background: #151515;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 
+                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
+                inset -2px -2px 4px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-10 .cents-num {
+            font-size: 28px;
+            font-weight: 700;
+            color: #4CAF50;
+            font-family: 'Courier New', monospace;
+        }
+
+        .sample-10 .bottom-bar {
+            height: 48px;
+            background: #151515;
+            border-radius: 12px;
+            position: relative;
+            box-shadow: 
+                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
+                inset -2px -2px 4px rgba(40, 40, 40, 0.1);
+        }
+
+        .sample-10 .bar-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 56px;
+            background: #4CAF50;
+            border-radius: 2px;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .samples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="gallery-header">
+        <h1>🎸 SHRED UP × HUD TECH - 10 Tuner Samples</h1>
+        <p>Combinaison de l'esthétique neumorphic SHRED UP avec des touches tech/HUD. Tous les designs utilisent le gradient background et le color scheme officiel (#4CAF50 primary, backgrounds #1a1a1a).</p>
+    </div>
+
+    <div class="samples-grid">
+
+        <!-- SAMPLE 1 -->
+        <div class="sample-container sample-1">
+            <div class="sample-label">SAMPLE 1</div>
+            <div class="sample-title">Classic Neumorphic + Tech Labels</div>
+            
+            <div class="note-display">
+                <div class="tech-label">DETECTED NOTE</div>
+                <div class="note-letter">D</div>
+                <div class="cents-value">+12 CENTS</div>
+            </div>
+
+            <div class="meter-container">
+                <div class="meter-track">
+                    <div class="meter-indicator"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 2 -->
+        <div class="sample-container sample-2">
+            <div class="sample-label">SAMPLE 2</div>
+            <div class="sample-title">Minimal Tech Grid</div>
+            
+            <div class="grid-layout">
+                <div class="side-panel">
+                    <div class="panel-label">FREQ</div>
+                    <div class="panel-value">293</div>
+                    <div class="panel-label">Hz</div>
+                </div>
+
+                <div class="center-note">
+                    <div class="note-large">D</div>
+                    <div class="cents-value" style="margin-top: 12px; font-size: 20px; color: #4CAF50;">+12 CENTS</div>
+                </div>
+
+                <div class="side-panel">
+                    <div class="panel-label">STRING</div>
+                    <div class="panel-value">7</div>
+                    <div class="panel-label">OF 7</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 3 -->
+        <div class="sample-container sample-3">
+            <div class="sample-label">SAMPLE 3</div>
+            <div class="sample-title">LED Bars Style</div>
+            
+            <div class="note-card">
+                <div class="note-text">A</div>
+                <div class="led-bars">
+                    <div class="led-bar active-red" style="height: 30%;"></div>
+                    <div class="led-bar active-yellow" style="height: 50%;"></div>
+                    <div class="led-bar active-yellow" style="height: 70%;"></div>
+                    <div class="led-bar active-green" style="height: 90%;"></div>
+                    <div class="led-bar active-green" style="height: 100%;"></div>
+                    <div class="led-bar active-green" style="height: 100%;"></div>
+                    <div class="led-bar active-green" style="height: 90%;"></div>
+                    <div class="led-bar active-yellow" style="height: 70%;"></div>
+                    <div class="led-bar active-yellow" style="height: 50%;"></div>
+                    <div class="led-bar active-red" style="height: 30%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 4 -->
+        <div class="sample-container sample-4">
+            <div class="sample-label">SAMPLE 4</div>
+            <div class="sample-title">Circular Gauge</div>
+            
+            <div class="gauge-container">
+                <div class="gauge-circle">
+                    <div class="gauge-center">
+                        <div class="gauge-note">G</div>
+                        <div class="gauge-cents">+8 cents</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 5 -->
+        <div class="sample-container sample-5">
+            <div class="sample-label">SAMPLE 5</div>
+            <div class="sample-title">Split Panel Design</div>
+            
+            <div class="split-container">
+                <div class="left-panel">
+                    <div class="note-huge">F</div>
+                </div>
+
+                <div class="right-panel">
+                    <div class="info-row">
+                        <span class="info-label">FREQUENCY</span>
+                        <span class="info-value">174.61 Hz</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">DEVIATION</span>
+                        <span class="info-value">+5 cents</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">STRING</span>
+                        <span class="info-value">5 / 7</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">CONFIDENCE</span>
+                        <span class="info-value">89%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 6 -->
+        <div class="sample-container sample-6">
+            <div class="sample-label">SAMPLE 6</div>
+            <div class="sample-title">Waveform Compact</div>
+            
+            <div class="compact-layout">
+                <div class="note-inline">
+                    <div class="note-big">C</div>
+                    <div class="cents-big">+3</div>
+                </div>
+                <div class="waveform-mini"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 7 -->
+        <div class="sample-container sample-7">
+            <div class="sample-label">SAMPLE 7</div>
+            <div class="sample-title">Tech Segmented</div>
+            
+            <div class="segmented-display">
+                <div class="segments">
+                    <div class="segment">
+                        <div class="segment-label">FREQ</div>
+                        <div class="segment-value">220</div>
+                    </div>
+                    <div class="segment">
+                        <div class="segment-label">CENTS</div>
+                        <div class="segment-value">+7</div>
+                    </div>
+                    <div class="segment">
+                        <div class="segment-label">STRING</div>
+                        <div class="segment-value">6</div>
+                    </div>
+                </div>
+                <div class="note-center">A</div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 8 -->
+        <div class="sample-container sample-8">
+            <div class="sample-label">SAMPLE 8</div>
+            <div class="sample-title">Vertical Stack</div>
+            
+            <div class="vertical-stack">
+                <div class="note-section">
+                    <div class="note-xl">D</div>
+                </div>
+
+                <div class="meter-section">
+                    <div class="meter-bar">
+                        <div class="meter-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 9 -->
+        <div class="sample-container sample-9">
+            <div class="sample-label">SAMPLE 9</div>
+            <div class="sample-title">Dashboard Style</div>
+            
+            <div class="dashboard-grid">
+                <div class="dash-card">
+                    <div class="dash-label">FREQ</div>
+                    <div class="dash-value">98</div>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-label">CENTS</div>
+                    <div class="dash-value">-4</div>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-label">STRING</div>
+                    <div class="dash-value">3</div>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-label">CONF</div>
+                    <div class="dash-value">92%</div>
+                </div>
+            </div>
+
+            <div class="main-display">
+                <div class="note-massive">G</div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 10 -->
+        <div class="sample-container sample-10">
+            <div class="sample-label">SAMPLE 10</div>
+            <div class="sample-title">Hybrid Mini</div>
+            
+            <div class="hybrid-container">
+                <div class="top-row">
+                    <div class="note-medium">A</div>
+                    <div class="cents-display">
+                        <div class="cents-num">+2</div>
+                    </div>
+                </div>
+
+                <div class="bottom-bar">
+                    <div class="bar-indicator"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        console.log('🎸 10 SHRED UP × HUD Tuner Samples Ready');
+        console.log('All samples use:');
+        console.log('- SHRED UP gradient background');
+        console.log('- Neumorphic shadows (8px/16px outer, 4px/8px inset)');
+        console.log('- Primary color: #4CAF50');
+        console.log('- Background: #1a1a1a');
+        console.log('- Tech accents: Orbitron font, tech labels');
+    </script>
+
+</body>
+</html>

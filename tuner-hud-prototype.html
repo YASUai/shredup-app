@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED UP - Tuner HUD (Tech Version)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        /* Scanlines effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 1000;
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Main Container */
+        .tuner-hud {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+        }
+
+        /* Header HUD */
+        .hud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, rgba(255, 0, 64, 0.1), rgba(0, 0, 0, 0.8));
+            border: 1px solid rgba(255, 0, 64, 0.3);
+            border-radius: 0;
+            clip-path: polygon(20px 0, 100% 0, 100% 100%, 0 100%, 0 20px);
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .hud-header::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(45deg, #ff0040, transparent);
+            opacity: 0.3;
+            clip-path: polygon(20px 0, 100% 0, 100% 100%, 0 100%, 0 20px);
+            z-index: -1;
+            animation: pulse-border 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        .hud-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ff0040;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 0, 64, 0.8);
+        }
+
+        .hud-status {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff88;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: #00ff88;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .btn-hud {
+            padding: 8px 20px;
+            background: rgba(255, 0, 64, 0.2);
+            border: 1px solid #ff0040;
+            color: #ff0040;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+            font-family: 'Orbitron', monospace;
+        }
+
+        .btn-hud:hover {
+            background: rgba(255, 0, 64, 0.4);
+            box-shadow: 0 0 20px rgba(255, 0, 64, 0.5);
+        }
+
+        /* Note Display HUD */
+        .note-hud-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .note-main-hud {
+            grid-column: 2;
+            text-align: center;
+            padding: 32px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid rgba(255, 0, 64, 0.4);
+            position: relative;
+            clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+        }
+
+        .note-main-hud::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 0, 64, 0.1), transparent);
+            pointer-events: none;
+        }
+
+        .note-label {
+            font-size: 10px;
+            color: rgba(255, 0, 64, 0.6);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .note-display-hud {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .note-letter-hud {
+            font-size: 80px;
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1;
+            text-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.5),
+                0 0 40px rgba(255, 0, 64, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .note-sharp-hud {
+            font-size: 40px;
+            font-weight: 700;
+            color: rgba(255, 0, 64, 0.8);
+            transform: translateY(-16px);
+            text-shadow: 0 0 10px rgba(255, 0, 64, 0.6);
+        }
+
+        .note-hud-container.in-tune .note-letter-hud {
+            color: #00ff88;
+            text-shadow: 
+                0 0 30px #00ff88,
+                0 0 60px rgba(0, 255, 136, 0.5);
+        }
+
+        .cents-hud {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .cents-value-hud {
+            font-size: 32px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            transition: color 0.3s ease;
+        }
+
+        .cents-value-hud.perfect {
+            color: #00ff88;
+            text-shadow: 0 0 15px #00ff88;
+        }
+
+        .cents-value-hud.good {
+            color: #00ccff;
+            text-shadow: 0 0 15px #00ccff;
+        }
+
+        .cents-value-hud.mid {
+            color: #ffcc00;
+            text-shadow: 0 0 15px #ffcc00;
+        }
+
+        .cents-value-hud.bad {
+            color: #ff0040;
+            text-shadow: 0 0 15px #ff0040;
+        }
+
+        .cents-unit {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 1px;
+        }
+
+        /* Side Panels */
+        .side-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 0, 64, 0.3);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+            clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+        }
+
+        .panel-label {
+            font-size: 8px;
+            color: rgba(255, 0, 64, 0.6);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .panel-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #00ccff;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px #00ccff;
+        }
+
+        /* HUD Meter */
+        .meter-hud-container {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid rgba(255, 0, 64, 0.4);
+            padding: 32px 24px;
+            margin-bottom: 24px;
+            position: relative;
+            clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px);
+        }
+
+        .meter-hud-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, transparent, rgba(255, 0, 64, 0.05), transparent),
+                radial-gradient(circle at 50% 50%, rgba(255, 0, 64, 0.1), transparent);
+            pointer-events: none;
+        }
+
+        .meter-title {
+            font-size: 10px;
+            color: rgba(255, 0, 64, 0.6);
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .meter-track-hud {
+            position: relative;
+            height: 60px;
+            margin-bottom: 16px;
+        }
+
+        /* Technical grid background */
+        .meter-grid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+
+        .grid-segment {
+            flex: 1;
+            border-right: 1px solid rgba(255, 0, 64, 0.1);
+            position: relative;
+        }
+
+        .grid-segment:last-child {
+            border-right: none;
+        }
+
+        /* Color zones */
+        .meter-zones {
+            position: absolute;
+            width: 100%;
+            height: 40px;
+            top: 10px;
+            display: flex;
+            overflow: hidden;
+            border: 1px solid rgba(255, 0, 64, 0.3);
+        }
+
+        .zone-hud {
+            flex: 1;
+            position: relative;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+
+        .zone-red-left {
+            background: linear-gradient(90deg, #ff0040, #ff3366);
+        }
+
+        .zone-yellow-left {
+            background: linear-gradient(90deg, #ff6600, #ffcc00);
+        }
+
+        .zone-green {
+            background: linear-gradient(90deg, #ffcc00, #00ff88, #00ff88, #ffcc00);
+        }
+
+        .zone-yellow-right {
+            background: linear-gradient(90deg, #ffcc00, #ff6600);
+        }
+
+        .zone-red-right {
+            background: linear-gradient(90deg, #ff3366, #ff0040);
+        }
+
+        /* HUD Ticks */
+        .meter-ticks-hud {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+        }
+
+        .tick-hud {
+            position: absolute;
+            background: rgba(255, 0, 64, 0.6);
+            transform: translateX(-50%);
+            box-shadow: 0 0 4px rgba(255, 0, 64, 0.4);
+        }
+
+        .tick-hud.major {
+            width: 2px;
+            height: 20px;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .tick-hud.minor {
+            width: 1px;
+            height: 12px;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.5;
+        }
+
+        /* Center line */
+        .meter-center-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: #00ff88;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px #00ff88;
+            z-index: 2;
+        }
+
+        /* HUD Indicator */
+        .meter-indicator-hud {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            transform: translateX(-50%);
+            transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 10;
+        }
+
+        .indicator-beam {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(180deg, #ffffff, #ff0040);
+            transform: translateX(-50%);
+            box-shadow: 
+                0 0 10px #ff0040,
+                0 0 20px rgba(255, 0, 64, 0.5);
+            animation: beam-pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes beam-pulse {
+            0%, 100% { box-shadow: 0 0 10px #ff0040, 0 0 20px rgba(255, 0, 64, 0.5); }
+            50% { box-shadow: 0 0 15px #ff0040, 0 0 30px rgba(255, 0, 64, 0.8); }
+        }
+
+        .indicator-pointer-hud {
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 12px solid #ff0040;
+            transform: translateX(-50%);
+            filter: drop-shadow(0 0 8px rgba(255, 0, 64, 0.8));
+        }
+
+        .indicator-reticle {
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ff0040;
+            border-radius: 50%;
+            transform: translate(-50%, 0);
+            box-shadow: 0 0 10px rgba(255, 0, 64, 0.6);
+        }
+
+        .indicator-reticle::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: #ff0040;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 6px #ff0040;
+        }
+
+        /* Labels HUD */
+        .meter-labels-hud {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 8px;
+            margin-top: 8px;
+        }
+
+        .meter-labels-hud span {
+            font-size: 11px;
+            color: rgba(255, 0, 64, 0.8);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(255, 0, 64, 0.4);
+        }
+
+        /* Graph HUD */
+        .graph-hud-container {
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid rgba(255, 0, 64, 0.4);
+            padding: 24px;
+            position: relative;
+            clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px);
+        }
+
+        .graph-hud-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 0, 64, 0.05), transparent);
+            pointer-events: none;
+        }
+
+        .graph-title {
+            font-size: 10px;
+            color: rgba(255, 0, 64, 0.6);
+            letter-spacing: 3px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+
+        .graph-canvas-hud {
+            width: 100%;
+            height: 180px;
+            display: block;
+            border: 1px solid rgba(255, 0, 64, 0.2);
+            margin-bottom: 16px;
+        }
+
+        .graph-stats-hud {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 0, 64, 0.05);
+            border: 1px solid rgba(255, 0, 64, 0.2);
+            clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+        }
+
+        .stat-label {
+            font-size: 8px;
+            color: rgba(255, 0, 64, 0.6);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #00ccff;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 8px #00ccff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .note-hud-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .note-main-hud {
+                grid-column: 1;
+            }
+            
+            .side-panel {
+                display: none;
+            }
+
+            .graph-stats-hud {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tuner-hud">
+        <!-- Header HUD -->
+        <div class="hud-header">
+            <div class="hud-title">PITCH ANALYZER</div>
+            <div class="hud-status">
+                <div class="status-indicator"></div>
+                <span class="status-text">READY</span>
+            </div>
+            <button class="btn-hud" onclick="toggleAnimation()">START</button>
+        </div>
+
+        <!-- Note Display HUD -->
+        <div class="note-hud-container" id="noteHudContainer">
+            <!-- Left Panel -->
+            <div class="side-panel">
+                <div class="panel-label">FREQUENCY</div>
+                <div class="panel-value" id="freqDisplay">55.00</div>
+                <div class="panel-label">Hz</div>
+            </div>
+
+            <!-- Main Note -->
+            <div class="note-main-hud">
+                <div class="note-label">DETECTED NOTE</div>
+                <div class="note-display-hud">
+                    <span class="note-letter-hud" id="noteLetterHud">A</span>
+                    <span class="note-sharp-hud" id="noteSharpHud"></span>
+                </div>
+                <div class="cents-hud">
+                    <span class="cents-value-hud" id="centsValueHud">0</span>
+                    <span class="cents-unit">CENTS</span>
+                </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="side-panel">
+                <div class="panel-label">STRING</div>
+                <div class="panel-value" id="stringDisplay">1</div>
+                <div class="panel-label">OF 7</div>
+            </div>
+        </div>
+
+        <!-- HUD Meter -->
+        <div class="meter-hud-container">
+            <div class="meter-title">DEVIATION METER [-50 / +50 CENTS]</div>
+            <div class="meter-track-hud">
+                <!-- Grid -->
+                <div class="meter-grid" id="meterGrid"></div>
+                
+                <!-- Zones -->
+                <div class="meter-zones">
+                    <div class="zone-hud zone-red-left"></div>
+                    <div class="zone-hud zone-yellow-left"></div>
+                    <div class="zone-hud zone-green"></div>
+                    <div class="zone-hud zone-yellow-right"></div>
+                    <div class="zone-hud zone-red-right"></div>
+                </div>
+
+                <!-- Center line -->
+                <div class="meter-center-line"></div>
+
+                <!-- Ticks -->
+                <div class="meter-ticks-hud" id="meterTicksHud"></div>
+
+                <!-- Indicator -->
+                <div class="meter-indicator-hud" id="meterIndicatorHud">
+                    <div class="indicator-pointer-hud"></div>
+                    <div class="indicator-beam"></div>
+                    <div class="indicator-reticle"></div>
+                </div>
+            </div>
+            <div class="meter-labels-hud">
+                <span>-50</span>
+                <span>-25</span>
+                <span>0</span>
+                <span>+25</span>
+                <span>+50</span>
+            </div>
+        </div>
+
+        <!-- Graph HUD -->
+        <div class="graph-hud-container">
+            <div class="graph-title">WAVEFORM ANALYSIS</div>
+            <canvas id="graphCanvasHud" class="graph-canvas-hud"></canvas>
+            <div class="graph-stats-hud">
+                <div class="stat-item">
+                    <div class="stat-label">SESSION</div>
+                    <div class="stat-value" id="sessionTimeHud">0.0s</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">AVG CENTS</div>
+                    <div class="stat-value" id="avgCentsHud">0.0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">SAMPLES</div>
+                    <div class="stat-value" id="samplesHud">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">CONFIDENCE</div>
+                    <div class="stat-value" id="confidenceHud">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // CONFIGURATION
+        // =====================================================
+
+        const notes = [
+            { letter: 'A', sharp: false, freq: 55.00, string: 1 },
+            { letter: 'D', sharp: false, freq: 73.42, string: 2 },
+            { letter: 'G', sharp: false, freq: 98.00, string: 3 },
+            { letter: 'C', sharp: false, freq: 130.81, string: 4 },
+            { letter: 'F', sharp: false, freq: 174.61, string: 5 },
+            { letter: 'A', sharp: false, freq: 220.00, string: 6 },
+            { letter: 'D', sharp: false, freq: 293.66, string: 7 },
+        ];
+
+        let animationRunning = false;
+        let animationFrame = null;
+        let noteChangeInterval = null;
+        let sessionStartTime = null;
+
+        let currentNoteIndex = 0;
+        let currentCents = 0;
+
+        // =====================================================
+        // INITIALIZE GRID
+        // =====================================================
+
+        function initMeterGrid() {
+            const grid = document.getElementById('meterGrid');
+            for (let i = 0; i < 10; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'grid-segment';
+                grid.appendChild(segment);
+            }
+        }
+
+        // =====================================================
+        // INITIALIZE TICKS
+        // =====================================================
+
+        function initMeterTicks() {
+            const container = document.getElementById('meterTicksHud');
+            
+            // Major ticks
+            [-50, -25, 0, 25, 50].forEach(cent => {
+                if (cent === 0) return; // Skip center (has its own line)
+                const tick = document.createElement('div');
+                tick.className = 'tick-hud major';
+                tick.style.left = `${((cent + 50) / 100) * 100}%`;
+                container.appendChild(tick);
+            });
+
+            // Minor ticks
+            for (let cent = -45; cent <= 45; cent += 5) {
+                if (cent % 25 !== 0 && cent !== 0) {
+                    const tick = document.createElement('div');
+                    tick.className = 'tick-hud minor';
+                    tick.style.left = `${((cent + 50) / 100) * 100}%`;
+                    container.appendChild(tick);
+                }
+            }
+        }
+
+        // =====================================================
+        // UPDATE NOTE DISPLAY
+        // =====================================================
+
+        function updateNoteDisplay(note, cents) {
+            const container = document.getElementById('noteHudContainer');
+            const noteLetter = document.getElementById('noteLetterHud');
+            const noteSharp = document.getElementById('noteSharpHud');
+            const centsValue = document.getElementById('centsValueHud');
+            const freqDisplay = document.getElementById('freqDisplay');
+            const stringDisplay = document.getElementById('stringDisplay');
+
+            noteLetter.textContent = note.letter;
+            noteSharp.textContent = note.sharp ? '♯' : '';
+            freqDisplay.textContent = note.freq.toFixed(2);
+            stringDisplay.textContent = note.string;
+
+            const centsFormatted = cents > 0 ? `+${cents.toFixed(0)}` : cents.toFixed(0);
+            centsValue.textContent = centsFormatted;
+
+            // Color coding
+            const absCents = Math.abs(cents);
+            centsValue.className = 'cents-value-hud';
+            
+            if (absCents <= 3) {
+                centsValue.classList.add('perfect');
+                container.classList.add('in-tune');
+            } else {
+                container.classList.remove('in-tune');
+                if (absCents <= 10) {
+                    centsValue.classList.add('good');
+                } else if (absCents <= 25) {
+                    centsValue.classList.add('mid');
+                } else {
+                    centsValue.classList.add('bad');
+                }
+            }
+        }
+
+        // =====================================================
+        // UPDATE METER INDICATOR
+        // =====================================================
+
+        function updateMeterIndicator(cents) {
+            const indicator = document.getElementById('meterIndicatorHud');
+            const position = ((cents + 50) / 100) * 100;
+            indicator.style.left = `${Math.max(0, Math.min(100, position))}%`;
+        }
+
+        // =====================================================
+        // CANVAS GRAPH
+        // =====================================================
+
+        const canvas = document.getElementById('graphCanvasHud');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const dataPoints = [];
+        const maxPoints = 200;
+
+        function getLineColor(cents) {
+            const absCents = Math.abs(cents);
+            
+            if (absCents <= 3) return '#00ff88';
+            if (absCents <= 10) return '#00ccff';
+            if (absCents <= 25) return '#ffcc00';
+            return '#ff0040';
+        }
+
+        function drawGraph() {
+            const width = canvas.getBoundingClientRect().width;
+            const height = canvas.getBoundingClientRect().height;
+            const centerY = height / 2;
+
+            // Clear
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, width, height);
+
+            // Grid
+            ctx.strokeStyle = 'rgba(255, 0, 64, 0.1)';
+            ctx.lineWidth = 1;
+
+            [-50, -25, 0, 25, 50].forEach(cents => {
+                const y = centerY - (cents * (height / 120));
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            });
+
+            // Center line
+            ctx.strokeStyle = 'rgba(0, 255, 136, 0.3)';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Data line
+            if (dataPoints.length > 1) {
+                const currentColor = getLineColor(dataPoints[dataPoints.length - 1]);
+                
+                ctx.save();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = currentColor;
+                
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.lineJoin = 'round';
+
+                ctx.beginPath();
+                dataPoints.forEach((point, i) => {
+                    const x = width - (dataPoints.length - i) * (width / maxPoints);
+                    const y = centerY - (point * (height / 120));
+                    
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                ctx.restore();
+
+                // Gradient fill
+                const gradient = ctx.createLinearGradient(0, centerY - 50, 0, centerY);
+                gradient.addColorStop(0, `${currentColor}44`);
+                gradient.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                dataPoints.forEach((point, i) => {
+                    const x = width - (dataPoints.length - i) * (width / maxPoints);
+                    const y = centerY - (point * (height / 120));
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.lineTo(width, centerY);
+                ctx.lineTo(width - dataPoints.length * (width / maxPoints), centerY);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // =====================================================
+        // ANIMATION LOOP
+        // =====================================================
+
+        function animate() {
+            if (!animationRunning) return;
+
+            const elapsed = (Date.now() - sessionStartTime) / 1000;
+            
+            document.getElementById('sessionTimeHud').textContent = `${elapsed.toFixed(1)}s`;
+
+            // Generate cents
+            const baseCents = Math.sin(Date.now() / 1500) * 40;
+            const noise = (Math.random() - 0.5) * 10;
+            currentCents = baseCents + noise;
+
+            // Add data
+            dataPoints.push(currentCents);
+            if (dataPoints.length > maxPoints) {
+                dataPoints.shift();
+            }
+
+            // Stats
+            const avg = dataPoints.reduce((sum, val) => sum + val, 0) / dataPoints.length;
+            const avgFormatted = avg > 0 ? `+${avg.toFixed(1)}` : avg.toFixed(1);
+            document.getElementById('avgCentsHud').textContent = avgFormatted;
+            document.getElementById('samplesHud').textContent = dataPoints.length;
+            
+            // Mock confidence
+            const conf = (85 + Math.random() * 10).toFixed(0);
+            document.getElementById('confidenceHud').textContent = `${conf}%`;
+
+            // Update UI
+            updateNoteDisplay(notes[currentNoteIndex], currentCents);
+            updateMeterIndicator(currentCents);
+            drawGraph();
+
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        // =====================================================
+        // TOGGLE
+        // =====================================================
+
+        function toggleAnimation() {
+            const btn = document.querySelector('.btn-hud');
+            const statusText = document.querySelector('.status-text');
+            
+            if (animationRunning) {
+                animationRunning = false;
+                btn.textContent = 'START';
+                statusText.textContent = 'READY';
+                
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+                if (noteChangeInterval) clearInterval(noteChangeInterval);
+            } else {
+                animationRunning = true;
+                btn.textContent = 'STOP';
+                statusText.textContent = 'ACTIVE';
+                sessionStartTime = Date.now();
+                dataPoints.length = 0;
+
+                noteChangeInterval = setInterval(() => {
+                    currentNoteIndex = (currentNoteIndex + 1) % notes.length;
+                }, 3000);
+
+                animate();
+            }
+        }
+
+        // =====================================================
+        // INIT
+        // =====================================================
+
+        initMeterGrid();
+        initMeterTicks();
+        updateNoteDisplay(notes[currentNoteIndex], 0);
+        updateMeterIndicator(0);
+        drawGraph();
+
+        console.log('🎸 HUD TUNER - Tech Version Ready');
+    </script>
+
+</body>
+</html>

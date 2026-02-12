@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHRED UP - Concept 7 Variants (10 Versions)</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #141414;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .gallery-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .gallery-header h1 {
+      font-size: 32px;
+      font-weight: 300;
+      margin-bottom: 12px;
+      color: #888;
+      letter-spacing: 3px;
+    }
+
+    .gallery-header p {
+      font-size: 13px;
+      color: #555;
+      font-weight: 300;
+    }
+
+    .samples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(650px, 1fr));
+      gap: 60px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .sample {
+      background: #1a1a1a;
+      border-radius: 16px;
+      padding: 50px 40px;
+      position: relative;
+      min-height: 700px;
+      border: 1px solid #222;
+    }
+
+    .sample-label {
+      position: absolute;
+      top: -12px;
+      left: 40px;
+      background: #1a1a1a;
+      color: #666;
+      padding: 4px 16px;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border: 1px solid #333;
+    }
+
+    /* Common elements */
+    .bars-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 50px;
+    }
+    .bar-item {
+      text-align: center;
+    }
+    .bar {
+      width: 24px;
+      height: 60px;
+      background: linear-gradient(180deg, #3a3a3a, #2a2a2a);
+      margin: 0 auto 8px;
+    }
+    .bar-label {
+      font-size: 9px;
+      color: #555;
+    }
+
+    .hex-area {
+      position: relative;
+      height: 320px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+    .hex {
+      width: 60px;
+      height: 70px;
+      position: relative;
+    }
+    .hex-shape {
+      width: 100%;
+      height: 100%;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #555;
+    }
+    .hex.active .hex-shape {
+      background: #1e1e1e;
+      border-color: #3a3a3a;
+      color: #888;
+    }
+
+    .info-bottom {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      letter-spacing: 4px;
+    }
+
+    /* VARIANT 1: Classic Center Overlay */
+    .v1-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .v1-note {
+      font-size: 120px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 6px;
+      line-height: 1;
+    }
+    .v1-freq {
+      font-size: 16px;
+      color: #555;
+      margin-top: 20px;
+      letter-spacing: 3px;
+    }
+
+    /* VARIANT 2: Top Note + Bottom Freq */
+    .v2-top {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    .v2-note {
+      font-size: 96px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 4px;
+    }
+    .v2-bottom {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    .v2-freq {
+      font-size: 18px;
+      color: #555;
+      letter-spacing: 4px;
+    }
+
+    /* VARIANT 3: Bottom Note + Top Freq */
+    .v3-top {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    .v3-freq {
+      font-size: 14px;
+      color: #555;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .v3-bottom {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    .v3-note {
+      font-size: 110px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 5px;
+    }
+
+    /* VARIANT 4: Left Side Overlay */
+    .v4-left {
+      position: absolute;
+      top: 50%;
+      left: 40px;
+      transform: translateY(-50%);
+      text-align: left;
+    }
+    .v4-note {
+      font-size: 100px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 4px;
+      line-height: 1;
+    }
+    .v4-freq {
+      font-size: 14px;
+      color: #555;
+      margin-top: 16px;
+      letter-spacing: 3px;
+    }
+
+    /* VARIANT 5: Right Side Overlay */
+    .v5-right {
+      position: absolute;
+      top: 50%;
+      right: 40px;
+      transform: translateY(-50%);
+      text-align: right;
+    }
+    .v5-note {
+      font-size: 100px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 4px;
+      line-height: 1;
+    }
+    .v5-freq {
+      font-size: 14px;
+      color: #555;
+      margin-top: 16px;
+      letter-spacing: 3px;
+    }
+
+    /* VARIANT 6: Compact Center with Border */
+    .v6-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      padding: 30px 50px;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      background: rgba(26, 26, 26, 0.8);
+    }
+    .v6-note {
+      font-size: 80px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 4px;
+      line-height: 1;
+    }
+    .v6-freq {
+      font-size: 14px;
+      color: #555;
+      margin-top: 16px;
+      letter-spacing: 3px;
+    }
+
+    /* VARIANT 7: Stacked Vertical Center */
+    .v7-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .v7-freq-top {
+      font-size: 12px;
+      color: #555;
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .v7-note {
+      font-size: 110px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 5px;
+      line-height: 1;
+    }
+    .v7-cents {
+      font-size: 16px;
+      color: #555;
+      margin-top: 12px;
+      letter-spacing: 2px;
+    }
+
+    /* VARIANT 8: Giant Center Note Only */
+    .v8-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .v8-note {
+      font-size: 140px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 8px;
+      line-height: 1;
+    }
+
+    /* VARIANT 9: Split Top-Bottom */
+    .v9-split-top {
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    .v9-freq {
+      font-size: 14px;
+      color: #555;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .v9-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .v9-note {
+      font-size: 120px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 6px;
+    }
+    .v9-split-bottom {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    .v9-cents {
+      font-size: 16px;
+      color: #555;
+      letter-spacing: 3px;
+    }
+
+    /* VARIANT 10: Minimal Top Corner */
+    .v10-corner {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      text-align: right;
+    }
+    .v10-note {
+      font-size: 48px;
+      font-weight: 100;
+      color: #888;
+      letter-spacing: 3px;
+    }
+    .v10-freq {
+      font-size: 11px;
+      color: #555;
+      margin-top: 6px;
+      letter-spacing: 2px;
+    }
+    .v10-center-giant {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .v10-giant-note {
+      font-size: 160px;
+      font-weight: 100;
+      color: rgba(136, 136, 136, 0.15);
+      letter-spacing: 8px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="gallery-header">
+    <h1>CONCEPT 7 VARIANTS</h1>
+    <p>10 variations with overlaid note and frequency</p>
+  </div>
+
+  <div class="samples-grid">
+    
+    <!-- VARIANT 1: Classic Center Overlay -->
+    <div class="sample">
+      <div class="sample-label">VARIANT 1 - CENTER</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v1-center">
+          <div class="v1-note">G2</div>
+          <div class="v1-freq">98.00 HZ</div>
+        </div>
+      </div>
+
+      <div class="info-bottom">STRING 3/7 · -2 CENTS</div>
+    </div>
+
+    <!-- VARIANT 2: Top Note + Bottom Freq -->
+    <div class="sample">
+      <div class="sample-label">VARIANT 2 - TOP/BOTTOM</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v2-top">
+          <div class="v2-note">G2</div>
+        </div>
+        <div class="v2-bottom">
+          <div class="v2-freq">98.00 HZ</div>
+        </div>
+      </div>
+
+      <div class="info-bottom">STRING 3/7 · -2 CENTS</div>
+    </div>
+
+    <!-- VARIANT 3: Bottom Note + Top Freq -->
+    <div class="sample">
+      <div class="sample-label">VARIANT 3 - INVERTED</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v3-top">
+          <div class="v3-freq">98.00 Hz</div>
+        </div>
+        <div class="v3-bottom">
+          <div class="v3-note">G2</div>
+        </div>
+      </div>
+
+      <div class="info-bottom">STRING 3/7 · -2 CENTS</div>
+    </div>
+
+    <!-- VARIANT 4: Left Side Overlay -->
+    <div class="sample">
+      <div class="sample-label">VARIANT 4 - LEFT SIDE</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v4-left">
+          <div class="v4-note">G2</div>
+          <div class="v4-freq">98.00 HZ</div>
+        </div>
+      </div>
+
+      <div class="info-bottom">STRING 3/7 · -2 CENTS</div>
+    </div>
+
+    <!-- VARIANT 5: Right Side Overlay -->
+    <div class="sample">
+      <div class="sample-label">VARIANT 5 - RIGHT SIDE</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v5-right">
+          <div class="v5-note">G2</div>
+          <div class="v5-freq">98.00 HZ</div>
+        </div>
+      </div>
+
+      <div class="info-bottom">STRING 3/7 · -2 CENTS</div>
+    </div>
+
+    <!-- VARIANT 6: Compact Center with Border -->
+    <div class="sample">
+      <div class="sample-label">VARIANT 6 - BORDERED</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v6-center">
+          <div class="v6-note">G2</div>
+          <div class="v6-freq">98.00 HZ</div>
+        </div>
+      </div>
+
+      <div class="info-bottom">STRING 3/7 · -2 CENTS</div>
+    </div>
+
+    <!-- VARIANT 7: Stacked Vertical Center -->
+    <div class="sample">
+      <div class="sample-label">VARIANT 7 - STACKED</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v7-center">
+          <div class="v7-freq-top">98.00 Hz</div>
+          <div class="v7-note">G2</div>
+          <div class="v7-cents">-2 Cents</div>
+        </div>
+      </div>
+
+      <div class="info-bottom">STRING 3/7 · AVG -1.8</div>
+    </div>
+
+    <!-- VARIANT 8: Giant Center Note Only -->
+    <div class="sample">
+      <div class="sample-label">VARIANT 8 - GIANT</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v8-center">
+          <div class="v8-note">G2</div>
+        </div>
+      </div>
+
+      <div class="info-bottom">98.00 HZ · STRING 3/7 · -2 CENTS</div>
+    </div>
+
+    <!-- VARIANT 9: Split Top-Bottom -->
+    <div class="sample">
+      <div class="sample-label">VARIANT 9 - TRIPLE SPLIT</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v9-split-top">
+          <div class="v9-freq">98.00 Hz</div>
+        </div>
+        <div class="v9-center">
+          <div class="v9-note">G2</div>
+        </div>
+        <div class="v9-split-bottom">
+          <div class="v9-cents">-2 Cents</div>
+        </div>
+      </div>
+
+      <div class="info-bottom">STRING 3/7 · AVG -1.8</div>
+    </div>
+
+    <!-- VARIANT 10: Minimal Corner + Giant Background -->
+    <div class="sample">
+      <div class="sample-label">VARIANT 10 - LAYERED</div>
+      
+      <div class="bars-row">
+        <div class="bar-item">
+          <div class="bar"></div>
+          <div class="bar-label">A1</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 75px;"></div>
+          <div class="bar-label">D2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 90px;"></div>
+          <div class="bar-label">G2</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 78px;"></div>
+          <div class="bar-label">C3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 68px;"></div>
+          <div class="bar-label">F3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 58px;"></div>
+          <div class="bar-label">A3</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar" style="height: 48px;"></div>
+          <div class="bar-label">D4</div>
+        </div>
+      </div>
+
+      <div class="hex-area">
+        <div class="hex">
+          <div class="hex-shape">A1</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D2</div>
+        </div>
+        <div class="hex active">
+          <div class="hex-shape">G2</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">C3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">F3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">A3</div>
+        </div>
+        <div class="hex">
+          <div class="hex-shape">D4</div>
+        </div>
+
+        <div class="v10-center-giant">
+          <div class="v10-giant-note">G2</div>
+        </div>
+        <div class="v10-corner">
+          <div class="v10-note">G2</div>
+          <div class="v10-freq">98.00 HZ</div>
+        </div>
+      </div>
+
+      <div class="info-bottom">STRING 3/7 · -2 CENTS</div>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED UP - 20 Tuner Samples V3 (Cold Tech × Complex)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            padding: 40px 20px;
+            color: #ffffff;
+        }
+
+        .gallery-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .gallery-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(90deg, #00d9ff, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gallery-header p {
+            font-size: 14px;
+            color: #888;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .samples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(800px, 1fr));
+            gap: 60px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .sample-container {
+            background: linear-gradient(180deg, 
+                #141414 0%, 
+                #161616 15%, 
+                #181818 30%, 
+                #1a1a1a 45%, 
+                #1b1b1b 50%, 
+                #1a1a1a 55%, 
+                #181818 70%, 
+                #161616 85%, 
+                #151515 100%);
+            border-radius: 20px;
+            padding: 32px;
+            position: relative;
+        }
+
+        .sample-label {
+            position: absolute;
+            top: -12px;
+            left: 32px;
+            background: linear-gradient(135deg, #00d9ff, #0099ff);
+            color: #000;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .sample-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #00d9ff;
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+        }
+
+        /* Locked neumorphic */
+        .neo-card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .neo-inset {
+            box-shadow: 
+                inset 4px 4px 8px rgba(0, 0, 0, 0.6),
+                inset -2px -2px 6px rgba(40, 40, 40, 0.1);
+        }
+
+        /* NO strong glow - subtle only */
+        .text-cyan {
+            color: #00d9ff;
+        }
+
+        .text-blue {
+            color: #0099ff;
+        }
+
+        .text-steel {
+            color: #6699cc;
+        }
+
+        .text-ice {
+            color: #99ccff;
+        }
+
+        /* Graph canvas */
+        .graph-area {
+            width: 100%;
+            height: 100px;
+            background: #151515;
+            border-radius: 8px;
+            box-shadow: 
+                inset 4px 4px 8px rgba(0, 0, 0, 0.6),
+                inset -2px -2px 6px rgba(40, 40, 40, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .graph-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.15;
+        }
+
+        .graph-h-line {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: #00d9ff;
+        }
+
+        .graph-v-line {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 1px;
+            background: #00d9ff;
+        }
+
+        .graph-wave {
+            position: absolute;
+            bottom: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00d9ff 20%, #0099ff 50%, #00d9ff 80%, transparent);
+        }
+
+        /* Detail elements */
+        .detail-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        .detail-line {
+            position: absolute;
+            background: #00d9ff;
+        }
+
+        .detail-corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 1px solid #00d9ff;
+        }
+
+        .detail-dot {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #00d9ff;
+            border-radius: 50%;
+        }
+
+        /* ==================== SAMPLE 1 ==================== */
+        .s1 .main-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .s1 .stat-mini {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+            border-top: 2px solid rgba(0, 217, 255, 0.3);
+        }
+
+        .s1 .stat-label {
+            font-size: 8px;
+            color: #666;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .s1 .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00d9ff;
+        }
+
+        .s1 .note-large {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+            border-left: 4px solid #00d9ff;
+        }
+
+        .s1 .note-text {
+            font-size: 64px;
+            font-weight: 900;
+            color: #ffffff;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .s1 .note-sub {
+            font-size: 16px;
+            color: #00d9ff;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* ==================== SAMPLE 2 ==================== */
+        .s2 .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 20px;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s2 .note-display {
+            font-size: 56px;
+            font-weight: 900;
+            color: #00d9ff;
+        }
+
+        .s2 .cents-display {
+            background: #151515;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #0099ff;
+            font-family: 'Courier New', monospace;
+            box-shadow: 
+                inset 2px 2px 6px rgba(0, 0, 0, 0.6),
+                inset -1px -1px 4px rgba(40, 40, 40, 0.1);
+        }
+
+        .s2 .detail-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .s2 .detail-item {
+            background: #151515;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0, 0, 0, 0.6),
+                inset -1px -1px 2px rgba(40, 40, 40, 0.1);
+        }
+
+        .s2 .detail-value {
+            font-size: 14px;
+            color: #6699cc;
+            margin-top: 4px;
+        }
+
+        /* ==================== SAMPLE 3 ==================== */
+        .s3 .split-view {
+            display: grid;
+            grid-template-columns: 2fr 3fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .s3 .left-col {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s3 .note-huge {
+            font-size: 72px;
+            font-weight: 900;
+            color: #00d9ff;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .s3 .freq-display {
+            text-align: center;
+            font-size: 20px;
+            color: #6699cc;
+            font-family: 'Courier New', monospace;
+        }
+
+        .s3 .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .s3 .info-card {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s3 .info-label {
+            font-size: 11px;
+            color: #666;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .s3 .info-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0099ff;
+        }
+
+        /* ==================== SAMPLE 4 ==================== */
+        .s4 .compact-layout {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s4 .inline-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .s4 .note-main {
+            font-size: 64px;
+            font-weight: 900;
+            color: #00d9ff;
+        }
+
+        .s4 .cents-main {
+            font-size: 36px;
+            font-weight: 700;
+            color: #0099ff;
+            font-family: 'Courier New', monospace;
+        }
+
+        .s4 .meter-strip {
+            height: 32px;
+            background: #151515;
+            border-radius: 16px;
+            position: relative;
+            margin-bottom: 16px;
+            box-shadow: 
+                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
+                inset -2px -2px 4px rgba(40, 40, 40, 0.1);
+        }
+
+        .s4 .meter-fill {
+            position: absolute;
+            left: 20%;
+            top: 2px;
+            bottom: 2px;
+            width: 60%;
+            background: linear-gradient(90deg, #0099ff, #00d9ff, #0099ff);
+            border-radius: 14px;
+        }
+
+        .s4 .indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 40px;
+            background: #ffffff;
+            border-radius: 2px;
+            transform: translate(-50%, -50%);
+        }
+
+        /* ==================== SAMPLE 5 ==================== */
+        .s5 .header-section {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .s5 .side-stat {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s5 .side-label {
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 6px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .s5 .side-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #00d9ff;
+        }
+
+        .s5 .center-note {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px 32px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+            text-align: center;
+        }
+
+        .s5 .note-xl {
+            font-size: 60px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        /* ==================== SAMPLE 6 ==================== */
+        .s6 .vertical-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .s6 .note-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 28px;
+            text-align: center;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+            border-top: 3px solid #00d9ff;
+        }
+
+        .s6 .note-big {
+            font-size: 68px;
+            font-weight: 900;
+            color: #00d9ff;
+        }
+
+        .s6 .cents-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .s6 .cents-box {
+            background: #151515;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #0099ff;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0, 0, 0, 0.6),
+                inset -1px -1px 2px rgba(40, 40, 40, 0.1);
+        }
+
+        .s6 .meter-row {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        /* ==================== SAMPLE 7 ==================== */
+        .s7 .modular-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .s7 .module {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s7 .module-label {
+            font-size: 8px;
+            color: #666;
+            margin-bottom: 6px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .s7 .module-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0099ff;
+        }
+
+        .s7 .main-panel {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s7 .note-massive {
+            font-size: 80px;
+            font-weight: 900;
+            color: #00d9ff;
+        }
+
+        /* ==================== SAMPLE 8 ==================== */
+        .s8 .dual-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .s8 .panel {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s8 .panel-title {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 12px;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1px;
+        }
+
+        .s8 .note-display {
+            font-size: 56px;
+            font-weight: 900;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        .s8 .data-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .s8 .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: #151515;
+            border-radius: 6px;
+            font-size: 12px;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0, 0, 0, 0.6),
+                inset -1px -1px 2px rgba(40, 40, 40, 0.1);
+        }
+
+        .s8 .data-label {
+            color: #666;
+        }
+
+        .s8 .data-value {
+            color: #6699cc;
+            font-weight: 700;
+        }
+
+        /* ==================== SAMPLE 9 ==================== */
+        .s9 .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .s9 .stat-cell {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+            border-bottom: 2px solid rgba(0, 153, 255, 0.3);
+        }
+
+        .s9 .stat-cell-label {
+            font-size: 8px;
+            color: #666;
+            margin-bottom: 4px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .s9 .stat-cell-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0099ff;
+        }
+
+        .s9 .note-area {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 36px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s9 .note-ultra {
+            font-size: 76px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        /* ==================== SAMPLE 10 ==================== */
+        .s10 .compact-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s10 .top-inline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .s10 .note-med {
+            font-size: 58px;
+            font-weight: 900;
+            color: #00d9ff;
+        }
+
+        .s10 .cents-panel {
+            background: #151515;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 
+                inset 2px 2px 6px rgba(0, 0, 0, 0.6),
+                inset -1px -1px 4px rgba(40, 40, 40, 0.1);
+        }
+
+        .s10 .cents-num {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0099ff;
+            font-family: 'Courier New', monospace;
+        }
+
+        .s10 .bar-meter {
+            height: 40px;
+            background: #151515;
+            border-radius: 12px;
+            position: relative;
+            margin-bottom: 16px;
+            box-shadow: 
+                inset 3px 3px 6px rgba(0, 0, 0, 0.6),
+                inset -2px -2px 4px rgba(40, 40, 40, 0.1);
+        }
+
+        .s10 .bar-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 48px;
+            background: #00d9ff;
+            border-radius: 2px;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Continue with samples 11-20... */
+        
+        /* ==================== SAMPLE 11 ==================== */
+        .s11 .tech-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s11 .tech-item {
+            text-align: center;
+        }
+
+        .s11 .tech-label {
+            font-size: 9px;
+            color: #666;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .s11 .tech-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #6699cc;
+            margin-top: 4px;
+        }
+
+        .s11 .note-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 28px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+            border-left: 4px solid #0099ff;
+        }
+
+        .s11 .note-large {
+            font-size: 70px;
+            font-weight: 900;
+            color: #00d9ff;
+        }
+
+        /* ==================== SAMPLE 12 ==================== */
+        .s12 .segmented-layout {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .s12 .segment {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s12 .seg-label {
+            font-size: 8px;
+            color: #666;
+            margin-bottom: 8px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .s12 .seg-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0099ff;
+        }
+
+        .s12 .main-display {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s12 .note-giant {
+            font-size: 74px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        /* ==================== SAMPLE 13 ==================== */
+        .s13 .matrix-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .s13 .matrix-main {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s13 .note-display {
+            font-size: 62px;
+            font-weight: 900;
+            color: #00d9ff;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .s13 .cents-strip {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #6699cc;
+            font-family: 'Courier New', monospace;
+        }
+
+        .s13 .matrix-side {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .s13 .side-card {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s13 .side-label {
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .s13 .side-val {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0099ff;
+        }
+
+        /* ==================== SAMPLE 14 ==================== */
+        .s14 .flow-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .s14 .flow-row {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .s14 .flow-main {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .s14 .flow-note {
+            font-size: 66px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .s14 .flow-stat {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s14 .flow-label {
+            font-size: 8px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .s14 .flow-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #6699cc;
+        }
+
+        /* ==================== SAMPLE 15 ==================== */
+        .s15 .micro-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .s15 .micro-cell {
+            background: #1a1a1a;
+            border-radius: 6px;
+            padding: 8px 4px;
+            text-align: center;
+            box-shadow: 
+                3px 3px 8px rgba(0, 0, 0, 0.6),
+                -2px -2px 6px rgba(40, 40, 40, 0.1);
+        }
+
+        .s15 .micro-label {
+            font-size: 7px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .s15 .micro-value {
+            font-size: 12px;
+            font-weight: 700;
+            color: #6699cc;
+        }
+
+        .s15 .focus-panel {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s15 .focus-note {
+            font-size: 78px;
+            font-weight: 900;
+            color: #00d9ff;
+        }
+
+        /* ==================== SAMPLE 16 ==================== */
+        .s16 .asymmetric {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .s16 .asym-left {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .s16 .mini-stat {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s16 .mini-label {
+            font-size: 8px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .s16 .mini-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0099ff;
+        }
+
+        .s16 .asym-right {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .s16 .asym-note {
+            font-size: 70px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        /* ==================== SAMPLE 17 ==================== */
+        .s17 .layered {
+            position: relative;
+        }
+
+        .s17 .layer-back {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s17 .note-center {
+            font-size: 68px;
+            font-weight: 900;
+            color: #00d9ff;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .s17 .detail-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .s17 .strip-item {
+            background: #151515;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0, 0, 0, 0.6),
+                inset -1px -1px 2px rgba(40, 40, 40, 0.1);
+        }
+
+        .s17 .strip-label {
+            font-size: 8px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .s17 .strip-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #6699cc;
+        }
+
+        /* ==================== SAMPLE 18 ==================== */
+        .s18 .cascade {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .s18 .cascade-main {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 28px;
+            text-align: center;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+            border-top: 3px solid #0099ff;
+        }
+
+        .s18 .cascade-note {
+            font-size: 72px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .s18 .cascade-sub {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .s18 .cascade-item {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s18 .cascade-label {
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .s18 .cascade-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #6699cc;
+        }
+
+        /* ==================== SAMPLE 19 ==================== */
+        .s19 .complex-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 2fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .s19 .complex-stat {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s19 .complex-label {
+            font-size: 8px;
+            color: #666;
+            margin-bottom: 6px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .s19 .complex-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0099ff;
+        }
+
+        .s19 .complex-note {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.6),
+                -2px -2px 8px rgba(40, 40, 40, 0.1);
+        }
+
+        .s19 .note-text {
+            font-size: 52px;
+            font-weight: 900;
+            color: #00d9ff;
+        }
+
+        .s19 .main-area {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s19 .main-note {
+            font-size: 76px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        /* ==================== SAMPLE 20 ==================== */
+        .s20 .ultra-compact {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.6),
+                -4px -4px 12px rgba(40, 40, 40, 0.1);
+        }
+
+        .s20 .ultra-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(0, 153, 255, 0.2);
+        }
+
+        .s20 .ultra-note {
+            font-size: 60px;
+            font-weight: 900;
+            color: #00d9ff;
+        }
+
+        .s20 .ultra-cents {
+            background: #151515;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #0099ff;
+            font-family: 'Courier New', monospace;
+            box-shadow: 
+                inset 2px 2px 6px rgba(0, 0, 0, 0.6),
+                inset -1px -1px 4px rgba(40, 40, 40, 0.1);
+        }
+
+        .s20 .ultra-bottom {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .s20 .ultra-cell {
+            background: #151515;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0, 0, 0, 0.6),
+                inset -1px -1px 2px rgba(40, 40, 40, 0.1);
+        }
+
+        .s20 .ultra-label {
+            font-size: 7px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .s20 .ultra-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #6699cc;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .samples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="gallery-header">
+        <h1>🎸 SHRED UP - 20 Samples V3 (Cold Tech × Complex Details)</h1>
+        <p>Direction: Dashboard/Compact (9&10) • No strong glow • Complex details • Cold colors only (#00d9ff, #0099ff, #6699cc, #99ccff) • Very different layouts</p>
+    </div>
+
+    <div class="samples-grid">
+
+        <!-- SAMPLE 1: 6-Column Stats + Note + Graph -->
+        <div class="sample-container s1">
+            <div class="sample-label">SAMPLE 1</div>
+            <div class="sample-title">6-Column Micro Stats Dashboard</div>
+            
+            <div class="detail-grid">
+                <div class="detail-line" style="left: 0; top: 30%; width: 100%; height: 1px;"></div>
+                <div class="detail-line" style="left: 0; top: 70%; width: 100%; height: 1px;"></div>
+            </div>
+
+            <div class="main-grid">
+                <div class="stat-mini">
+                    <div class="stat-label">FREQ</div>
+                    <div class="stat-value">293</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-label">CENTS</div>
+                    <div class="stat-value">+12</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-label">STRING</div>
+                    <div class="stat-value">7</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-label">CONF</div>
+                    <div class="stat-value">89%</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-label">TIME</div>
+                    <div class="stat-value">12.5s</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-label">AVG</div>
+                    <div class="stat-value">+2.3</div>
+                </div>
+            </div>
+
+            <div class="note-large">
+                <div class="note-text">D</div>
+                <div class="note-sub">293.66 Hz</div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 2: Top Bar + 5 Details + Graph -->
+        <div class="sample-container s2">
+            <div class="sample-label">SAMPLE 2</div>
+            <div class="sample-title">Compact Top Bar + Detail Row</div>
+            
+            <div class="detail-grid">
+                <div class="detail-corner" style="top: 8px; left: 8px; border-right: none; border-bottom: none;"></div>
+                <div class="detail-corner" style="top: 8px; right: 8px; border-left: none; border-bottom: none;"></div>
+            </div>
+
+            <div class="top-bar">
+                <div class="note-display">A</div>
+                <div class="cents-display">+12</div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-item">
+                    <div>FREQ</div>
+                    <div class="detail-value">55.0</div>
+                </div>
+                <div class="detail-item">
+                    <div>STRING</div>
+                    <div class="detail-value">1/7</div>
+                </div>
+                <div class="detail-item">
+                    <div>CONF</div>
+                    <div class="detail-value">92%</div>
+                </div>
+                <div class="detail-item">
+                    <div>SESSION</div>
+                    <div class="detail-value">8.2s</div>
+                </div>
+                <div class="detail-item">
+                    <div>STABLE</div>
+                    <div class="detail-value">YES</div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 3: Split 2/3 Column -->
+        <div class="sample-container s3">
+            <div class="sample-label">SAMPLE 3</div>
+            <div class="sample-title">Split View 2/3 Column</div>
+            
+            <div class="detail-grid">
+                <div class="detail-line" style="left: 40%; top: 0; width: 1px; height: 100%;"></div>
+            </div>
+
+            <div class="split-view">
+                <div class="left-col">
+                    <div class="note-huge">G</div>
+                    <div class="freq-display">98.00 Hz</div>
+                </div>
+
+                <div class="right-col">
+                    <div class="info-card">
+                        <span class="info-label">DEVIATION</span>
+                        <span class="info-value">+8 cents</span>
+                    </div>
+                    <div class="info-card">
+                        <span class="info-label">STRING</span>
+                        <span class="info-value">3 / 7</span>
+                    </div>
+                    <div class="info-card">
+                        <span class="info-label">CONFIDENCE</span>
+                        <span class="info-value">87%</span>
+                    </div>
+                    <div class="info-card">
+                        <span class="info-label">AVG ERROR</span>
+                        <span class="info-value">+2.1¢</span>
+                    </div>
+                    <div class="info-card">
+                        <span class="info-label">SESSION</span>
+                        <span class="info-value">10.3s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 52%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 4: Super Compact Inline -->
+        <div class="sample-container s4">
+            <div class="sample-label">SAMPLE 4</div>
+            <div class="sample-title">Ultra Compact Inline Layout</div>
+            
+            <div class="compact-layout">
+                <div class="inline-display">
+                    <div class="note-main">C</div>
+                    <div class="cents-main">+3</div>
+                </div>
+
+                <div class="meter-strip">
+                    <div class="meter-fill"></div>
+                    <div class="indicator"></div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 25%;"></div>
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                    <div class="graph-h-line" style="top: 75%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 48%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 5: 3-Section Header -->
+        <div class="sample-container s5">
+            <div class="sample-label">SAMPLE 5</div>
+            <div class="sample-title">3-Section Header Layout</div>
+            
+            <div class="detail-grid">
+                <div class="detail-line" style="left: 0; top: 35%; width: 100%; height: 1px;"></div>
+                <div class="detail-line" style="left: 33%; top: 0; width: 1px; height: 35%;"></div>
+                <div class="detail-line" style="left: 67%; top: 0; width: 1px; height: 35%;"></div>
+            </div>
+
+            <div class="header-section">
+                <div class="side-stat">
+                    <div class="side-label">FREQUENCY</div>
+                    <div class="side-value">174.61</div>
+                </div>
+
+                <div class="center-note">
+                    <div class="note-xl">F</div>
+                </div>
+
+                <div class="side-stat">
+                    <div class="side-label">CONFIDENCE</div>
+                    <div class="side-value">91%</div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                    <div class="graph-v-line" style="left: 25%;"></div>
+                    <div class="graph-v-line" style="left: 50%;"></div>
+                    <div class="graph-v-line" style="left: 75%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 54%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 6: Vertical Stack + Cents Row -->
+        <div class="sample-container s6">
+            <div class="sample-label">SAMPLE 6</div>
+            <div class="sample-title">Vertical Stack with Cents Row</div>
+            
+            <div class="vertical-layout">
+                <div class="note-card">
+                    <div class="note-big">D</div>
+                    <div class="cents-row">
+                        <div class="cents-box">+12</div>
+                        <div class="cents-box" style="background: #1a1a1a; color: #666;">AVG +2.3</div>
+                    </div>
+                </div>
+
+                <div class="meter-row">
+                    <div style="height: 32px; background: linear-gradient(90deg, #0066cc, #0099ff, #00d9ff, #0099ff, #0066cc); border-radius: 16px; opacity: 0.6;"></div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 7: 4-Module Top + Main -->
+        <div class="sample-container s7">
+            <div class="sample-label">SAMPLE 7</div>
+            <div class="sample-title">4-Module Grid + Main Panel</div>
+            
+            <div class="detail-grid">
+                <div class="detail-line" style="left: 0; top: 28%; width: 100%; height: 1px;"></div>
+                <div class="detail-line" style="left: 25%; top: 0; width: 1px; height: 28%;"></div>
+                <div class="detail-line" style="left: 50%; top: 0; width: 1px; height: 28%;"></div>
+                <div class="detail-line" style="left: 75%; top: 0; width: 1px; height: 28%;"></div>
+            </div>
+
+            <div class="modular-grid">
+                <div class="module">
+                    <div class="module-label">FREQ</div>
+                    <div class="module-value">220</div>
+                </div>
+                <div class="module">
+                    <div class="module-label">CENTS</div>
+                    <div class="module-value">+7</div>
+                </div>
+                <div class="module">
+                    <div class="module-label">STRING</div>
+                    <div class="module-value">6</div>
+                </div>
+                <div class="module">
+                    <div class="module-label">CONF</div>
+                    <div class="module-value">88%</div>
+                </div>
+            </div>
+
+            <div class="main-panel">
+                <div class="note-massive">A</div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 56%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 8: Dual Panel Side by Side -->
+        <div class="sample-container s8">
+            <div class="sample-label">SAMPLE 8</div>
+            <div class="sample-title">Dual Panel Layout</div>
+            
+            <div class="detail-grid">
+                <div class="detail-line" style="left: 50%; top: 0; width: 1px; height: 70%;"></div>
+            </div>
+
+            <div class="dual-panel">
+                <div class="panel">
+                    <div class="panel-title">NOTE DETECTED</div>
+                    <div class="note-display">G</div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">ANALYSIS DATA</div>
+                    <div class="data-list">
+                        <div class="data-row">
+                            <span class="data-label">Frequency</span>
+                            <span class="data-value">98.00 Hz</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Deviation</span>
+                            <span class="data-value">-4 cents</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">String</span>
+                            <span class="data-value">3 / 7</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Confidence</span>
+                            <span class="data-value">92%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 47%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 9: 5-Stats Bar + Note -->
+        <div class="sample-container s9">
+            <div class="sample-label">SAMPLE 9</div>
+            <div class="sample-title">5-Stats Bar + Large Note</div>
+            
+            <div class="detail-grid">
+                <div class="detail-line" style="left: 20%; top: 0; width: 1px; height: 25%;"></div>
+                <div class="detail-line" style="left: 40%; top: 0; width: 1px; height: 25%;"></div>
+                <div class="detail-line" style="left: 60%; top: 0; width: 1px; height: 25%;"></div>
+                <div class="detail-line" style="left: 80%; top: 0; width: 1px; height: 25%;"></div>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat-cell">
+                    <div class="stat-cell-label">FREQ</div>
+                    <div class="stat-cell-value">130.81</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="stat-cell-label">CENTS</div>
+                    <div class="stat-cell-value">+5</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="stat-cell-label">STRING</div>
+                    <div class="stat-cell-value">4</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="stat-cell-label">CONF</div>
+                    <div class="stat-cell-value">89%</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="stat-cell-label">TIME</div>
+                    <div class="stat-cell-value">9.7s</div>
+                </div>
+            </div>
+
+            <div class="note-area">
+                <div class="note-ultra">C</div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 52%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 10: Compact Card Style -->
+        <div class="sample-container s10">
+            <div class="sample-label">SAMPLE 10</div>
+            <div class="sample-title">Compact Card + Bar Meter</div>
+            
+            <div class="detail-grid">
+                <div class="detail-corner" style="top: 8px; left: 8px; border-right: none; border-bottom: none;"></div>
+                <div class="detail-corner" style="top: 8px; right: 8px; border-left: none; border-bottom: none;"></div>
+            </div>
+
+            <div class="compact-card">
+                <div class="top-inline">
+                    <div class="note-med">A</div>
+                    <div class="cents-panel">
+                        <div class="cents-num">+2</div>
+                    </div>
+                </div>
+
+                <div class="bar-meter">
+                    <div class="bar-line"></div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 25%;"></div>
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                    <div class="graph-h-line" style="top: 75%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 51%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 11: Tech Header + Note -->
+        <div class="sample-container s11">
+            <div class="sample-label">SAMPLE 11</div>
+            <div class="sample-title">Tech Header with 5 Items</div>
+            
+            <div class="tech-header">
+                <div class="tech-item">
+                    <div class="tech-label">FREQ</div>
+                    <div class="tech-value">293.66</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-label">CENTS</div>
+                    <div class="tech-value">+12</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-label">STRING</div>
+                    <div class="tech-value">7</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-label">CONF</div>
+                    <div class="tech-value">91%</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-label">AVG</div>
+                    <div class="tech-value">+3.2</div>
+                </div>
+            </div>
+
+            <div class="note-section">
+                <div class="note-large">D</div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 12: 3-Segment Top + Main -->
+        <div class="sample-container s12">
+            <div class="sample-label">SAMPLE 12</div>
+            <div class="sample-title">3-Segment + Main Display</div>
+            
+            <div class="detail-grid">
+                <div class="detail-line" style="left: 33%; top: 0; width: 1px; height: 30%;"></div>
+                <div class="detail-line" style="left: 67%; top: 0; width: 1px; height: 30%;"></div>
+            </div>
+
+            <div class="segmented-layout">
+                <div class="segment">
+                    <div class="seg-label">FREQUENCY</div>
+                    <div class="seg-value">73.42</div>
+                </div>
+                <div class="segment">
+                    <div class="seg-label">DEVIATION</div>
+                    <div class="seg-value">+8¢</div>
+                </div>
+                <div class="segment">
+                    <div class="seg-label">STRING</div>
+                    <div class="seg-value">2/7</div>
+                </div>
+            </div>
+
+            <div class="main-display">
+                <div class="note-giant">D</div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 58%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 13: Matrix 2/1 Layout -->
+        <div class="sample-container s13">
+            <div class="sample-label">SAMPLE 13</div>
+            <div class="sample-title">Matrix Layout 2/1 Column</div>
+            
+            <div class="matrix-layout">
+                <div class="matrix-main">
+                    <div class="note-display">F</div>
+                    <div class="cents-strip">+5 cents</div>
+                </div>
+
+                <div class="matrix-side">
+                    <div class="side-card">
+                        <div class="side-label">FREQ</div>
+                        <div class="side-val">174.61</div>
+                    </div>
+                    <div class="side-card">
+                        <div class="side-label">STRING</div>
+                        <div class="side-val">5/7</div>
+                    </div>
+                    <div class="side-card">
+                        <div class="side-label">CONF</div>
+                        <div class="side-val">89%</div>
+                    </div>
+                    <div class="side-card">
+                        <div class="side-label">TIME</div>
+                        <div class="side-val">11.2s</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 53%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 14: Flow 3/1/1 -->
+        <div class="sample-container s14">
+            <div class="sample-label">SAMPLE 14</div>
+            <div class="sample-title">Flow Layout 3/1/1</div>
+            
+            <div class="flow-layout">
+                <div class="flow-row">
+                    <div class="flow-main">
+                        <div class="flow-note">A</div>
+                    </div>
+                    <div class="flow-stat">
+                        <div class="flow-label">FREQ</div>
+                        <div class="flow-value">220</div>
+                    </div>
+                    <div class="flow-stat">
+                        <div class="flow-label">CENTS</div>
+                        <div class="flow-value">+7</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 54%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 15: 8-Micro Grid + Focus -->
+        <div class="sample-container s15">
+            <div class="sample-label">SAMPLE 15</div>
+            <div class="sample-title">8-Micro Grid + Focus Panel</div>
+            
+            <div class="detail-grid">
+                <div class="detail-line" style="left: 0; top: 22%; width: 100%; height: 1px;"></div>
+            </div>
+
+            <div class="micro-grid">
+                <div class="micro-cell">
+                    <div class="micro-label">FREQ</div>
+                    <div class="micro-value">293</div>
+                </div>
+                <div class="micro-cell">
+                    <div class="micro-label">CENT</div>
+                    <div class="micro-value">+12</div>
+                </div>
+                <div class="micro-cell">
+                    <div class="micro-label">STR</div>
+                    <div class="micro-value">7</div>
+                </div>
+                <div class="micro-cell">
+                    <div class="micro-label">CONF</div>
+                    <div class="micro-value">89</div>
+                </div>
+                <div class="micro-cell">
+                    <div class="micro-label">TIME</div>
+                    <div class="micro-value">12s</div>
+                </div>
+                <div class="micro-cell">
+                    <div class="micro-label">AVG</div>
+                    <div class="micro-value">+2</div>
+                </div>
+                <div class="micro-cell">
+                    <div class="micro-label">MIN</div>
+                    <div class="micro-value">-1</div>
+                </div>
+                <div class="micro-cell">
+                    <div class="micro-label">MAX</div>
+                    <div class="micro-value">+15</div>
+                </div>
+            </div>
+
+            <div class="focus-panel">
+                <div class="focus-note">D</div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 16: Asymmetric 1/2 -->
+        <div class="sample-container s16">
+            <div class="sample-label">SAMPLE 16</div>
+            <div class="sample-title">Asymmetric 1/2 Layout</div>
+            
+            <div class="asymmetric">
+                <div class="asym-left">
+                    <div class="mini-stat">
+                        <div class="mini-label">FREQ</div>
+                        <div class="mini-value">55.0</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-label">CENTS</div>
+                        <div class="mini-value">+3</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-label">STRING</div>
+                        <div class="mini-value">1/7</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-label">CONF</div>
+                        <div class="mini-value">92%</div>
+                    </div>
+                </div>
+
+                <div class="asym-right">
+                    <div class="asym-note">A</div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 48%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 17: Layered with Detail Strip -->
+        <div class="sample-container s17">
+            <div class="sample-label">SAMPLE 17</div>
+            <div class="sample-title">Layered + 4-Strip Details</div>
+            
+            <div class="layered">
+                <div class="layer-back">
+                    <div class="note-center">G</div>
+                    <div class="detail-strip">
+                        <div class="strip-item">
+                            <div class="strip-label">FREQ</div>
+                            <div class="strip-value">98.0</div>
+                        </div>
+                        <div class="strip-item">
+                            <div class="strip-label">CENTS</div>
+                            <div class="strip-value">-4</div>
+                        </div>
+                        <div class="strip-item">
+                            <div class="strip-label">STRING</div>
+                            <div class="strip-value">3/7</div>
+                        </div>
+                        <div class="strip-item">
+                            <div class="strip-label">CONF</div>
+                            <div class="strip-value">87%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 47%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 18: Cascade Main + 3 Sub -->
+        <div class="sample-container s18">
+            <div class="sample-label">SAMPLE 18</div>
+            <div class="sample-title">Cascade Main + 3 Sub Items</div>
+            
+            <div class="cascade">
+                <div class="cascade-main">
+                    <div class="cascade-note">D</div>
+                </div>
+
+                <div class="cascade-sub">
+                    <div class="cascade-item">
+                        <div class="cascade-label">FREQUENCY</div>
+                        <div class="cascade-value">73.42 Hz</div>
+                    </div>
+                    <div class="cascade-item">
+                        <div class="cascade-label">DEVIATION</div>
+                        <div class="cascade-value">+8 cents</div>
+                    </div>
+                    <div class="cascade-item">
+                        <div class="cascade-label">CONFIDENCE</div>
+                        <div class="cascade-value">88%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 58%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 19: Complex 1/1/1/2 Grid -->
+        <div class="sample-container s19">
+            <div class="sample-label">SAMPLE 19</div>
+            <div class="sample-title">Complex 1/1/1/2 Grid</div>
+            
+            <div class="detail-grid">
+                <div class="detail-line" style="left: 20%; top: 0; width: 1px; height: 28%;"></div>
+                <div class="detail-line" style="left: 40%; top: 0; width: 1px; height: 28%;"></div>
+                <div class="detail-line" style="left: 60%; top: 0; width: 1px; height: 28%;"></div>
+            </div>
+
+            <div class="complex-grid">
+                <div class="complex-stat">
+                    <div class="complex-label">FREQ</div>
+                    <div class="complex-value">130</div>
+                </div>
+                <div class="complex-stat">
+                    <div class="complex-label">CENT</div>
+                    <div class="complex-value">+5</div>
+                </div>
+                <div class="complex-stat">
+                    <div class="complex-label">CONF</div>
+                    <div class="complex-value">89%</div>
+                </div>
+                <div class="complex-note">
+                    <div class="note-text">C</div>
+                </div>
+            </div>
+
+            <div class="main-area">
+                <div class="main-note">C</div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 52%;"></div>
+            </div>
+        </div>
+
+        <!-- SAMPLE 20: Ultra Compact All-in-One -->
+        <div class="sample-container s20">
+            <div class="sample-label">SAMPLE 20</div>
+            <div class="sample-title">Ultra Compact All-in-One</div>
+            
+            <div class="detail-grid">
+                <div class="detail-corner" style="top: 8px; left: 8px; border-right: none; border-bottom: none;"></div>
+                <div class="detail-corner" style="top: 8px; right: 8px; border-left: none; border-bottom: none;"></div>
+                <div class="detail-line" style="left: 0; top: 45%; width: 100%; height: 1px;"></div>
+            </div>
+
+            <div class="ultra-compact">
+                <div class="ultra-top">
+                    <div class="ultra-note">A</div>
+                    <div class="ultra-cents">+2</div>
+                </div>
+
+                <div class="ultra-bottom">
+                    <div class="ultra-cell">
+                        <div class="ultra-label">FREQ</div>
+                        <div class="ultra-value">55.0</div>
+                    </div>
+                    <div class="ultra-cell">
+                        <div class="ultra-label">STR</div>
+                        <div class="ultra-value">1/7</div>
+                    </div>
+                    <div class="ultra-cell">
+                        <div class="ultra-label">CONF</div>
+                        <div class="ultra-value">92%</div>
+                    </div>
+                    <div class="ultra-cell">
+                        <div class="ultra-label">TIME</div>
+                        <div class="ultra-value">8.5s</div>
+                    </div>
+                    <div class="ultra-cell">
+                        <div class="ultra-label">AVG</div>
+                        <div class="ultra-value">+1.2</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="graph-area">
+                <div class="graph-grid">
+                    <div class="graph-h-line" style="top: 25%;"></div>
+                    <div class="graph-h-line" style="top: 50%;"></div>
+                    <div class="graph-h-line" style="top: 75%;"></div>
+                </div>
+                <div class="graph-wave" style="bottom: 51%;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        console.log('🎸 20 SHRED UP V3 Samples Ready');
+        console.log('✅ Direction: Dashboard/Compact (9&10)');
+        console.log('✅ NO strong glow');
+        console.log('✅ Complex details added');
+        console.log('✅ Cold colors only (#00d9ff, #0099ff, #6699cc, #99ccff)');
+        console.log('✅ Very different layouts');
+    </script>
+
+</body>
+</html>

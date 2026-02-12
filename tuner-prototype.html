@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED UP - Tuner Prototype (Visual Mock)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Main Container */
+        .tuner-module {
+            width: 100%;
+            max-width: 800px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 
+                0 8px 24px rgba(0, 0, 0, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.05);
+        }
+
+        /* Header */
+        .tuner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .tuner-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 2px;
+        }
+
+        .btn-start {
+            padding: 10px 24px;
+            background: #2a2a2a;
+            border: none;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.3),
+                0 1px 2px rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-start:hover {
+            background: #333333;
+            transform: translateY(-1px);
+            box-shadow: 
+                0 6px 16px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-start:active {
+            transform: translateY(0);
+        }
+
+        /* Note Display */
+        .note-display {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .note-main {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .note-letter {
+            font-size: 72px;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1;
+            transition: all 0.3s ease;
+        }
+
+        .note-sharp {
+            font-size: 36px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-12px);
+            transition: all 0.3s ease;
+        }
+
+        .note-display.in-tune .note-letter,
+        .note-display.in-tune .note-sharp {
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+        }
+
+        .cents-deviation {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .cents-value {
+            font-size: 24px;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            transition: color 0.3s ease;
+        }
+
+        .cents-value.perfect {
+            color: #00ff88;
+        }
+
+        .cents-value.good {
+            color: #00cc66;
+        }
+
+        .cents-value.mid {
+            color: #ffcc00;
+        }
+
+        .cents-value.bad {
+            color: #ff4444;
+        }
+
+        .cents-label {
+            font-size: 14px;
+            color: #808080;
+            font-weight: 400;
+        }
+
+        /* Horizontal Meter */
+        .horizontal-meter {
+            margin-bottom: 32px;
+        }
+
+        .meter-container {
+            position: relative;
+            width: 100%;
+            height: 60px;
+            margin-bottom: 12px;
+        }
+
+        .meter-track {
+            position: absolute;
+            width: 100%;
+            height: 40px;
+            top: 10px;
+            display: flex;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 2px 8px rgba(0, 0, 0, 0.6),
+                inset 0 -1px 1px rgba(255, 255, 255, 0.03);
+        }
+
+        .meter-zone {
+            flex: 1;
+            transition: opacity 0.3s;
+        }
+
+        .zone-red-left {
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+        }
+
+        .zone-yellow-left {
+            background: linear-gradient(90deg, #ff6666, #ffcc00);
+        }
+
+        .zone-green {
+            background: linear-gradient(90deg, #ffcc00, #00ff88, #00ff88, #ffcc00);
+        }
+
+        .zone-yellow-right {
+            background: linear-gradient(90deg, #ffcc00, #ff6666);
+        }
+
+        .zone-red-right {
+            background: linear-gradient(90deg, #ff6666, #ff4444);
+        }
+
+        .meter-ticks {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            pointer-events: none;
+        }
+
+        .tick {
+            position: absolute;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.3);
+            top: 50%;
+            transform: translateX(-50%);
+        }
+
+        .tick.major {
+            height: 12px;
+            transform: translate(-50%, -50%);
+        }
+
+        .tick.minor {
+            height: 6px;
+            transform: translate(-50%, -50%);
+            opacity: 0.5;
+        }
+
+        .meter-indicator {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            transform: translateX(-50%);
+            transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+
+        .indicator-line {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            width: 3px;
+            height: 50px;
+            background: #ffffff;
+            transform: translateX(-50%);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+            border-radius: 2px;
+        }
+
+        .indicator-pointer {
+            position: absolute;
+            top: 3px;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid #ffffff;
+            transform: translateX(-50%);
+            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+        }
+
+        .meter-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+
+        .meter-labels span {
+            font-size: 12px;
+            color: #808080;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Reactive Graph */
+        .reactive-graph-container {
+            background: #1e1e1e;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 
+                0 8px 24px rgba(0, 0, 0, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.05);
+        }
+
+        .reactive-graph-canvas {
+            width: 100%;
+            height: 200px;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .graph-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding: 0 8px;
+        }
+
+        .graph-stats span {
+            font-size: 14px;
+            color: #808080;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .note-letter {
+                font-size: 56px;
+            }
+            
+            .note-sharp {
+                font-size: 28px;
+            }
+
+            .cents-value {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tuner-module">
+        <!-- Header -->
+        <div class="tuner-header">
+            <h2>TUNER</h2>
+            <button class="btn-start" onclick="toggleAnimation()">Start Mock</button>
+        </div>
+
+        <!-- Note Display -->
+        <div class="note-display" id="noteDisplay">
+            <div class="note-main">
+                <span class="note-letter" id="noteLetter">A</span>
+                <span class="note-sharp" id="noteSharp"></span>
+            </div>
+            <div class="cents-deviation">
+                <span class="cents-value" id="centsValue">0</span>
+                <span class="cents-label">cents</span>
+            </div>
+        </div>
+
+        <!-- Horizontal Meter -->
+        <div class="horizontal-meter">
+            <div class="meter-container">
+                <div class="meter-track">
+                    <div class="meter-zone zone-red-left"></div>
+                    <div class="meter-zone zone-yellow-left"></div>
+                    <div class="meter-zone zone-green"></div>
+                    <div class="meter-zone zone-yellow-right"></div>
+                    <div class="meter-zone zone-red-right"></div>
+                </div>
+                <div class="meter-ticks" id="meterTicks"></div>
+                <div class="meter-indicator" id="meterIndicator">
+                    <div class="indicator-pointer"></div>
+                    <div class="indicator-line"></div>
+                </div>
+            </div>
+            <div class="meter-labels">
+                <span>-50</span>
+                <span>-25</span>
+                <span>0</span>
+                <span>+25</span>
+                <span>+50</span>
+            </div>
+        </div>
+
+        <!-- Reactive Graph -->
+        <div class="reactive-graph-container">
+            <canvas id="reactiveGraph" class="reactive-graph-canvas"></canvas>
+            <div class="graph-stats">
+                <span id="sessionTime">Session: 0.0s</span>
+                <span id="avgCents">Avg: 0.0 cents</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // MOCK DATA & ANIMATION CONTROL
+        // =====================================================
+
+        const notes = [
+            { letter: 'A', sharp: false, freq: 55.00 },    // A1
+            { letter: 'D', sharp: false, freq: 73.42 },    // D2
+            { letter: 'G', sharp: false, freq: 98.00 },    // G2
+            { letter: 'C', sharp: false, freq: 130.81 },   // C3
+            { letter: 'F', sharp: false, freq: 174.61 },   // F3
+            { letter: 'A', sharp: false, freq: 220.00 },   // A3
+            { letter: 'D', sharp: false, freq: 293.66 },   // D4
+        ];
+
+        let animationRunning = false;
+        let animationFrame = null;
+        let noteChangeInterval = null;
+        let sessionStartTime = null;
+
+        let currentNoteIndex = 0;
+        let currentCents = 0;
+
+        // =====================================================
+        // INITIALIZE METER TICKS
+        // =====================================================
+
+        function initMeterTicks() {
+            const container = document.getElementById('meterTicks');
+            
+            // Major ticks (-50, -25, 0, 25, 50)
+            [-50, -25, 0, 25, 50].forEach(cent => {
+                const tick = document.createElement('div');
+                tick.className = 'tick major';
+                tick.style.left = `${((cent + 50) / 100) * 100}%`;
+                container.appendChild(tick);
+            });
+
+            // Minor ticks (every 5 cents)
+            for (let cent = -45; cent <= 45; cent += 5) {
+                if (cent % 25 !== 0) {
+                    const tick = document.createElement('div');
+                    tick.className = 'tick minor';
+                    tick.style.left = `${((cent + 50) / 100) * 100}%`;
+                    container.appendChild(tick);
+                }
+            }
+        }
+
+        // =====================================================
+        // UPDATE NOTE DISPLAY
+        // =====================================================
+
+        function updateNoteDisplay(note, cents) {
+            const noteDisplay = document.getElementById('noteDisplay');
+            const noteLetter = document.getElementById('noteLetter');
+            const noteSharp = document.getElementById('noteSharp');
+            const centsValue = document.getElementById('centsValue');
+
+            noteLetter.textContent = note.letter;
+            noteSharp.textContent = note.sharp ? '♯' : '';
+
+            const centsFormatted = cents > 0 ? `+${cents.toFixed(0)}` : cents.toFixed(0);
+            centsValue.textContent = centsFormatted;
+
+            // Color coding
+            const absCents = Math.abs(cents);
+            centsValue.className = 'cents-value';
+            
+            if (absCents <= 3) {
+                centsValue.classList.add('perfect');
+                noteDisplay.classList.add('in-tune');
+            } else {
+                noteDisplay.classList.remove('in-tune');
+                if (absCents <= 10) {
+                    centsValue.classList.add('good');
+                } else if (absCents <= 25) {
+                    centsValue.classList.add('mid');
+                } else {
+                    centsValue.classList.add('bad');
+                }
+            }
+        }
+
+        // =====================================================
+        // UPDATE METER INDICATOR
+        // =====================================================
+
+        function updateMeterIndicator(cents) {
+            const indicator = document.getElementById('meterIndicator');
+            const position = ((cents + 50) / 100) * 100;
+            indicator.style.left = `${Math.max(0, Math.min(100, position))}%`;
+        }
+
+        // =====================================================
+        // REACTIVE GRAPH (CANVAS)
+        // =====================================================
+
+        const canvas = document.getElementById('reactiveGraph');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas resolution
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const dataPoints = [];
+        const maxPoints = 200;
+
+        function getLineColor(cents) {
+            const absCents = Math.abs(cents);
+            
+            if (absCents <= 3) {
+                return '#00ff88'; // Perfect green
+            } else if (absCents <= 10) {
+                return '#00cc66'; // Good green
+            } else if (absCents <= 25) {
+                return '#ffcc00'; // Mid yellow
+            } else {
+                return '#ff4444'; // Bad red
+            }
+        }
+
+        function drawGraph() {
+            const width = canvas.getBoundingClientRect().width;
+            const height = canvas.getBoundingClientRect().height;
+            const centerY = height / 2;
+
+            // Clear canvas
+            ctx.fillStyle = '#1e1e1e';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw grid lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+
+            // Horizontal grid lines (every 25 cents)
+            [-50, -25, 0, 25, 50].forEach(cents => {
+                const y = centerY - (cents * (height / 120));
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            });
+
+            // Center line (dashed)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw data line with glow
+            if (dataPoints.length > 1) {
+                const currentColor = getLineColor(dataPoints[dataPoints.length - 1]);
+                
+                // Glow effect
+                ctx.save();
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = currentColor;
+                
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+
+                ctx.beginPath();
+                dataPoints.forEach((point, i) => {
+                    const x = width - (dataPoints.length - i) * (width / maxPoints);
+                    const y = centerY - (point * (height / 120));
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                ctx.stroke();
+                ctx.restore();
+
+                // Gradient fill under line
+                const gradient = ctx.createLinearGradient(0, centerY - 50, 0, centerY + 50);
+                gradient.addColorStop(0, `${currentColor}33`);
+                gradient.addColorStop(0.5, `${currentColor}11`);
+                gradient.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                dataPoints.forEach((point, i) => {
+                    const x = width - (dataPoints.length - i) * (width / maxPoints);
+                    const y = centerY - (point * (height / 120));
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                ctx.lineTo(width, centerY);
+                ctx.lineTo(width - dataPoints.length * (width / maxPoints), centerY);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // =====================================================
+        // ANIMATION LOOP
+        // =====================================================
+
+        function animate() {
+            if (!animationRunning) return;
+
+            const elapsed = (Date.now() - sessionStartTime) / 1000;
+            
+            // Update session time
+            document.getElementById('sessionTime').textContent = `Session: ${elapsed.toFixed(1)}s`;
+
+            // Generate mock cents value (sine wave + noise)
+            const baseCents = Math.sin(Date.now() / 1500) * 40;
+            const noise = (Math.random() - 0.5) * 10;
+            currentCents = baseCents + noise;
+
+            // Add data point
+            dataPoints.push(currentCents);
+            if (dataPoints.length > maxPoints) {
+                dataPoints.shift();
+            }
+
+            // Calculate average
+            const avg = dataPoints.reduce((sum, val) => sum + val, 0) / dataPoints.length;
+            const avgFormatted = avg > 0 ? `+${avg.toFixed(1)}` : avg.toFixed(1);
+            document.getElementById('avgCents').textContent = `Avg: ${avgFormatted} cents`;
+
+            // Update UI
+            updateNoteDisplay(notes[currentNoteIndex], currentCents);
+            updateMeterIndicator(currentCents);
+            drawGraph();
+
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        // =====================================================
+        // TOGGLE ANIMATION
+        // =====================================================
+
+        function toggleAnimation() {
+            const btn = document.querySelector('.btn-start');
+            
+            if (animationRunning) {
+                // Stop
+                animationRunning = false;
+                btn.textContent = 'Start Mock';
+                
+                if (animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                }
+                if (noteChangeInterval) {
+                    clearInterval(noteChangeInterval);
+                }
+            } else {
+                // Start
+                animationRunning = true;
+                btn.textContent = 'Stop Mock';
+                sessionStartTime = Date.now();
+                dataPoints.length = 0;
+
+                // Change note every 3 seconds
+                noteChangeInterval = setInterval(() => {
+                    currentNoteIndex = (currentNoteIndex + 1) % notes.length;
+                }, 3000);
+
+                animate();
+            }
+        }
+
+        // =====================================================
+        // INITIALIZE
+        // =====================================================
+
+        initMeterTicks();
+        updateNoteDisplay(notes[currentNoteIndex], 0);
+        updateMeterIndicator(0);
+        drawGraph();
+
+        console.log('🎸 TUNER PROTOTYPE - Visual Mock Ready');
+        console.log('Click "Start Mock" to see animations');
+    </script>
+
+</body>
+</html>

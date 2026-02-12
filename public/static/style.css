@@ -760,14 +760,20 @@ body {
    ================================================ */
 
 .zone-tuner {
-  background-color: var(--color-bg-secondary);
+  background-color: #141414;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-lg);
-  min-height: 180px;
+  padding: 0;
+  min-height: 700px;
+  overflow: hidden;
+}
+
+.tuner-iframe {
+  width: 100%;
+  height: 700px;
+  border: none;
+  display: block;
+  background: #141414;
 }
 
 .tuner-container {
