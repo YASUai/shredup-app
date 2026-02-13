@@ -195,6 +195,33 @@ if (absError <= 10) {
 **Route**: `/test-phase-5b`  
 **File**: `public/static/metronome/test-phase-5b.html`
 
+### ⚠️ **CRITICAL LIMITATION – QUARTER NOTES ONLY**
+
+**This version of Phase 5B detects QUARTER NOTES (noires) ONLY.**
+
+- Play **ONE note per beat** (♩)
+- **DO NOT** play eighth notes (♪♪), triplets (♪♪♪), or any subdivisions
+- If you play subdivisions, they will be matched to the nearest beat and your score will be **incorrectly low**
+
+**Why?**  
+The beat matching algorithm currently only matches onsets to **main beats** (1, 2, 3, 4...). It does not understand subdivisions yet.
+
+**Example of INCORRECT usage**:
+```
+Metronome : │  1  │  2  │  3  │  4  │
+You play  : │ 1& │ 2& │ 3& │ 4& │  (eighth notes)
+Result    : ❌ LOW SCORE (& notes matched to wrong beats)
+```
+
+**Correct usage**:
+```
+Metronome : │  1  │  2  │  3  │  4  │
+You play  : │  1  │  2  │  3  │  4  │  (quarter notes)
+Result    : ✅ ACCURATE SCORE
+```
+
+**Next Phase (5B+)** will add subdivision detection (eighth notes, triplets, sixteenth notes, etc.).
+
 ### **Features**
 
 1. **Initialize Audio Engine** – Create AudioContext & MasterTimeEngine
