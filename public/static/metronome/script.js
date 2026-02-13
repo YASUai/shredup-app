@@ -800,23 +800,67 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ensure all beat LEDs are OFF at startup
     updateBeatIndicators();
     
-    // 🔒 CRITICAL: Remove focus from buttons after ANY click
-    // All keyboard control is centralized in parent window
-    // Buttons must blur immediately to prevent CSS :focus/:active states
+    // ============================================================================
+    // 🔒 CRITICAL: GUARANTEE KEYBOARD SHORTCUTS ALWAYS WORK
+    // ============================================================================
+    // Problem: After clicking a button, it retains focus and keyboard shortcuts
+    // may stop working or trigger button clicks instead
+    // 
+    // Solution: 3-layer protection
+    // 1. Make buttons non-focusable via Tab
+    // 2. Force blur immediately after click
+    // 3. Restore focus to body (ensures document receives keyboard events)
+    
+    // Make body focusable (needed for focus restoration)
+    document.body.setAttribute('tabindex', '-1');
+    
+    // Apply to ALL buttons
     document.querySelectorAll('button').forEach(btn => {
+        // Layer 1: Prevent Tab focus
         btn.setAttribute('tabindex', '-1');
+        
+        // Ensure button type (prevents form submission)
         if (!btn.hasAttribute('type')) {
             btn.setAttribute('type', 'button');
         }
         
-        // Blur immediately after mousedown (before existing handlers)
+        // Layer 2 & 3: Force blur + restore focus to body
+        // Use mousedown (before click) to catch the focus change early
         btn.addEventListener('mousedown', (e) => {
+            // Immediate blur (no setTimeout - must be synchronous)
+            e.target.blur();
+            
+            // Restore focus to body (ensures keyboard events reach document)
+            // Use setTimeout to let the click event complete first
             setTimeout(() => {
-                e.target.blur();
+                document.body.focus();
             }, 0);
-        }, true); // useCapture to run before other handlers
+        }, true); // useCapture = true (runs before other handlers)
     });
-    console.log('🔒 All buttons: tabindex="-1" + auto-blur on click');
+    
+    // Also handle any INPUT fields (BPM editor, etc.)
+    document.querySelectorAll('input').forEach(input => {
+        // When input loses focus, restore focus to body
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                // Only restore if no other input has focus
+                if (document.activeElement === document.body || 
+                    document.activeElement === null ||
+                    document.activeElement.tagName === 'BODY') {
+                    document.body.focus();
+                }
+            }, 0);
+        });
+    });
+    
+    // Initial focus on body (ensures keyboard works from page load)
+    document.body.focus();
+    
+    console.log('🔒 Keyboard shortcuts protection enabled:');
+    console.log('  ✅ All buttons: tabindex="-1"');
+    console.log('  ✅ Auto-blur on mousedown');
+    console.log('  ✅ Focus restored to body');
+    console.log('  ✅ Inputs handled separately');
 });
 
 // ═══════════════════════════════════════════════════════════════════
