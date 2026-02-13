@@ -446,6 +446,11 @@ class MasterTimeEngine {
    */
   async realRuntimeValidation(bpm = 120, clickCount = 100) {
     console.log(`\n[RUNTIME VALIDATION] Starting real WebAudio test: ${clickCount} clicks @ ${bpm} BPM\n`);
+    console.log('[RUNTIME VALIDATION] ⚠️ Debug mode temporarily disabled during audio playback');
+    
+    // Temporarily disable debug mode to avoid excessive logging
+    const originalDebugMode = this.debugMode;
+    this.setDebugMode(false);
     
     const interval = 60.0 / bpm; // seconds per beat
     const intervalMs = interval * 1000.0;
@@ -462,7 +467,10 @@ class MasterTimeEngine {
       const scheduleClick = () => {
         if (clickIndex >= clickCount) {
           // Wait for last click to finish, then analyze
+          console.log(`\n[RUNTIME VALIDATION] All ${clickCount} clicks scheduled. Waiting for playback to complete...\n`);
           setTimeout(() => {
+            console.log('[RUNTIME VALIDATION] Playback complete. Analyzing results...\n');
+            this.setDebugMode(originalDebugMode);
             this._analyzeRuntimeResults(timingData, bpm, intervalMs, resolve);
           }, (interval * 1000) + 500); // Wait extra 500ms after last click
           return;
@@ -527,6 +535,8 @@ class MasterTimeEngine {
    * @private
    */
   _analyzeRuntimeResults(timingData, bpm, theoreticalIntervalMs, resolve) {
+    console.log(`[RUNTIME VALIDATION] Analyzing ${timingData.length} clicks...`);
+    
     if (timingData.length < 2) {
       console.error('[RUNTIME VALIDATION] ❌ FAIL: Not enough clicks recorded');
       resolve(null);
