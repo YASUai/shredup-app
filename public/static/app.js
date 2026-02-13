@@ -8,8 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeTempoSubdivision()
   initializeMetronome()
   initializeDateTime()
-  // NOTE: Keyboard shortcuts are now in iframe (metronome/script.js)
-  // No need to initialize them in parent
+  initializeGlobalKeyboardShortcuts()
 })
 
 /**
@@ -273,9 +272,104 @@ function initializeDateTime() {
   console.log('✅ Date/Time initialized')
 }
 
-// NOTE: Keyboard shortcuts are now handled in the IFRAME (metronome/script.js)
-// This ensures shortcuts work even after clicking on iframe buttons
-// The iframe captures keyboard events directly when it has focus
+/**
+ * Initialize Global Keyboard Shortcuts
+ * ============================================================================
+ * CRITICAL: Shortcuts work from ANYWHERE on the page (not just iframe)
+ * 
+ * SOLUTION:
+ * - Listen on PARENT window (document level)
+ * - Access iframe buttons via contentWindow
+ * - Call button.click() which works now because all buttons use 'click' event
+ * 
+ * WHY THIS WORKS NOW:
+ * - All metronome buttons use addEventListener('click') ✅
+ * - button.click() triggers 'click' event ✅
+ * - No need for complex event dispatching ✅
+ */
+function initializeGlobalKeyboardShortcuts() {
+  const metronomeIframe = document.querySelector('.metronome-iframe')
+  
+  if (!metronomeIframe) {
+    console.warn('⚠️ Metronome iframe not found - shortcuts disabled')
+    return
+  }
+  
+  // Wait for iframe to load
+  const setupShortcuts = () => {
+    console.log('🎹 Global keyboard shortcuts initialized (work from anywhere)')
+    
+    document.addEventListener('keydown', (e) => {
+      // Ignore if typing in input/textarea
+      const target = e.target
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return
+      }
+      
+      const iframeWindow = metronomeIframe.contentWindow
+      const iframeDocument = iframeWindow?.document
+      
+      if (!iframeDocument) {
+        return
+      }
+      
+      let handled = false
+      
+      switch(e.key) {
+        case ' ':
+          e.preventDefault()
+          const playBtn = iframeDocument.querySelector('.play-btn')
+          if (playBtn) {
+            playBtn.click()
+            handled = true
+          }
+          break
+          
+        case '+':
+        case '=':
+        case 'ArrowUp':
+          e.preventDefault()
+          const plusBtn = iframeDocument.querySelector('.plus-btn')
+          if (plusBtn) {
+            plusBtn.click()
+            handled = true
+          }
+          break
+          
+        case '-':
+        case '_':
+        case 'ArrowDown':
+          e.preventDefault()
+          const minusBtn = iframeDocument.querySelector('.minus-btn')
+          if (minusBtn) {
+            minusBtn.click()
+            handled = true
+          }
+          break
+          
+        case 'ArrowLeft':
+          e.preventDefault()
+          const tapBtn = iframeDocument.querySelector('.tap-btn')
+          if (tapBtn) {
+            tapBtn.click()
+            handled = true
+          }
+          break
+      }
+      
+      if (handled) {
+        console.log('⌨️ Global shortcut:', e.key)
+      }
+    })
+  }
+  
+  // Check if iframe is already loaded
+  if (metronomeIframe.contentDocument && metronomeIframe.contentDocument.readyState === 'complete') {
+    setupShortcuts()
+  } else {
+    metronomeIframe.addEventListener('load', setupShortcuts)
+  }
+}
 
 // Initialize shortcuts after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
