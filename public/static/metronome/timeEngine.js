@@ -1014,44 +1014,81 @@ class MasterTimeEngine {
     console.log('[RHYTHMIC ANALYSIS] Detected onsets:', this.detectedOnsets.length);
     console.log('[RHYTHMIC ANALYSIS] Metronome beats:', this.metronomeTimeline.length);
     
-    const matches = [];
-    const unmatched = [];
+    // STEP 1: Filter onsets (minimum 120ms spacing)
+    console.log('[RHYTHMIC ANALYSIS] Filtering onsets (min spacing: 120ms)...');
+    const filteredOnsets = [];
+    let lastOnsetTime = -Infinity;
     
-    // For each onset, find nearest beat
-    for (let i = 0; i < this.detectedOnsets.length; i++) {
-      const onset = this.detectedOnsets[i];
-      const onsetTime = onset.time;
+    for (const onset of this.detectedOnsets) {
+      const timeSinceLast = (onset.time - lastOnsetTime) * 1000.0; // ms
       
-      // Find nearest beat
-      let nearestBeat = null;
-      let minDistance = Infinity;
+      if (timeSinceLast >= 120) {
+        filteredOnsets.push(onset);
+        lastOnsetTime = onset.time;
+      }
+    }
+    
+    console.log('[RHYTHMIC ANALYSIS] Filtered onsets:', this.detectedOnsets.length, '→', filteredOnsets.length);
+    
+    // STEP 2: Compute all possible matches (onset ↔ beat pairs)
+    const MATCH_WINDOW_MS = 150; // ±150ms matching window
+    const possibleMatches = [];
+    
+    for (let i = 0; i < filteredOnsets.length; i++) {
+      const onset = filteredOnsets[i];
+      const onsetTime = onset.time;
       
       for (let j = 0; j < this.metronomeTimeline.length; j++) {
         const beat = this.metronomeTimeline[j];
-        const distance = Math.abs(onsetTime - beat.scheduledTime);
+        const beatTime = beat.scheduledTime;
+        const timingError = (onsetTime - beatTime) * 1000.0; // ms
+        const absError = Math.abs(timingError);
         
-        if (distance < minDistance) {
-          minDistance = distance;
-          nearestBeat = beat;
+        // Only consider matches within window
+        if (absError <= MATCH_WINDOW_MS) {
+          possibleMatches.push({
+            onsetIndex: i,
+            onsetTime: onsetTime,
+            beatIndex: beat.tickIndex,
+            beatTime: beatTime,
+            timingError: timingError,
+            absError: absError,
+            energy: onset.energy
+          });
         }
       }
-      
-      if (nearestBeat) {
-        const timingError = (onsetTime - nearestBeat.scheduledTime) * 1000.0; // ms
-        
-        matches.push({
-          onsetIndex: i,
-          onsetTime: onsetTime,
-          beatIndex: nearestBeat.tickIndex,
-          beatTime: nearestBeat.scheduledTime,
-          timingError: timingError, // ms (negative = early, positive = late)
-          absError: Math.abs(timingError),
-          energy: onset.energy
-        });
-      } else {
-        unmatched.push(i);
-      }
     }
+    
+    console.log('[RHYTHMIC ANALYSIS] Possible matches (within ±150ms):', possibleMatches.length);
+    
+    // STEP 3: Greedy one-to-one matching (match closest pairs first)
+    // Sort by absolute error (best matches first)
+    possibleMatches.sort((a, b) => a.absError - b.absError);
+    
+    const matches = [];
+    const matchedOnsets = new Set();
+    const matchedBeats = new Set();
+    
+    for (const candidate of possibleMatches) {
+      // Check if onset or beat already matched
+      if (matchedOnsets.has(candidate.onsetIndex) || matchedBeats.has(candidate.beatIndex)) {
+        continue; // Skip, already matched
+      }
+      
+      // Accept match
+      matches.push(candidate);
+      matchedOnsets.add(candidate.onsetIndex);
+      matchedBeats.add(candidate.beatIndex);
+    }
+    
+    console.log('[RHYTHMIC ANALYSIS] One-to-one matches:', matches.length);
+    
+    // STEP 4: Count unmatched
+    const unmatchedOnsets = filteredOnsets.length - matchedOnsets.size;
+    const unmatchedBeats = this.metronomeTimeline.length - matchedBeats.size;
+    
+    console.log('[RHYTHMIC ANALYSIS] Unmatched onsets:', unmatchedOnsets);
+    console.log('[RHYTHMIC ANALYSIS] Unmatched beats:', unmatchedBeats);
     
     if (matches.length === 0) {
       console.error('[RHYTHMIC ANALYSIS] ❌ No matches found');
@@ -1083,9 +1120,11 @@ class MasterTimeEngine {
     
     const results = {
       totalOnsets: this.detectedOnsets.length,
+      totalOnsetsFiltered: filteredOnsets.length,
       totalBeats: this.metronomeTimeline.length,
       matched: matches.length,
-      unmatched: unmatched.length,
+      unmatchedOnsets: unmatchedOnsets,
+      unmatchedBeats: unmatchedBeats,
       
       // Timing metrics (ms)
       meanError,
@@ -1160,9 +1199,11 @@ class MasterTimeEngine {
     
     console.log('DETECTION SUMMARY:');
     console.log(`  Total Onsets Detected: ${results.totalOnsets}`);
+    console.log(`  Onsets After Filtering (≥120ms spacing): ${results.totalOnsetsFiltered}`);
     console.log(`  Total Metronome Beats: ${results.totalBeats}`);
-    console.log(`  Matched: ${results.matched}`);
-    console.log(`  Unmatched: ${results.unmatched}\n`);
+    console.log(`  Matched (one-to-one, ±150ms): ${results.matched}`);
+    console.log(`  Unmatched Onsets: ${results.unmatchedOnsets}`);
+    console.log(`  Unmatched Beats: ${results.unmatchedBeats}\n`);
     
     console.log('TIMING ACCURACY (ms):');
     console.log(`  Mean Error: ${results.meanError.toFixed(3)} ms`);
