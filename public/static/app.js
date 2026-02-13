@@ -272,114 +272,9 @@ function initializeDateTime() {
 }
 
 /**
- * Initialize Keyboard Shortcuts
- * ✅ NEW CLEAN ARCHITECTURE: Direct function calls to iframe (no postMessage)
+ * Initialize Keyboard Shortcuts - TO BE REIMPLEMENTED
  */
-function initializeKeyboardShortcuts() {
-  const metronomeIframe = document.querySelector('.metronome-iframe')
-  
-  if (!metronomeIframe) {
-    console.warn('⚠️ Metronome iframe not found')
-    return
-  }
-  
-  console.log('✅ Keyboard shortcuts initialized (DIRECT CALL MODE)')
-  
-  // ✅ Single keydown listener - calls iframe functions directly
-  window.addEventListener('keydown', (e) => {
-    const target = e.target
-    
-    // Ignore if typing in input/textarea
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-      return
-    }
-    
-    // Get iframe window
-    const iframeWindow = metronomeIframe.contentWindow
-    if (!iframeWindow) return
-    
-    let handled = false
-    
-    switch(e.code) {
-      case 'Space':
-        e.preventDefault()
-        console.log('⌨️ SPACE → Toggle Play/Stop')
-        if (typeof iframeWindow.metronomeTogglePlay === 'function') {
-          iframeWindow.metronomeTogglePlay()
-        }
-        handled = true
-        break
-        
-      case 'ArrowLeft':
-        e.preventDefault()
-        console.log('⌨️ ← → TAP Tempo')
-        if (typeof iframeWindow.metronomeTap === 'function') {
-          iframeWindow.metronomeTap()
-        }
-        handled = true
-        break
-        
-      case 'Equal':
-      case 'NumpadAdd':
-      case 'ArrowUp':
-        e.preventDefault()
-        console.log('⌨️ + → BPM +1')
-        if (typeof iframeWindow.metronomeBPMUp === 'function') {
-          iframeWindow.metronomeBPMUp()
-        }
-        handled = true
-        break
-        
-      case 'Minus':
-      case 'NumpadSubtract':
-      case 'ArrowDown':
-        e.preventDefault()
-        console.log('⌨️ - → BPM -1')
-        if (typeof iframeWindow.metronomeBPMDown === 'function') {
-          iframeWindow.metronomeBPMDown()
-        }
-        handled = true
-        break
-        
-      case 'NumpadMultiply':
-        e.preventDefault()
-        console.log('⌨️ * → Toggle REC')
-        const firstRecBtn = document.querySelector('.rec-button')
-        if (firstRecBtn) firstRecBtn.click()
-        handled = true
-        break
-    }
-    
-    if (handled) {
-      console.log('✅ Keyboard shortcut handled')
-    }
-  }, true) // useCapture = true
-  
-  // Prevent native Space → button activation on keyup
-  window.addEventListener('keyup', (e) => {
-    const target = e.target
-    
-    // Ignore if typing in input/textarea
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-      return
-    }
-    
-    // Prevent native button activation for ALL keyboard shortcuts
-    switch(e.code) {
-      case 'Space':
-      case 'ArrowLeft':
-      case 'Equal':
-      case 'NumpadAdd':
-      case 'ArrowUp':
-      case 'Minus':
-      case 'NumpadSubtract':
-      case 'ArrowDown':
-      case 'NumpadMultiply':
-        e.preventDefault()
-        break
-    }
-  }, true) // useCapture = true
-}
+// All keyboard shortcuts will be implemented from scratch here
 
 // Initialize shortcuts after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -396,8 +291,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('mousemove', activateAudioContext, { once: true })
   document.addEventListener('click', activateAudioContext, { once: true })
   
-  // Wait for iframe to load
-  setTimeout(() => {
-    initializeKeyboardShortcuts()
-  }, 1000)
+  // Keyboard shortcuts will be initialized here from scratch
 })

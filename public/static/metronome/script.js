@@ -1712,71 +1712,9 @@ function updateBeatIndicators() {
 
 
 // ============================================================================
-// EXPOSE GLOBAL API FOR PARENT WINDOW
+// KEYBOARD SHORTCUTS - TO BE IMPLEMENTED
 // ============================================================================
-// ✅ NEW ARCHITECTURE: Parent calls these functions directly (no postMessage)
-// This is cleaner and avoids all focus/iframe issues
-
-/**
- * Toggle Play/Stop
- */
-window.metronomeTogglePlay = function() {
-    const playBtn = document.querySelector('.play-btn');
-    if (!playBtn) {
-        console.warn('⚠️ Play button not found');
-        return;
-    }
-    
-    console.log('🎵 metronomeTogglePlay() called from parent');
-    playBtn.click();
-};
-
-/**
- * Handle TAP tempo
- */
-window.metronomeTap = function() {
-    console.log('👆 metronomeTap() called from parent');
-    
-    if (typeof handleTapLogic === 'function') {
-        handleTapLogic();
-    }
-    
-    // Visual feedback
-    const tapBtn = document.querySelector('.tap-btn');
-    if (tapBtn) {
-        tapBtn.classList.add('tapping');
-        setTimeout(() => tapBtn.classList.remove('tapping'), 150);
-    }
-    
-    // Audio feedback
-    playUIClick();
-};
-
-/**
- * Increase BPM by 1
- */
-window.metronomeBPMUp = function() {
-    console.log('⬆️ metronomeBPMUp() called from parent');
-    
-    const plusBtn = document.querySelector('.plus-btn');
-    if (plusBtn) {
-        plusBtn.click();
-    }
-};
-
-/**
- * Decrease BPM by 1
- */
-window.metronomeBPMDown = function() {
-    console.log('⬇️ metronomeBPMDown() called from parent');
-    
-    const minusBtn = document.querySelector('.minus-btn');
-    if (minusBtn) {
-        minusBtn.click();
-    }
-};
-
-console.log('✅ Metronome API exposed on window: metronomeTogglePlay, metronomeTap, metronomeBPMUp, metronomeBPMDown');
+// All keyboard shortcuts will be implemented from scratch here
 
 // ============================================================================
 // SERVICE WORKER POUR PWA (Progressive Web App)
