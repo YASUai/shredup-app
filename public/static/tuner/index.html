@@ -404,9 +404,18 @@
 <body>
   <div class="container">
     <div class="sample">
-      <!-- TWO Toggle Buttons - BEND and ON/OFF -->
+      <!-- THREE Toggle Buttons - TUNING, BEND and ON/OFF -->
       <div class="toggles-container">
-        <!-- BEND Toggle (top) -->
+        <!-- TUNING Toggle (top) -->
+        <div class="toggle-container">
+          <div class="toggle-btn active" id="tuning-toggle">
+            <div class="toggle-knob"></div>
+            <span class="toggle-label on">STD</span>
+            <span class="toggle-label off">D↓</span>
+          </div>
+        </div>
+        
+        <!-- BEND Toggle (middle) -->
         <div class="toggle-container">
           <div class="toggle-btn" id="bend-toggle">
             <div class="toggle-knob"></div>
@@ -538,8 +547,18 @@
   <script src="/static/tuner/tuner-dsp-bridge.js"></script>
 
   <script>
-    // 7-string guitar tuning (A1→D4)
-    const NOTES = [
+    // 7-string guitar tunings
+    const E_STANDARD_TUNING = [
+      { name: 'B1', freq: 61.74, string: 1 },
+      { name: 'E2', freq: 82.41, string: 2 },
+      { name: 'A2', freq: 110.0, string: 3 },
+      { name: 'D3', freq: 146.83, string: 4 },
+      { name: 'G3', freq: 196.0, string: 5 },
+      { name: 'B3', freq: 246.94, string: 6 },
+      { name: 'E4', freq: 329.63, string: 7 }
+    ];
+    
+    const D_STANDARD_TUNING = [
       { name: 'A1', freq: 55.0, string: 1 },
       { name: 'D2', freq: 73.42, string: 2 },
       { name: 'G2', freq: 98.0, string: 3 },
@@ -548,6 +567,9 @@
       { name: 'A3', freq: 220.0, string: 6 },
       { name: 'D4', freq: 293.66, string: 7 }
     ];
+    
+    let NOTES = E_STANDARD_TUNING; // Default: E Standard
+    let isStandardTuning = true; // Start with E Standard
     
     let currentNoteIndex = 0; // Start with A1
     let tunerRunning = false;
@@ -564,6 +586,7 @@
     const needleEl = document.getElementById('meter-needle');
     const powerToggle = document.getElementById('power-toggle');
     const bendToggle = document.getElementById('bend-toggle');
+    const tuningToggle = document.getElementById('tuning-toggle');
     const bars = [];
     const hexes = [];
     
@@ -942,12 +965,43 @@
       }
     });
     
+    // Toggle TUNING (E Standard / D Standard)
+    tuningToggle.addEventListener('click', () => {
+      isStandardTuning = !isStandardTuning;
+      
+      if (isStandardTuning) {
+        tuningToggle.classList.add('active');
+        NOTES = E_STANDARD_TUNING;
+        console.log('🎸 E STANDARD tuning selected (B1, E2, A2, D3, G3, B3, E4)');
+      } else {
+        tuningToggle.classList.remove('active');
+        NOTES = D_STANDARD_TUNING;
+        console.log('🎸 D STANDARD tuning selected (A1, D2, G2, C3, F3, A3, D4)');
+      }
+      
+      // Update bars and hexagons labels
+      NOTES.forEach((note, i) => {
+        const barLabel = document.querySelector(`#bar-${i} + .bar-label`) || document.querySelectorAll('.bar-label')[i];
+        const hexShape = document.querySelector(`#hex-${i} .hex-shape`);
+        if (barLabel) barLabel.textContent = note.name;
+        if (hexShape) hexShape.textContent = note.name;
+      });
+      
+      // Reset current note index
+      currentNoteIndex = 0;
+      updateHexagons();
+    });
+    
     // Initialize
     currentCents = -4;
     currentNoteIndex = 0;
     hasActiveDetection = false; // No signal at start
     stringInfoEl.textContent = '1/7';
     centsInfoEl.textContent = '-4';
+    
+    // Initialize tuning toggle to active (E Standard is default)
+    tuningToggle.classList.add('active');
+    
     updateHexagons();
     updateNeedle(); // Will position needle at 0% (left) since hasActiveDetection = false
     
