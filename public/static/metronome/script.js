@@ -1758,11 +1758,93 @@ function updateBeatIndicators() {
 // ============================================================================
 // KEYBOARD SHORTCUTS
 // ============================================================================
-// NOTE: Keyboard shortcuts are now handled in the PARENT window (app.js)
-// to avoid focus issues. The parent directly clicks the buttons in this iframe.
-// We keep this placeholder for documentation purposes.
+// Implemented shortcuts:
+// - Space → PLAY/STOP
+// - + / = / ArrowUp → BPM +1
+// - - / _ / ArrowDown → BPM -1
+// - ArrowLeft → TAP Tempo
 
-console.log('🎹 Metronome keyboard shortcuts: handled by PARENT (app.js)');
+document.addEventListener('keydown', (e) => {
+    // Ignore if typing in input/textarea
+    const target = e.target;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return;
+    }
+    
+    let handled = false;
+    
+    switch(e.key) {
+        case ' ':          // Space
+            e.preventDefault();
+            console.log('⌨️ SPACE → Toggle PLAY/STOP');
+            
+            // Trigger PLAY/STOP button
+            const playBtn = document.querySelector('.play-btn');
+            if (playBtn) {
+                playBtn.click();
+                handled = true;
+            } else {
+                console.warn('⚠️ Play button not found');
+            }
+            break;
+            
+        case '+':          // Plus (Shift + =)
+        case '=':          // Equal (same key as +)
+        case 'ArrowUp':    // Up arrow
+            e.preventDefault();
+            console.log('⌨️ +/↑ → BPM +1');
+            
+            // Trigger BPM+ button
+            const plusBtn = document.querySelector('.plus-btn');
+            if (plusBtn) {
+                plusBtn.click();
+                handled = true;
+            } else {
+                console.warn('⚠️ Plus button not found');
+            }
+            break;
+            
+        case '-':          // Minus
+        case '_':          // Underscore (Shift + -)
+        case 'ArrowDown':  // Down arrow
+            e.preventDefault();
+            console.log('⌨️ -/↓ → BPM -1');
+            
+            // Trigger BPM- button
+            const minusBtn = document.querySelector('.minus-btn');
+            if (minusBtn) {
+                minusBtn.click();
+                handled = true;
+            } else {
+                console.warn('⚠️ Minus button not found');
+            }
+            break;
+            
+        case 'ArrowLeft':  // Left arrow
+            e.preventDefault();
+            console.log('⌨️ ← → TAP Tempo');
+            
+            // Trigger TAP button
+            const tapBtn = document.querySelector('.tap-btn');
+            if (tapBtn) {
+                tapBtn.click();
+                handled = true;
+            } else {
+                console.warn('⚠️ TAP button not found');
+            }
+            break;
+    }
+    
+    if (handled) {
+        console.log('✅ Keyboard shortcut executed successfully');
+    }
+});
+
+console.log('🎹 Keyboard shortcuts initialized:');
+console.log('  Space → PLAY/STOP');
+console.log('  +/=/↑ → BPM +1');
+console.log('  -/_/↓ → BPM -1');
+console.log('  ← → TAP Tempo');
 
 // ============================================================================
 // SERVICE WORKER POUR PWA (Progressive Web App)
