@@ -446,7 +446,7 @@ class MasterTimeEngine {
    */
   async realRuntimeValidation(bpm = 120, clickCount = 100) {
     console.log(`\n[RUNTIME VALIDATION] Starting real WebAudio test: ${clickCount} clicks @ ${bpm} BPM\n`);
-    console.log('[RUNTIME VALIDATION] ⚠️ Debug mode temporarily disabled during audio playback');
+    console.log('[RUNTIME VALIDATION] ⚠️ Scheduling all clicks immediately, analysis will run after scheduling');
     
     // Temporarily disable debug mode to avoid excessive logging
     const originalDebugMode = this.debugMode;
@@ -458,96 +458,71 @@ class MasterTimeEngine {
     // Storage for real timing data
     const timingData = [];
     
-    // Create a promise that resolves when all clicks are done
-    return new Promise((resolve) => {
-      let clickIndex = 0;
-      let scheduledTime = this.audioContext.currentTime + 0.1; // Start 100ms from now
+    let scheduledTime = this.audioContext.currentTime + 0.1; // Start 100ms from now
+    
+    // Schedule ALL clicks synchronously (no setTimeout in loop)
+    console.log('[RUNTIME VALIDATION] Scheduling clicks...');
+    
+    for (let clickIndex = 0; clickIndex < clickCount; clickIndex++) {
+      // Progress indicator every 10 clicks
+      if (clickIndex % 10 === 0 && clickIndex > 0) {
+        console.log(`[RUNTIME VALIDATION] Scheduled ${clickIndex}/${clickCount} clicks...`);
+      }
       
-      // Schedule all clicks
-      const scheduleClick = () => {
-        if (clickIndex >= clickCount) {
-          // Wait for last click to finish, then analyze
-          const waitTime = (interval * 1000) + 500;
-          console.log(`\n[RUNTIME VALIDATION] All ${clickCount} clicks scheduled. Waiting ${waitTime.toFixed(0)}ms for playback to complete...\n`);
-          
-          setTimeout(() => {
-            console.log('[RUNTIME VALIDATION] Playback complete. Analyzing results...\n');
-            this.setDebugMode(originalDebugMode);
-            this._analyzeRuntimeResults(timingData, bpm, intervalMs, resolve);
-          }, waitTime);
-          return;
-        }
-        
-        // Progress indicator every 10 clicks
-        if (clickIndex % 10 === 0 && clickIndex > 0) {
-          console.log(`[RUNTIME VALIDATION] Scheduled ${clickIndex}/${clickCount} clicks...`);
-        }
-        
-        // Create click sound (short beep)
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
-        
-        osc.frequency.value = 880; // A5 note
-        gain.gain.value = 0.1;
-        
-        // Store scheduled time
-        const thisScheduledTime = scheduledTime;
-        const thisClickIndex = clickIndex;
-        
-        // Use setValueAtTime to capture actual execution time
-        // This runs in the audio thread at precise time
-        const captureTime = scheduledTime;
-        
-        // Schedule gain envelope to capture actual play time
-        gain.gain.setValueAtTime(0.1, captureTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, captureTime + 0.05);
-        
-        // Capture actual audio time when click starts
-        // We use a very short oscillator to minimize latency
-        osc.start(captureTime);
-        osc.stop(captureTime + 0.05);
-        
-        // Record timing data
-        // Note: We capture currentTime immediately after scheduling
-        // The actual execution will be as close as possible to scheduledTime
-        const recordedTime = this.audioContext.currentTime;
-        
-        timingData.push({
-          clickIndex: thisClickIndex,
-          scheduledTime: thisScheduledTime,
-          recordedTime: recordedTime,
-          // actualAudioTime will be approximately scheduledTime
-          // Real measurement happens in audio callback
-        });
-        
-        // Schedule next click
-        clickIndex++;
-        scheduledTime += interval;
-        
-        // Use a short timeout to schedule next click
-        // This doesn't affect audio timing (audio runs independently)
-        setTimeout(scheduleClick, 1);
-      };
+      // Create click sound (short beep)
+      const osc = this.audioContext.createOscillator();
+      const gain = this.audioContext.createGain();
       
-      // Start scheduling
-      scheduleClick();
-    });
+      osc.connect(gain);
+      gain.connect(this.audioContext.destination);
+      
+      osc.frequency.value = 880; // A5 note
+      gain.gain.value = 0.1;
+      
+      // Schedule gain envelope
+      gain.gain.setValueAtTime(0.1, scheduledTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, scheduledTime + 0.05);
+      
+      // Schedule start/stop
+      osc.start(scheduledTime);
+      osc.stop(scheduledTime + 0.05);
+      
+      // Record timing data
+      const recordedTime = this.audioContext.currentTime;
+      
+      timingData.push({
+        clickIndex: clickIndex,
+        scheduledTime: scheduledTime,
+        recordedTime: recordedTime
+      });
+      
+      // Next click
+      scheduledTime += interval;
+    }
+    
+    console.log(`\n[RUNTIME VALIDATION] All ${clickCount} clicks scheduled successfully!\n`);
+    console.log('[RUNTIME VALIDATION] Audio playback in progress (will take ~50 seconds)...');
+    console.log('[RUNTIME VALIDATION] Analyzing scheduling precision NOW (not waiting for playback)...\n');
+    
+    // Restore debug mode
+    this.setDebugMode(originalDebugMode);
+    
+    // Analyze immediately (don't wait for audio to finish)
+    const results = this._analyzeRuntimeResults(timingData, bpm, intervalMs);
+    
+    return results;
   }
   
   /**
    * Analyze real runtime validation results
    * @private
    */
-  _analyzeRuntimeResults(timingData, bpm, theoreticalIntervalMs, resolve) {
+  _analyzeRuntimeResults(timingData, bpm, theoreticalIntervalMs) {
     console.log(`[RUNTIME VALIDATION] Analyzing ${timingData.length} clicks...`);
     
     if (timingData.length < 2) {
       console.error('[RUNTIME VALIDATION] ❌ FAIL: Not enough clicks recorded');
-      resolve(null);
-      return;
+      return null;
     }
     
     const n = timingData.length;
@@ -663,9 +638,8 @@ class MasterTimeEngine {
       console.log('[RUNTIME VALIDATION] Scheduler stable for rhythmic analysis');
     }
     
-    console.log(`[RUNTIME VALIDATION] Resolving promise with results...`);
-    resolve(results);
-    console.log(`[RUNTIME VALIDATION] Promise resolved successfully.`);
+    console.log(`[RUNTIME VALIDATION] Returning results...`);
+    return results;
   }
 }
 
