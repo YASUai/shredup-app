@@ -92,6 +92,13 @@
         </div>
         
         <div class="test-section">
+            <h2>🔴 Test 2.5: Real Runtime Validation (Phase 5A.2)</h2>
+            <p style="color: #ff6b6b; font-size: 12px;">⚠️ This test plays 100 audio clicks. Please ensure volume is at comfortable level.</p>
+            <button id="btn-test-runtime" disabled>Run Real Audio Timing Test</button>
+            <div class="stats" id="runtime-stats"></div>
+        </div>
+        
+        <div class="test-section">
             <h2>🎤 Test 3: Input Buffer (Circular Buffer)</h2>
             <button id="btn-test-input" disabled>Run Input Buffer Test</button>
             <div class="stats" id="input-stats"></div>
@@ -169,6 +176,7 @@
                 
                 // Enable other tests
                 document.getElementById('btn-test-metronome').disabled = false;
+                document.getElementById('btn-test-runtime').disabled = false;
                 document.getElementById('btn-test-input').disabled = false;
                 document.getElementById('btn-test-latency').disabled = false;
                 document.getElementById('btn-init').disabled = true;
@@ -228,6 +236,73 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">PHASE 5A.1 STATUS</div>
+                        <div class="stat-value" style="color: ${statusColor}; font-size: 20px; font-weight: bold;">
+                            ${statusText}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        // Test 2.5: Real Runtime Validation
+        document.getElementById('btn-test-runtime').addEventListener('click', async () => {
+            if (!timeEngine) {
+                console.error('❌ Time Engine not initialized');
+                return;
+            }
+            
+            console.log('\n🔴 Starting Real Runtime Validation (100 audio clicks @ 120 BPM)...\n');
+            console.log('⚠️ Audio playback in progress. Please wait...\n');
+            
+            // Disable button during test
+            const btn = document.getElementById('btn-test-runtime');
+            btn.disabled = true;
+            btn.textContent = 'Testing... (playing 100 clicks)';
+            
+            const bpm = 120;
+            const clickCount = 100;
+            
+            const results = await timeEngine.realRuntimeValidation(bpm, clickCount);
+            
+            // Re-enable button
+            btn.disabled = false;
+            btn.textContent = 'Run Real Audio Timing Test';
+            
+            if (results) {
+                const statusColor = results.allPassed ? '#4CAF50' : '#f44336';
+                const statusText = results.allPassed ? '✅ PASS' : '❌ FAIL';
+                
+                document.getElementById('runtime-stats').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">Total Clicks</div>
+                        <div class="stat-value">${results.totalClicks}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Mean Execution Error</div>
+                        <div class="stat-value" style="color: ${results.passedMeanError ? '#4CAF50' : '#f44336'}">
+                            ${results.meanExecutionError.toFixed(6)} ms ${results.passedMeanError ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Std Dev</div>
+                        <div class="stat-value" style="color: ${results.passedStdDev ? '#4CAF50' : '#f44336'}">
+                            ${results.stdExecutionError.toFixed(6)} ms ${results.passedStdDev ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Worst Absolute Error</div>
+                        <div class="stat-value" style="color: ${results.passedWorstCase ? '#4CAF50' : '#f44336'}">
+                            ${results.worstAbsoluteExecutionError.toFixed(6)} ms ${results.passedWorstCase ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Scheduling Overhead</div>
+                        <div class="stat-value">
+                            ${results.meanSchedulingOverhead.toFixed(6)} ms
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">PHASE 5A.2 STATUS</div>
                         <div class="stat-value" style="color: ${statusColor}; font-size: 20px; font-weight: bold;">
                             ${statusText}
                         </div>
