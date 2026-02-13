@@ -286,92 +286,114 @@ function initializeKeyboardShortcuts() {
     return
   }
   
-  console.log('🎹 Parent keyboard shortcuts initialized (DIRECT IFRAME ACCESS)')
+  // CRITICAL: Wait for iframe to be fully loaded before initializing shortcuts
+  const setupShortcuts = () => {
+    console.log('🎹 Parent keyboard shortcuts initialized (DIRECT IFRAME ACCESS)')
+    
+    // Listen for keyboard events on the parent window
+    document.addEventListener('keydown', (e) => {
+      // Ignore if typing in input/textarea
+      const target = e.target
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return
+      }
+      
+      const iframeWindow = metronomeIframe.contentWindow
+      const iframeDocument = iframeWindow?.document
+      
+      if (!iframeDocument) {
+        console.warn('⚠️ Cannot access iframe document')
+        return
+      }
+      
+      // DEBUG: Log every key press to understand what's being captured
+      console.log('🔍 DEBUG Key pressed:', {
+        key: e.key,
+        code: e.code,
+        keyCode: e.keyCode,
+        shiftKey: e.shiftKey,
+        ctrlKey: e.ctrlKey,
+        altKey: e.altKey
+      })
+      
+      let handled = false
+      
+      switch(e.key) {
+        case ' ':          // Space only (no Tab because it conflicts with navigation)
+          e.preventDefault()
+          console.log('⌨️ SPACE → Toggle PLAY/STOP (from parent)')
+          
+          // Find and click PLAY button in iframe
+          const playBtn = iframeDocument.querySelector('.play-btn')
+          if (playBtn) {
+            playBtn.click()
+            handled = true
+          } else {
+            console.warn('⚠️ Play button not found in iframe')
+          }
+          break
+          
+        case '+':          // Plus (Shift + =)
+        case '=':          // Equal (same key as +)
+        case 'ArrowUp':    // Up arrow
+          e.preventDefault()
+          console.log('⌨️ +/↑ → BPM +1 (from parent)')
+          
+          // Find and click BPM+ button in iframe
+          const plusBtn = iframeDocument.querySelector('.plus-btn')
+          if (plusBtn) {
+            plusBtn.click()
+            handled = true
+          } else {
+            console.warn('⚠️ Plus button not found in iframe')
+          }
+          break
+          
+        case '-':          // Minus
+        case '_':          // Underscore (Shift + -)
+        case 'ArrowDown':  // Down arrow
+          e.preventDefault()
+          console.log('⌨️ -/↓ → BPM -1 (from parent)')
+          
+          // Find and click BPM- button in iframe
+          const minusBtn = iframeDocument.querySelector('.minus-btn')
+          if (minusBtn) {
+            minusBtn.click()
+            handled = true
+          } else {
+            console.warn('⚠️ Minus button not found in iframe')
+          }
+          break
+          
+        case 'ArrowLeft':  // Left arrow
+          e.preventDefault()
+          console.log('⌨️ ← → TAP Tempo (from parent)')
+          
+          // Find and click TAP button in iframe
+          const tapBtn = iframeDocument.querySelector('.tap-btn')
+          if (tapBtn) {
+            tapBtn.click()
+            handled = true
+          } else {
+            console.warn('⚠️ TAP button not found in iframe')
+          }
+          break
+      }
+      
+      if (handled) {
+        console.log('✅ Parent keyboard shortcut executed successfully')
+      }
+    })
+  }
   
-  // Listen for keyboard events on the parent window
-  document.addEventListener('keydown', (e) => {
-    // Ignore if typing in input/textarea
-    const target = e.target
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-      return
-    }
-    
-    const iframeWindow = metronomeIframe.contentWindow
-    const iframeDocument = iframeWindow?.document
-    
-    if (!iframeDocument) {
-      console.warn('⚠️ Cannot access iframe document')
-      return
-    }
-    
-    let handled = false
-    
-    switch(e.key) {
-      case ' ':          // Space only (no Tab because it conflicts with navigation)
-        e.preventDefault()
-        console.log('⌨️ SPACE → Toggle PLAY/STOP (from parent)')
-        
-        // Find and click PLAY button in iframe
-        const playBtn = iframeDocument.querySelector('.play-btn')
-        if (playBtn) {
-          playBtn.click()
-          handled = true
-        } else {
-          console.warn('⚠️ Play button not found in iframe')
-        }
-        break
-        
-      case '+':          // Plus (Shift + =)
-      case '=':          // Equal (same key as +)
-      case 'ArrowUp':    // Up arrow
-        e.preventDefault()
-        console.log('⌨️ +/↑ → BPM +1 (from parent)')
-        
-        // Find and click BPM+ button in iframe
-        const plusBtn = iframeDocument.querySelector('.plus-btn')
-        if (plusBtn) {
-          plusBtn.click()
-          handled = true
-        } else {
-          console.warn('⚠️ Plus button not found in iframe')
-        }
-        break
-        
-      case '-':          // Minus
-      case '_':          // Underscore (Shift + -)
-      case 'ArrowDown':  // Down arrow
-        e.preventDefault()
-        console.log('⌨️ -/↓ → BPM -1 (from parent)')
-        
-        // Find and click BPM- button in iframe
-        const minusBtn = iframeDocument.querySelector('.minus-btn')
-        if (minusBtn) {
-          minusBtn.click()
-          handled = true
-        } else {
-          console.warn('⚠️ Minus button not found in iframe')
-        }
-        break
-        
-      case 'ArrowLeft':  // Left arrow
-        e.preventDefault()
-        console.log('⌨️ ← → TAP Tempo (from parent)')
-        
-        // Find and click TAP button in iframe
-        const tapBtn = iframeDocument.querySelector('.tap-btn')
-        if (tapBtn) {
-          tapBtn.click()
-          handled = true
-        } else {
-          console.warn('⚠️ TAP button not found in iframe')
-        }
-        break
-    }
-    
-    if (handled) {
-      console.log('✅ Parent keyboard shortcut executed successfully')
-    }
-  })
+  // Wait for iframe to load completely
+  if (metronomeIframe.contentDocument && metronomeIframe.contentDocument.readyState === 'complete') {
+    // Iframe already loaded
+    setupShortcuts()
+  } else {
+    // Wait for iframe to load
+    metronomeIframe.addEventListener('load', setupShortcuts)
+  }
 }
 
 // Initialize shortcuts after DOM is ready
