@@ -40,7 +40,7 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     this.framesSinceLastOnset = 9999;
     
     // Adaptive threshold
-    this.adaptiveMultiplier = 1.5; // Onset must be 1.5x above average
+    this.adaptiveMultiplier = 3.0; // Onset must be 3x above average (was 1.5x)
     
     // Listen for messages from main thread
     this.port.onmessage = (event) => {
@@ -134,10 +134,13 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     
     // Detect onset: sharp increase in energy
     const energyIncrease = rms - this.previousEnergy;
+    const relativeIncrease = this.previousEnergy > 0.001 ? energyIncrease / this.previousEnergy : 0;
+    
     const isOnset = (
-      energyIncrease > 0 && // Rising edge
-      rms > adaptiveThreshold && // Above threshold
-      this.framesSinceLastOnset >= this.cooldownFrames // Cooldown expired
+      energyIncrease > 0.02 &&                            // Absolute increase > 0.02 (significant jump)
+      relativeIncrease > 0.5 &&                           // Relative increase > 50%
+      rms > adaptiveThreshold &&                          // Above adaptive threshold
+      this.framesSinceLastOnset >= this.cooldownFrames    // Cooldown expired
     );
     
     if (isOnset) {

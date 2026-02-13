@@ -328,8 +328,8 @@
                 
                 // Start onset detection
                 await timeEngine.startOnsetDetection({
-                    energyThreshold: 0.01,
-                    cooldownMs: 50
+                    energyThreshold: 0.05,  // Increased from 0.01 to filter noise
+                    cooldownMs: 100          // Increased from 50ms to 100ms
                 });
                 
                 // UI callback for real-time onset display
