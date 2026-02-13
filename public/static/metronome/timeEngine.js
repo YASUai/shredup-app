@@ -641,6 +641,225 @@ class MasterTimeEngine {
     console.log(`[RUNTIME VALIDATION] Returning results...`);
     return results;
   }
+  
+  // ==================================================
+  // PHASE 5A.3 – AUDIO THREAD VALIDATION
+  // ==================================================
+  
+  /**
+   * PHASE 5A.3 - AUDIO THREAD VALIDATION
+   * 
+   * Validate REAL audio frame timing using AudioWorklet
+   * Measures timing IN the audio rendering thread
+   * 
+   * NO synthetic ticks, REAL audio frame processing
+   * 
+   * @param {number} bpm - BPM to test (default: 120)
+   * @param {number} clickCount - Number of clicks (default: 100)
+   * @returns {Promise<Object>} Audio thread validation metrics
+   */
+  async audioThreadValidation(bpm = 120, clickCount = 100) {
+    console.log(`\n[AUDIO THREAD VALIDATION] Starting AudioWorklet test: ${clickCount} clicks @ ${bpm} BPM\n`);
+    
+    try {
+      // Load AudioWorklet module
+      await this.audioContext.audioWorklet.addModule('/static/metronome/timing-validation-processor.js');
+      console.log('[AUDIO THREAD VALIDATION] ✅ AudioWorklet module loaded');
+      
+      // Create worklet node
+      const workletNode = new AudioWorkletNode(this.audioContext, 'timing-validation-processor');
+      workletNode.connect(this.audioContext.destination);
+      
+      console.log('[AUDIO THREAD VALIDATION] ✅ AudioWorklet node created');
+      
+      const interval = 60.0 / bpm; // seconds per beat
+      const intervalMs = interval * 1000.0;
+      const expectedFrameDelta = Math.round(interval * this.audioContext.sampleRate);
+      
+      console.log(`[AUDIO THREAD VALIDATION] Expected frame delta: ${expectedFrameDelta} frames (${intervalMs.toFixed(3)} ms)`);
+      
+      // Start capturing in audio thread
+      workletNode.port.postMessage({
+        type: 'start',
+        data: {
+          expectedFrameDelta: expectedFrameDelta,
+          sampleRate: this.audioContext.sampleRate
+        }
+      });
+      
+      console.log('[AUDIO THREAD VALIDATION] ✅ Started audio thread capture');
+      console.log('[AUDIO THREAD VALIDATION] Scheduling audio clicks...\n');
+      
+      // Schedule clicks
+      let scheduledTime = this.audioContext.currentTime + 0.1;
+      
+      for (let i = 0; i < clickCount; i++) {
+        if (i % 10 === 0 && i > 0) {
+          console.log(`[AUDIO THREAD VALIDATION] Scheduled ${i}/${clickCount} clicks...`);
+        }
+        
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        
+        osc.connect(gain);
+        gain.connect(workletNode); // Route through worklet
+        
+        osc.frequency.value = 880;
+        gain.gain.value = 0.1;
+        
+        gain.gain.setValueAtTime(0.1, scheduledTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, scheduledTime + 0.05);
+        
+        osc.start(scheduledTime);
+        osc.stop(scheduledTime + 0.05);
+        
+        scheduledTime += interval;
+      }
+      
+      console.log(`\n[AUDIO THREAD VALIDATION] All ${clickCount} clicks scheduled!`);
+      console.log('[AUDIO THREAD VALIDATION] Audio playback in progress (~50 seconds)...');
+      console.log('[AUDIO THREAD VALIDATION] ⏳ Waiting for audio thread measurements...\n');
+      
+      // Wait for all clicks to play + buffer time
+      const waitTime = (clickCount * interval * 1000) + 1000;
+      
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          console.log('[AUDIO THREAD VALIDATION] ⏹️ Stopping audio thread capture...');
+          
+          // Request results from audio thread
+          workletNode.port.postMessage({ type: 'stop' });
+          
+          // Wait for results
+          workletNode.port.onmessage = (event) => {
+            if (event.data.type === 'results') {
+              console.log('[AUDIO THREAD VALIDATION] ✅ Received results from audio thread\n');
+              
+              // Disconnect worklet
+              workletNode.disconnect();
+              
+              // Analyze results
+              const results = this._analyzeAudioThreadResults(
+                event.data.measurements,
+                event.data.sampleRate,
+                bpm,
+                intervalMs
+              );
+              
+              resolve(results);
+            }
+          };
+        }, waitTime);
+      });
+      
+    } catch (error) {
+      console.error('[AUDIO THREAD VALIDATION] ❌ ERROR:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Analyze audio thread validation results
+   * @private
+   */
+  _analyzeAudioThreadResults(measurements, sampleRate, bpm, theoreticalIntervalMs) {
+    console.log(`[AUDIO THREAD VALIDATION] Analyzing ${measurements.length} audio frame measurements...`);
+    
+    if (measurements.length < 2) {
+      console.error('[AUDIO THREAD VALIDATION] ❌ FAIL: Not enough measurements');
+      return null;
+    }
+    
+    const n = measurements.length;
+    const errors = measurements.map(m => m.errorMs);
+    const absoluteErrors = errors.map(e => Math.abs(e));
+    
+    // Statistical metrics
+    const meanExecutionError = errors.reduce((sum, e) => sum + e, 0) / errors.length;
+    const maxExecutionError = Math.max(...errors);
+    const minExecutionError = Math.min(...errors);
+    const worstAbsoluteError = Math.max(...absoluteErrors);
+    
+    // Standard deviation
+    const variance = errors.reduce((sum, e) => sum + Math.pow(e - meanExecutionError, 2), 0) / errors.length;
+    const stdExecutionError = Math.sqrt(variance);
+    
+    // ACCEPTANCE CRITERIA (AUDIO THREAD)
+    const THRESHOLD_MEAN_ERROR = 0.5; // ms
+    const THRESHOLD_STD_DEV = 1.0; // ms
+    const THRESHOLD_WORST_CASE = 2.0; // ms
+    
+    const passedMeanError = Math.abs(meanExecutionError) < THRESHOLD_MEAN_ERROR;
+    const passedStdDev = stdExecutionError < THRESHOLD_STD_DEV;
+    const passedWorstCase = worstAbsoluteError < THRESHOLD_WORST_CASE;
+    
+    const allPassed = passedMeanError && passedStdDev && passedWorstCase;
+    
+    const results = {
+      // Test parameters
+      totalMeasurements: n,
+      sampleRate: sampleRate,
+      expectedBPM: bpm,
+      theoreticalIntervalMs,
+      
+      // Audio thread metrics (ms)
+      meanExecutionError,
+      maxExecutionError,
+      minExecutionError,
+      stdExecutionError,
+      worstAbsoluteError,
+      
+      // Pass/Fail status
+      passedMeanError,
+      passedStdDev,
+      passedWorstCase,
+      allPassed,
+      
+      // Thresholds
+      thresholds: {
+        meanError: THRESHOLD_MEAN_ERROR,
+        stdDev: THRESHOLD_STD_DEV,
+        worstCase: THRESHOLD_WORST_CASE
+      }
+    };
+    
+    // Print formatted results
+    console.log('\n========================================');
+    console.log('PHASE 5A.3 - AUDIO THREAD VALIDATION');
+    console.log('========================================\n');
+    
+    console.log('TEST PARAMETERS:');
+    console.log(`  Total Measurements: ${n}`);
+    console.log(`  Sample Rate: ${sampleRate} Hz`);
+    console.log(`  Expected BPM: ${bpm}`);
+    console.log(`  Theoretical Interval: ${theoreticalIntervalMs.toFixed(6)} ms\n`);
+    
+    console.log('REAL AUDIO THREAD EXECUTION RESULTS:');
+    console.log(`  Mean Execution Error: ${meanExecutionError.toFixed(6)} ms ${passedMeanError ? '✅' : '❌'} (threshold: < ${THRESHOLD_MEAN_ERROR} ms)`);
+    console.log(`  Std Dev: ${stdExecutionError.toFixed(6)} ms ${passedStdDev ? '✅' : '❌'} (threshold: < ${THRESHOLD_STD_DEV} ms)`);
+    console.log(`  Max Execution Error: ${maxExecutionError.toFixed(6)} ms`);
+    console.log(`  Min Execution Error: ${minExecutionError.toFixed(6)} ms`);
+    console.log(`  Worst Absolute Error: ${worstAbsoluteError.toFixed(6)} ms ${passedWorstCase ? '✅' : '❌'} (threshold: < ${THRESHOLD_WORST_CASE} ms)\n`);
+    
+    console.log('ACCEPTANCE CRITERIA (AUDIO THREAD):');
+    console.log(`  Mean Execution Error < ${THRESHOLD_MEAN_ERROR} ms: ${passedMeanError ? '✅ PASS' : '❌ FAIL'}`);
+    console.log(`  Std Dev < ${THRESHOLD_STD_DEV} ms: ${passedStdDev ? '✅ PASS' : '❌ FAIL'}`);
+    console.log(`  Worst Case < ${THRESHOLD_WORST_CASE} ms: ${passedWorstCase ? '✅ PASS' : '❌ FAIL'}\n`);
+    
+    console.log('========================================');
+    console.log(`PHASE 5A.3 STATUS: ${allPassed ? '✅ PASS' : '❌ FAIL'}`);
+    console.log('========================================\n');
+    
+    if (!allPassed) {
+      console.error('[AUDIO THREAD VALIDATION] ❌ Phase 5A.3 FAILED - Audio thread timing unstable');
+      console.error('[AUDIO THREAD VALIDATION] Real audio execution does not meet thresholds');
+    } else {
+      console.log('[AUDIO THREAD VALIDATION] ✅ Phase 5A.3 PASSED - Audio thread timing validated');
+      console.log('[AUDIO THREAD VALIDATION] Real audio frames processed with acceptable precision');
+    }
+    
+    return results;
+  }
 }
 
 // Export for use in other modules

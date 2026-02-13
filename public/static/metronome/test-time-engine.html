@@ -99,6 +99,14 @@
         </div>
         
         <div class="test-section">
+            <h2>🔴 Test 2.6: Audio Thread Validation (Phase 5A.3) - REQUIRED</h2>
+            <p style="color: #ff6b6b; font-size: 12px;">⚠️ This test plays 100 audio clicks and measures timing in audio rendering thread.</p>
+            <p style="color: #ffa500; font-size: 12px;">⏳ Test duration: ~51 seconds. Results appear AFTER playback completes.</p>
+            <button id="btn-test-audiothread" disabled>Run Audio Thread Validation</button>
+            <div class="stats" id="audiothread-stats"></div>
+        </div>
+        
+        <div class="test-section">
             <h2>🎤 Test 3: Input Buffer (Circular Buffer)</h2>
             <button id="btn-test-input" disabled>Run Input Buffer Test</button>
             <div class="stats" id="input-stats"></div>
@@ -177,6 +185,7 @@
                 // Enable other tests
                 document.getElementById('btn-test-metronome').disabled = false;
                 document.getElementById('btn-test-runtime').disabled = false;
+                document.getElementById('btn-test-audiothread').disabled = false;
                 document.getElementById('btn-test-input').disabled = false;
                 document.getElementById('btn-test-latency').disabled = false;
                 document.getElementById('btn-init').disabled = true;
@@ -303,6 +312,73 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">PHASE 5A.2 STATUS</div>
+                        <div class="stat-value" style="color: ${statusColor}; font-size: 20px; font-weight: bold;">
+                            ${statusText}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        // Test 2.6: Audio Thread Validation
+        document.getElementById('btn-test-audiothread').addEventListener('click', async () => {
+            if (!timeEngine) {
+                console.error('❌ Time Engine not initialized');
+                return;
+            }
+            
+            console.log('\n🔴 Starting Audio Thread Validation (100 audio clicks @ 120 BPM)...\n');
+            console.log('⚠️ Audio playback in progress. Results will appear AFTER completion (~51 seconds)...\n');
+            
+            // Disable button during test
+            const btn = document.getElementById('btn-test-audiothread');
+            btn.disabled = true;
+            btn.textContent = 'Testing... (measuring audio frames)';
+            
+            const bpm = 120;
+            const clickCount = 100;
+            
+            const results = await timeEngine.audioThreadValidation(bpm, clickCount);
+            
+            // Re-enable button
+            btn.disabled = false;
+            btn.textContent = 'Run Audio Thread Validation';
+            
+            if (results) {
+                const statusColor = results.allPassed ? '#4CAF50' : '#f44336';
+                const statusText = results.allPassed ? '✅ PASS' : '❌ FAIL';
+                
+                document.getElementById('audiothread-stats').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">Total Measurements</div>
+                        <div class="stat-value">${results.totalMeasurements}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Mean Execution Error</div>
+                        <div class="stat-value" style="color: ${results.passedMeanError ? '#4CAF50' : '#f44336'}">
+                            ${results.meanExecutionError.toFixed(6)} ms ${results.passedMeanError ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Std Dev</div>
+                        <div class="stat-value" style="color: ${results.passedStdDev ? '#4CAF50' : '#f44336'}">
+                            ${results.stdExecutionError.toFixed(6)} ms ${results.passedStdDev ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Worst Absolute Error</div>
+                        <div class="stat-value" style="color: ${results.passedWorstCase ? '#4CAF50' : '#f44336'}">
+                            ${results.worstAbsoluteError.toFixed(6)} ms ${results.passedWorstCase ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Sample Rate</div>
+                        <div class="stat-value">
+                            ${results.sampleRate} Hz
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">PHASE 5A.3 STATUS</div>
                         <div class="stat-value" style="color: ${statusColor}; font-size: 20px; font-weight: bold;">
                             ${statusText}
                         </div>
