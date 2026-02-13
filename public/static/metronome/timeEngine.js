@@ -737,34 +737,38 @@ class MasterTimeEngine {
       const waitTime = (clickCount * interval * 1000) + 1000;
       
       return new Promise((resolve) => {
+        // Setup message handler FIRST (before timeout)
+        workletNode.port.onmessage = (event) => {
+          if (event.data.type === 'debug') {
+            // Debug message from audio thread
+            console.log(`[AUDIO THREAD DEBUG @ frame ${event.data.frame}] ${event.data.message}`);
+            if (event.data.maxAmplitude !== undefined) {
+              console.log(`[AUDIO THREAD DEBUG] Max amplitude: ${event.data.maxAmplitude.toFixed(6)}`);
+            }
+          } else if (event.data.type === 'results') {
+            console.log('[AUDIO THREAD VALIDATION] ✅ Received results from audio thread\n');
+            
+            // Disconnect worklet
+            workletNode.disconnect();
+            
+            // Analyze results
+            const results = this._analyzeAudioThreadResults(
+              event.data.measurements,
+              event.data.sampleRate,
+              bpm,
+              intervalMs
+            );
+            
+            resolve(results);
+          }
+        };
+        
+        // Stop capture after all clicks + buffer
         setTimeout(() => {
           console.log('[AUDIO THREAD VALIDATION] ⏹️ Stopping audio thread capture...');
           
           // Request results from audio thread
           workletNode.port.postMessage({ type: 'stop' });
-          
-          // Wait for results
-          workletNode.port.onmessage = (event) => {
-            if (event.data.type === 'results') {
-              console.log('[AUDIO THREAD VALIDATION] ✅ Received results from audio thread\n');
-              
-              // Disconnect worklet
-              workletNode.disconnect();
-              
-              // Analyze results
-              const results = this._analyzeAudioThreadResults(
-                event.data.measurements,
-                event.data.sampleRate,
-                bpm,
-                intervalMs
-              );
-              
-              resolve(results);
-            } else if (event.data.type === 'debug') {
-              // Debug message from audio thread
-              console.log(`[AUDIO THREAD DEBUG] ${event.data.message}`, event.data);
-            }
-          };
         }, waitTime);
       });
       

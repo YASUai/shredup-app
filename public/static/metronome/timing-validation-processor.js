@@ -24,6 +24,9 @@ class TimingValidationProcessor extends AudioWorkletProcessor {
     this.onsetCooldown = 0; // Prevent multiple detections for same click
     this.cooldownFrames = 2205; // ~50ms @ 44.1kHz
     
+    // Manual frame counter (AudioWorklet has no global currentFrame)
+    this.currentProcessedFrame = 0;
+    
     // Listen for messages from main thread
     this.port.onmessage = (event) => {
       const { type, data } = event.data;
@@ -62,42 +65,44 @@ class TimingValidationProcessor extends AudioWorkletProcessor {
   
   process(inputs, outputs, parameters) {
     const input = inputs[0];
+    const blockSize = input && input[0] ? input[0].length : 128;
     
-    // DEBUG: Check if we receive audio signal
+    // DEBUG: Check if we receive audio signal (every ~1 second)
     if (input && input[0] && input[0].length > 0) {
       const samples = input[0];
       const hasSignal = samples.some(s => Math.abs(s) > 0.0001);
       
-      // Log every second
-      if (hasSignal && currentFrame % 44100 === 0) {
+      // Log every second (44100 frames)
+      if (hasSignal && this.currentProcessedFrame % 44100 < blockSize) {
         this.port.postMessage({ 
           type: 'debug', 
           message: 'Audio signal received',
-          frame: currentFrame,
+          frame: this.currentProcessedFrame,
           maxAmplitude: Math.max(...samples.map(s => Math.abs(s)))
         });
       }
     } else {
       // No input at all
-      if (currentFrame % 44100 === 0) {
+      if (this.currentProcessedFrame % 44100 < blockSize) {
         this.port.postMessage({ 
           type: 'debug', 
           message: 'NO INPUT SIGNAL',
-          frame: currentFrame
+          frame: this.currentProcessedFrame
         });
       }
     }
     
     if (!this.isCapturing || this.nextScheduledIndex >= this.scheduledFrames.length) {
+      this.currentProcessedFrame += blockSize;
       return true;
     }
     
     if (!input || !input[0]) {
+      this.currentProcessedFrame += blockSize;
       return true;
     }
     
     const samples = input[0]; // First channel
-    const currentFrame = currentFrame; // Global frame counter
     
     // Decrement cooldown
     if (this.onsetCooldown > 0) {
@@ -107,7 +112,7 @@ class TimingValidationProcessor extends AudioWorkletProcessor {
     // Scan samples for onset (amplitude spike)
     for (let i = 0; i < samples.length; i++) {
       const sample = samples[i];
-      const frameSample = currentFrame + i;
+      const frameSample = this.currentProcessedFrame + i;
       
       // Detect onset: sharp increase in amplitude
       const delta = Math.abs(sample - this.lastSample);
@@ -138,6 +143,9 @@ class TimingValidationProcessor extends AudioWorkletProcessor {
       
       this.lastSample = sample;
     }
+    
+    // Update frame counter
+    this.currentProcessedFrame += samples.length;
     
     // Keep processor alive
     return true;
