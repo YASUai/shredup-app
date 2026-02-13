@@ -13,6 +13,11 @@ app.get('/tuner', (c) => {
   return c.redirect('/static/tuner/index.html')
 })
 
+// ⏱️ Route TEST: Time Engine Validation (Phase 5A)
+app.get('/test-time-engine', (c) => {
+  return c.redirect('/static/metronome/test-time-engine.html')
+})
+
 // 🎸 Route TEST: Audio Engine Phase 2A (Audio Scaffolding)
 app.get('/audio-test', (c) => {
   return c.html(`<!DOCTYPE html>

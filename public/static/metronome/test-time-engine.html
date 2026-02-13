@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Engine Validation Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        .test-section {
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .console {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-card {
+            background: #333;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .stat-label {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⏱️ PHASE 5A – Master Time Engine Validation</h1>
+        
+        <div class="test-section">
+            <h2>🎯 Test 1: Initialize Time Engine</h2>
+            <button id="btn-init">Initialize AudioContext & Time Engine</button>
+            <div class="stats" id="init-stats"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎵 Test 2: Metronome Timeline (100 ticks)</h2>
+            <button id="btn-test-metronome" disabled>Run Metronome Test</button>
+            <div class="stats" id="metronome-stats"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎤 Test 3: Input Buffer (Circular Buffer)</h2>
+            <button id="btn-test-input" disabled>Run Input Buffer Test</button>
+            <div class="stats" id="input-stats"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Test 4: Latency Measurement</h2>
+            <button id="btn-test-latency" disabled>Measure Latency</button>
+            <div class="stats" id="latency-stats"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📝 Console Output</h2>
+            <button id="btn-clear-console">Clear Console</button>
+            <div class="console" id="console-output"></div>
+        </div>
+    </div>
+    
+    <script src="/static/metronome/timeEngine.js"></script>
+    <script>
+        let audioContext = null;
+        let timeEngine = null;
+        
+        // Console output capture
+        const consoleOutput = document.getElementById('console-output');
+        const originalConsoleLog = console.log;
+        const originalConsoleWarn = console.warn;
+        const originalConsoleError = console.error;
+        
+        function appendToConsole(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, fractionalSecondDigits: 3 });
+            const color = type === 'warn' ? '#ff0' : type === 'error' ? '#f00' : '#0f0';
+            consoleOutput.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            appendToConsole(args.join(' '), 'log');
+        };
+        
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            appendToConsole(args.join(' '), 'warn');
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            appendToConsole(args.join(' '), 'error');
+        };
+        
+        // Test 1: Initialize
+        document.getElementById('btn-init').addEventListener('click', async () => {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                await audioContext.resume();
+                
+                timeEngine = new MasterTimeEngine(audioContext);
+                timeEngine.setDebugMode(true);
+                
+                document.getElementById('init-stats').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">Sample Rate</div>
+                        <div class="stat-value">${audioContext.sampleRate} Hz</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Current Time</div>
+                        <div class="stat-value">${audioContext.currentTime.toFixed(6)}s</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">State</div>
+                        <div class="stat-value">${audioContext.state}</div>
+                    </div>
+                `;
+                
+                // Enable other tests
+                document.getElementById('btn-test-metronome').disabled = false;
+                document.getElementById('btn-test-input').disabled = false;
+                document.getElementById('btn-test-latency').disabled = false;
+                document.getElementById('btn-init').disabled = true;
+                
+                console.log('✅ AudioContext and Time Engine initialized successfully');
+            } catch (error) {
+                console.error('❌ Initialization failed:', error);
+            }
+        });
+        
+        // Test 2: Metronome Timeline
+        document.getElementById('btn-test-metronome').addEventListener('click', async () => {
+            if (!timeEngine) {
+                console.error('❌ Time Engine not initialized');
+                return;
+            }
+            
+            console.log('\n🎵 Starting Metronome Timeline Test (100 ticks @ 120 BPM)...\n');
+            
+            const bpm = 120;
+            const tickCount = 100;
+            const interval = 60 / bpm; // seconds per beat
+            
+            timeEngine.clearMetronomeTimeline();
+            
+            let scheduledTime = audioContext.currentTime;
+            
+            for (let i = 0; i < tickCount; i++) {
+                scheduledTime += interval;
+                timeEngine.recordMetronomeTick(i, scheduledTime, scheduledTime, bpm, 1);
+            }
+            
+            // Analyze results
+            const timeline = timeEngine.getMetronomeTimeline();
+            const deltas = [];
+            
+            for (let i = 1; i < timeline.length; i++) {
+                const delta = (timeline[i].scheduledTime - timeline[i - 1].scheduledTime) * 1000;
+                deltas.push(delta);
+            }
+            
+            const avgDelta = deltas.reduce((sum, d) => sum + d, 0) / deltas.length;
+            const maxDelta = Math.max(...deltas);
+            const minDelta = Math.min(...deltas);
+            const jitter = maxDelta - minDelta;
+            const jitterStatus = jitter <= 0.5 ? '✅ PASS' : '❌ FAIL';
+            
+            document.getElementById('metronome-stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Total Ticks</div>
+                    <div class="stat-value">${timeline.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Delta</div>
+                    <div class="stat-value">${avgDelta.toFixed(3)}ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Min Delta</div>
+                    <div class="stat-value">${minDelta.toFixed(3)}ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Max Delta</div>
+                    <div class="stat-value">${maxDelta.toFixed(3)}ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Jitter</div>
+                    <div class="stat-value" style="color: ${jitter <= 0.5 ? '#4CAF50' : '#f44336'}">${jitter.toFixed(6)}ms ${jitterStatus}</div>
+                </div>
+            `;
+            
+            timeEngine.logTimeDrift();
+        });
+        
+        // Test 3: Input Buffer
+        document.getElementById('btn-test-input').addEventListener('click', () => {
+            if (!timeEngine) {
+                console.error('❌ Time Engine not initialized');
+                return;
+            }
+            
+            console.log('\n🎤 Starting Input Buffer Test (10000 samples)...\n');
+            
+            timeEngine.clearInputBuffer();
+            
+            const sampleCount = 10000;
+            const startTime = performance.now();
+            
+            for (let i = 0; i < sampleCount; i++) {
+                const amplitude = Math.random() * 0.5;
+                const spectralEnergy = Math.random() * 100;
+                timeEngine.recordInputSample(i, amplitude, spectralEnergy);
+            }
+            
+            const endTime = performance.now();
+            const duration = endTime - startTime;
+            const samples = timeEngine.getInputSamples();
+            
+            document.getElementById('input-stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Samples Recorded</div>
+                    <div class="stat-value">${samples.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Recording Duration</div>
+                    <div class="stat-value">${duration.toFixed(2)}ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Samples/sec</div>
+                    <div class="stat-value">${((sampleCount / duration) * 1000).toFixed(0)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Buffer Size</div>
+                    <div class="stat-value">${timeEngine.maxInputBufferSize}</div>
+                </div>
+            `;
+            
+            console.log(`✅ Input buffer test complete: ${samples.length} samples in ${duration.toFixed(2)}ms`);
+        });
+        
+        // Test 4: Latency
+        document.getElementById('btn-test-latency').addEventListener('click', () => {
+            if (!timeEngine) {
+                console.error('❌ Time Engine not initialized');
+                return;
+            }
+            
+            console.log('\n📊 Measuring Audio Latency...\n');
+            
+            timeEngine.refreshLatency();
+            const latency = timeEngine.getLatencyInfo();
+            
+            const baseLatencyMs = latency.baseLatency ? (latency.baseLatency * 1000).toFixed(3) : 'N/A';
+            const outputLatencyMs = latency.outputLatency ? (latency.outputLatency * 1000).toFixed(3) : 'N/A';
+            const totalLatencyMs = (latency.baseLatency && latency.outputLatency) 
+                ? ((latency.baseLatency + latency.outputLatency) * 1000).toFixed(3)
+                : 'N/A';
+            
+            document.getElementById('latency-stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Base Latency</div>
+                    <div class="stat-value">${baseLatencyMs}ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Output Latency</div>
+                    <div class="stat-value">${outputLatencyMs}ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Latency</div>
+                    <div class="stat-value">${totalLatencyMs}ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last Measured</div>
+                    <div class="stat-value">${latency.lastMeasured.toFixed(3)}s</div>
+                </div>
+            `;
+            
+            console.log('✅ Latency measurement complete');
+        });
+        
+        // Clear console
+        document.getElementById('btn-clear-console').addEventListener('click', () => {
+            consoleOutput.innerHTML = '';
+        });
+        
+        console.log('🎯 PHASE 5A Validation Test Suite Ready');
+        console.log('Click "Initialize AudioContext & Time Engine" to begin');
+    </script>
+</body>
+</html>
