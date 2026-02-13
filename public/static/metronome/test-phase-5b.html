@@ -361,6 +361,7 @@
                 
                 // Clear metronome timeline (will only store analysis beats)
                 timeEngine.metronomeTimeline = [];
+                timeEngine.analysisStartTime = null; // Will be set on first analysis beat
                 
                 metronomeInterval = setInterval(() => {
                     if (beatCount >= totalBeats) {
@@ -390,6 +391,13 @@
                     // Record in timeline ONLY analysis beats (skip count-in)
                     if (!isCountIn) {
                         const analysisIndex = beatCount - countInBeats; // 0, 1, 2... 19
+                        
+                        // Set analysis start time on first analysis beat
+                        if (timeEngine.analysisStartTime === null) {
+                            timeEngine.analysisStartTime = clickTime;
+                            console.log('[TEST] Analysis start time set:', clickTime.toFixed(6), 's');
+                        }
+                        
                         timeEngine.metronomeTimeline.push({
                             tickIndex: analysisIndex,
                             scheduledTime: clickTime,

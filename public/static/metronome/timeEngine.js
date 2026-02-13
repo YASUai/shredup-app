@@ -1014,12 +1014,24 @@ class MasterTimeEngine {
     console.log('[RHYTHMIC ANALYSIS] Detected onsets:', this.detectedOnsets.length);
     console.log('[RHYTHMIC ANALYSIS] Metronome beats:', this.metronomeTimeline.length);
     
+    // Get analysis start time
+    const analysisStartTime = this.analysisStartTime || (this.metronomeTimeline.length > 0 ? this.metronomeTimeline[0].scheduledTime : 0);
+    console.log('[RHYTHMIC ANALYSIS] Analysis start time:', analysisStartTime.toFixed(6), 's');
+    
+    // STEP 0: Filter onsets BEFORE analysis window (remove count-in onsets)
+    const MARGIN_MS = 200; // Allow 200ms margin before analysis start
+    const marginSeconds = MARGIN_MS / 1000.0;
+    const onsetsInWindow = this.detectedOnsets.filter(onset => onset.time >= (analysisStartTime - marginSeconds));
+    
+    console.log('[RHYTHMIC ANALYSIS] Onsets before filtering:', this.detectedOnsets.length);
+    console.log('[RHYTHMIC ANALYSIS] Onsets in analysis window (>= start - 200ms):', onsetsInWindow.length);
+    
     // STEP 1: Filter onsets (minimum 120ms spacing)
     console.log('[RHYTHMIC ANALYSIS] Filtering onsets (min spacing: 120ms)...');
     const filteredOnsets = [];
     let lastOnsetTime = -Infinity;
     
-    for (const onset of this.detectedOnsets) {
+    for (const onset of onsetsInWindow) {  // Use onsetsInWindow instead of this.detectedOnsets
       const timeSinceLast = (onset.time - lastOnsetTime) * 1000.0; // ms
       
       if (timeSinceLast >= 120) {
@@ -1028,16 +1040,17 @@ class MasterTimeEngine {
       }
     }
     
-    console.log('[RHYTHMIC ANALYSIS] Filtered onsets:', this.detectedOnsets.length, '→', filteredOnsets.length);
+    console.log('[RHYTHMIC ANALYSIS] Filtered onsets:', onsetsInWindow.length, '→', filteredOnsets.length);
     
     // DEBUG: Log first 5 timestamps for alignment verification
+    console.log('\n[ALIGNMENT DEBUG] Analysis start time:', analysisStartTime.toFixed(6), 's');
     console.log('\n[ALIGNMENT DEBUG] First 5 beat timestamps:');
     for (let i = 0; i < Math.min(5, this.metronomeTimeline.length); i++) {
       const beat = this.metronomeTimeline[i];
       console.log(`  Beat[${i}]: ${beat.scheduledTime.toFixed(6)}s`);
     }
     
-    console.log('\n[ALIGNMENT DEBUG] First 5 onset timestamps:');
+    console.log('\n[ALIGNMENT DEBUG] First 5 onset timestamps (after filtering):');
     for (let i = 0; i < Math.min(5, filteredOnsets.length); i++) {
       const onset = filteredOnsets[i];
       console.log(`  Onset[${i}]: ${onset.time.toFixed(6)}s`);
@@ -1050,6 +1063,8 @@ class MasterTimeEngine {
       if (Math.abs(offset) > 150) {
         console.warn('[ALIGNMENT DEBUG] ⚠️ WARNING: Offset exceeds ±150ms matching window!');
         console.warn('[ALIGNMENT DEBUG] This may indicate a timing reference mismatch.');
+      } else {
+        console.log('[ALIGNMENT DEBUG] ✅ Offset within ±150ms window - alignment looks good!');
       }
     }
     console.log('');
