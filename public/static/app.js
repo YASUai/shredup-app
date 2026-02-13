@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeMetronome()
   initializeDateTime()
   initializeGlobalKeyboardShortcuts()
+  initializeGlobalFocusManagement()
 })
 
 /**
@@ -369,6 +370,84 @@ function initializeGlobalKeyboardShortcuts() {
   } else {
     metronomeIframe.addEventListener('load', setupShortcuts)
   }
+}
+
+/**
+ * Initialize Global Focus Management
+ * ============================================================================
+ * CRITICAL: Prevent ANY element from keeping focus and blocking shortcuts
+ * 
+ * PROBLEM:
+ * - Clicking TUNER toggles → focus stays on button → shortcuts don't work
+ * - Clicking metronome iframe → focus goes to iframe → shortcuts don't work
+ * - User has to click elsewhere to restore shortcuts
+ * 
+ * SOLUTION:
+ * - Force blur on ALL interactive elements after click
+ * - Restore focus to document.body (focusable)
+ * - Apply to entire page (parent + iframe)
+ */
+function initializeGlobalFocusManagement() {
+  console.log('🔒 Initializing global focus management...')
+  
+  // Make body focusable
+  document.body.setAttribute('tabindex', '-1')
+  
+  // Apply to ALL buttons, links, and interactive elements in PARENT
+  const applyFocusProtection = (element) => {
+    element.setAttribute('tabindex', '-1')
+    
+    // Force blur on mousedown (before click, capture phase)
+    element.addEventListener('mousedown', (e) => {
+      e.target.blur()
+      // Restore focus to body immediately
+      setTimeout(() => {
+        document.body.focus()
+        console.log('🔄 Focus restored to body after click on:', e.target.className || e.target.tagName)
+      }, 0)
+    }, true)
+  }
+  
+  // Apply to all interactive elements in parent
+  document.querySelectorAll('button, a, [role="button"], .toggle, [tabindex]').forEach(applyFocusProtection)
+  
+  // Also apply to metronome iframe when loaded
+  const metronomeIframe = document.querySelector('.metronome-iframe')
+  if (metronomeIframe) {
+    const applyToIframe = () => {
+      try {
+        const iframeDoc = metronomeIframe.contentDocument || metronomeIframe.contentWindow.document
+        if (iframeDoc) {
+          // Apply to all buttons in iframe
+          iframeDoc.querySelectorAll('button').forEach(btn => {
+            btn.setAttribute('tabindex', '-1')
+            btn.addEventListener('mousedown', (e) => {
+              e.target.blur()
+              // Restore focus to PARENT body (not iframe body)
+              setTimeout(() => {
+                document.body.focus()
+                console.log('🔄 Focus restored to parent body after iframe click')
+              }, 0)
+            }, true)
+          })
+          console.log('✅ Focus protection applied to iframe buttons')
+        }
+      } catch (err) {
+        console.warn('⚠️ Could not apply focus protection to iframe:', err)
+      }
+    }
+    
+    if (metronomeIframe.contentDocument && metronomeIframe.contentDocument.readyState === 'complete') {
+      applyToIframe()
+    } else {
+      metronomeIframe.addEventListener('load', applyToIframe)
+    }
+  }
+  
+  // Initial focus on body
+  document.body.focus()
+  
+  console.log('✅ Global focus management enabled')
 }
 
 // Initialize shortcuts after DOM is ready
