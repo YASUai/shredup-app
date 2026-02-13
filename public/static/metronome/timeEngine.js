@@ -678,20 +678,33 @@ class MasterTimeEngine {
       
       console.log(`[AUDIO THREAD VALIDATION] Expected frame delta: ${expectedFrameDelta} frames (${intervalMs.toFixed(3)} ms)`);
       
-      // Start capturing in audio thread
+      // Calculate scheduled frames for each click
+      let scheduledTime = this.audioContext.currentTime + 0.1;
+      const scheduledFrames = [];
+      
+      for (let i = 0; i < clickCount; i++) {
+        const scheduledFrame = Math.round(scheduledTime * this.audioContext.sampleRate);
+        scheduledFrames.push(scheduledFrame);
+        scheduledTime += interval;
+      }
+      
+      console.log(`[AUDIO THREAD VALIDATION] Calculated ${scheduledFrames.length} scheduled frames`);
+      
+      // Start capturing in audio thread with scheduled frames
       workletNode.port.postMessage({
         type: 'start',
         data: {
           expectedFrameDelta: expectedFrameDelta,
-          sampleRate: this.audioContext.sampleRate
+          sampleRate: this.audioContext.sampleRate,
+          scheduledFrames: scheduledFrames
         }
       });
       
-      console.log('[AUDIO THREAD VALIDATION] ✅ Started audio thread capture');
+      console.log('[AUDIO THREAD VALIDATION] ✅ Started audio thread onset detection');
       console.log('[AUDIO THREAD VALIDATION] Scheduling audio clicks...\n');
       
       // Schedule clicks
-      let scheduledTime = this.audioContext.currentTime + 0.1;
+      scheduledTime = this.audioContext.currentTime + 0.1;
       
       for (let i = 0; i < clickCount; i++) {
         if (i % 10 === 0 && i > 0) {
