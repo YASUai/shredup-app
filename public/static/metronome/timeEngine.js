@@ -1069,13 +1069,57 @@ class MasterTimeEngine {
     }
     console.log('');
     
-    // STEP 2: Compute all possible matches (onset ↔ beat pairs)
+    // STEP 1.5: AUTO-CALIBRATION - Measure global system latency
+    console.log('[AUTO-CALIBRATION] Measuring system latency...');
+    
+    const calibrationSamples = Math.min(10, filteredOnsets.length, this.metronomeTimeline.length);
+    let offsetSum = 0;
+    let calibrationCount = 0;
+    
+    // For first 10 onset-beat pairs, compute raw offset (no strict tolerance)
+    for (let i = 0; i < calibrationSamples; i++) {
+      const onset = filteredOnsets[i];
+      const beat = this.metronomeTimeline[i]; // Assume sequential playing
+      
+      if (onset && beat) {
+        const rawOffset = (onset.time - beat.scheduledTime) * 1000.0; // ms
+        offsetSum += rawOffset;
+        calibrationCount++;
+      }
+    }
+    
+    const globalOffset = calibrationCount > 0 ? offsetSum / calibrationCount : 0;
+    
+    console.log(`[AUTO-CALIBRATION] Samples used: ${calibrationCount}`);
+    console.log(`[AUTO-CALIBRATION] Detected global offset (system latency): ${globalOffset.toFixed(3)} ms`);
+    
+    if (Math.abs(globalOffset) > 10) {
+      console.log(`[AUTO-CALIBRATION] ✅ Applying compensation: -${globalOffset.toFixed(3)} ms to all onsets`);
+    } else {
+      console.log(`[AUTO-CALIBRATION] ℹ️ Offset < 10ms, no compensation needed`);
+    }
+    
+    // Apply calibration to ALL onsets
+    const calibratedOnsets = filteredOnsets.map(onset => ({
+      ...onset,
+      originalTime: onset.time,
+      time: onset.time - (globalOffset / 1000.0) // Subtract latency
+    }));
+    
+    console.log('\n[AUTO-CALIBRATION] First 5 calibrated onset timestamps:');
+    for (let i = 0; i < Math.min(5, calibratedOnsets.length); i++) {
+      const onset = calibratedOnsets[i];
+      console.log(`  Onset[${i}]: ${onset.originalTime.toFixed(6)}s → ${onset.time.toFixed(6)}s (Δ${globalOffset.toFixed(3)}ms)`);
+    }
+    console.log('');
+    
+    // STEP 2: Compute all possible matches (onset ↔ beat pairs) - USE CALIBRATED ONSETS
     const MATCH_WINDOW_MS = 150; // ±150ms matching window
     const possibleMatches = [];
     
-    for (let i = 0; i < filteredOnsets.length; i++) {
-      const onset = filteredOnsets[i];
-      const onsetTime = onset.time;
+    for (let i = 0; i < calibratedOnsets.length; i++) {
+      const onset = calibratedOnsets[i];
+      const onsetTime = onset.time; // Use calibrated time
       
       for (let j = 0; j < this.metronomeTimeline.length; j++) {
         const beat = this.metronomeTimeline[j];
@@ -1123,7 +1167,7 @@ class MasterTimeEngine {
     console.log('[RHYTHMIC ANALYSIS] One-to-one matches:', matches.length);
     
     // STEP 4: Count unmatched
-    const unmatchedOnsets = filteredOnsets.length - matchedOnsets.size;
+    const unmatchedOnsets = calibratedOnsets.length - matchedOnsets.size;
     const unmatchedBeats = this.metronomeTimeline.length - matchedBeats.size;
     
     console.log('[RHYTHMIC ANALYSIS] Unmatched onsets:', unmatchedOnsets);
@@ -1160,10 +1204,14 @@ class MasterTimeEngine {
     const results = {
       totalOnsets: this.detectedOnsets.length,
       totalOnsetsFiltered: filteredOnsets.length,
+      totalOnsetsCalibrated: calibratedOnsets.length,
       totalBeats: this.metronomeTimeline.length,
       matched: matches.length,
       unmatchedOnsets: unmatchedOnsets,
       unmatchedBeats: unmatchedBeats,
+      
+      // Calibration
+      globalOffset: globalOffset, // System latency (ms)
       
       // Timing metrics (ms)
       meanError,
@@ -1243,6 +1291,10 @@ class MasterTimeEngine {
     console.log(`  Matched (one-to-one, ±150ms): ${results.matched}`);
     console.log(`  Unmatched Onsets: ${results.unmatchedOnsets}`);
     console.log(`  Unmatched Beats: ${results.unmatchedBeats}\n`);
+    
+    console.log('AUTO-CALIBRATION:');
+    console.log(`  Detected System Latency: ${results.globalOffset.toFixed(3)} ms`);
+    console.log(`  Compensation Applied: ${Math.abs(results.globalOffset) > 10 ? 'YES ✅' : 'NO (< 10ms)'}\n`);
     
     console.log('TIMING ACCURACY (ms):');
     console.log(`  Mean Error: ${results.meanError.toFixed(3)} ms`);
