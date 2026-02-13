@@ -411,36 +411,51 @@ function initializeGlobalFocusManagement() {
   // Apply to all interactive elements in parent
   document.querySelectorAll('button, a, [role="button"], .toggle, [tabindex]').forEach(applyFocusProtection)
   
-  // Also apply to metronome iframe when loaded
-  const metronomeIframe = document.querySelector('.metronome-iframe')
-  if (metronomeIframe) {
-    const applyToIframe = () => {
+  // Helper function to apply protection to any iframe
+  const applyToIframe = (iframe, name) => {
+    return () => {
       try {
-        const iframeDoc = metronomeIframe.contentDocument || metronomeIframe.contentWindow.document
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document
         if (iframeDoc) {
-          // Apply to all buttons in iframe
-          iframeDoc.querySelectorAll('button').forEach(btn => {
-            btn.setAttribute('tabindex', '-1')
-            btn.addEventListener('mousedown', (e) => {
+          // Apply to ALL interactive elements in iframe
+          iframeDoc.querySelectorAll('button, a, [role="button"], .toggle, input[type="checkbox"], input[type="radio"], [tabindex]').forEach(element => {
+            element.setAttribute('tabindex', '-1')
+            element.addEventListener('mousedown', (e) => {
               e.target.blur()
               // Restore focus to PARENT body (not iframe body)
               setTimeout(() => {
                 document.body.focus()
-                console.log('🔄 Focus restored to parent body after iframe click')
+                console.log(`🔄 Focus restored to parent body after ${name} click:`, e.target.className || e.target.tagName)
               }, 0)
             }, true)
           })
-          console.log('✅ Focus protection applied to iframe buttons')
+          console.log(`✅ Focus protection applied to ${name} iframe`)
         }
       } catch (err) {
-        console.warn('⚠️ Could not apply focus protection to iframe:', err)
+        console.warn(`⚠️ Could not apply focus protection to ${name} iframe:`, err)
       }
     }
-    
+  }
+  
+  // Apply to metronome iframe
+  const metronomeIframe = document.querySelector('.metronome-iframe')
+  if (metronomeIframe) {
+    const applyMetronome = applyToIframe(metronomeIframe, 'metronome')
     if (metronomeIframe.contentDocument && metronomeIframe.contentDocument.readyState === 'complete') {
-      applyToIframe()
+      applyMetronome()
     } else {
-      metronomeIframe.addEventListener('load', applyToIframe)
+      metronomeIframe.addEventListener('load', applyMetronome)
+    }
+  }
+  
+  // Apply to tuner iframe
+  const tunerIframe = document.querySelector('.tuner-iframe-right')
+  if (tunerIframe) {
+    const applyTuner = applyToIframe(tunerIframe, 'tuner')
+    if (tunerIframe.contentDocument && tunerIframe.contentDocument.readyState === 'complete') {
+      applyTuner()
+    } else {
+      tunerIframe.addEventListener('load', applyTuner)
     }
   }
   
