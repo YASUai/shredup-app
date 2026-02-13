@@ -467,13 +467,20 @@ class MasterTimeEngine {
       const scheduleClick = () => {
         if (clickIndex >= clickCount) {
           // Wait for last click to finish, then analyze
-          console.log(`\n[RUNTIME VALIDATION] All ${clickCount} clicks scheduled. Waiting for playback to complete...\n`);
+          const waitTime = (interval * 1000) + 500;
+          console.log(`\n[RUNTIME VALIDATION] All ${clickCount} clicks scheduled. Waiting ${waitTime.toFixed(0)}ms for playback to complete...\n`);
+          
           setTimeout(() => {
             console.log('[RUNTIME VALIDATION] Playback complete. Analyzing results...\n');
             this.setDebugMode(originalDebugMode);
             this._analyzeRuntimeResults(timingData, bpm, intervalMs, resolve);
-          }, (interval * 1000) + 500); // Wait extra 500ms after last click
+          }, waitTime);
           return;
+        }
+        
+        // Progress indicator every 10 clicks
+        if (clickIndex % 10 === 0 && clickIndex > 0) {
+          console.log(`[RUNTIME VALIDATION] Scheduled ${clickIndex}/${clickCount} clicks...`);
         }
         
         // Create click sound (short beep)
@@ -656,7 +663,9 @@ class MasterTimeEngine {
       console.log('[RUNTIME VALIDATION] Scheduler stable for rhythmic analysis');
     }
     
+    console.log(`[RUNTIME VALIDATION] Resolving promise with results...`);
     resolve(results);
+    console.log(`[RUNTIME VALIDATION] Promise resolved successfully.`);
   }
 }
 
