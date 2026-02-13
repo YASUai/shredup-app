@@ -18,6 +18,11 @@ app.get('/test-time-engine', (c) => {
   return c.redirect('/static/metronome/test-time-engine.html')
 })
 
+// 🎸 Route TEST: Phase 5B Onset Detection (Rhythmic Timing)
+app.get('/test-phase-5b', (c) => {
+  return c.redirect('/static/metronome/test-phase-5b.html')
+})
+
 // 🎸 Route TEST: Audio Engine Phase 2A (Audio Scaffolding)
 app.get('/audio-test', (c) => {
   return c.html(`<!DOCTYPE html>

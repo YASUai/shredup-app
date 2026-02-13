@@ -880,6 +880,308 @@ class MasterTimeEngine {
     
     return results;
   }
+  
+  /**
+   * PHASE 5B – ONSET DETECTION FROM MICROPHONE
+   * Start capturing onsets from microphone input
+   * @param {Object} options - Detection options
+   * @returns {Promise<AudioWorkletNode>} Onset detector worklet node
+   */
+  async startOnsetDetection(options = {}) {
+    console.log('\n[ONSET DETECTION] Starting microphone onset detection\n');
+    
+    try {
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        } 
+      });
+      
+      console.log('[ONSET DETECTION] ✅ Microphone access granted');
+      
+      // Create MediaStreamSource
+      const micSource = this.audioContext.createMediaStreamSource(stream);
+      
+      // Load onset detector worklet
+      await this.audioContext.audioWorklet.addModule('/static/metronome/onset-detector-processor.js');
+      console.log('[ONSET DETECTION] ✅ Onset detector worklet loaded');
+      
+      // Create worklet node
+      const onsetDetector = new AudioWorkletNode(this.audioContext, 'onset-detector-processor');
+      
+      // Route: Microphone → Onset Detector (do NOT connect to destination = no feedback)
+      micSource.connect(onsetDetector);
+      
+      console.log('[ONSET DETECTION] ✅ Audio routing: Mic → Onset Detector');
+      
+      // Store references
+      this.micStream = stream;
+      this.micSource = micSource;
+      this.onsetDetector = onsetDetector;
+      this.detectedOnsets = []; // Store onsets in main thread
+      
+      // Listen for onset events
+      onsetDetector.port.onmessage = (event) => {
+        if (event.data.type === 'onset') {
+          // Real-time onset notification
+          const onset = {
+            time: event.data.time,
+            energy: event.data.energy
+          };
+          
+          this.detectedOnsets.push(onset);
+          
+          // Optional: callback for real-time UI updates
+          if (this.onOnsetDetected) {
+            this.onOnsetDetected(onset);
+          }
+          
+          console.log(`[ONSET DETECTED] Time: ${onset.time.toFixed(6)}s, Energy: ${onset.energy.toFixed(6)}`);
+        } else if (event.data.type === 'results') {
+          // Final results when stopped
+          console.log('[ONSET DETECTION] ✅ Received final results');
+          console.log('[ONSET DETECTION] Total onsets:', event.data.onsets.length);
+        }
+      };
+      
+      // Start capturing
+      onsetDetector.port.postMessage({
+        type: 'start',
+        data: {
+          energyThreshold: options.energyThreshold || 0.01,
+          cooldownMs: options.cooldownMs || 50
+        }
+      });
+      
+      console.log('[ONSET DETECTION] ✅ Onset detection started');
+      console.log('[ONSET DETECTION] Energy threshold:', options.energyThreshold || 0.01);
+      console.log('[ONSET DETECTION] Cooldown:', options.cooldownMs || 50, 'ms\n');
+      
+      return onsetDetector;
+      
+    } catch (error) {
+      console.error('[ONSET DETECTION] ❌ ERROR:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Stop onset detection and clean up microphone
+   */
+  stopOnsetDetection() {
+    console.log('[ONSET DETECTION] Stopping onset detection...');
+    
+    if (this.onsetDetector) {
+      this.onsetDetector.port.postMessage({ type: 'stop' });
+      this.onsetDetector.disconnect();
+      this.onsetDetector = null;
+    }
+    
+    if (this.micSource) {
+      this.micSource.disconnect();
+      this.micSource = null;
+    }
+    
+    if (this.micStream) {
+      this.micStream.getTracks().forEach(track => track.stop());
+      this.micStream = null;
+    }
+    
+    console.log('[ONSET DETECTION] ✅ Stopped and cleaned up');
+  }
+  
+  /**
+   * PHASE 5B – BEAT MATCHING & TIMING ANALYSIS
+   * Match detected onsets to nearest metronome beats
+   * @returns {Object} Timing analysis results
+   */
+  analyzeRhythmicTiming() {
+    console.log('\n[RHYTHMIC ANALYSIS] Analyzing timing accuracy\n');
+    
+    if (this.detectedOnsets.length === 0) {
+      console.error('[RHYTHMIC ANALYSIS] ❌ No onsets detected');
+      return null;
+    }
+    
+    if (this.metronomeTimeline.length === 0) {
+      console.error('[RHYTHMIC ANALYSIS] ❌ No metronome beats recorded');
+      return null;
+    }
+    
+    console.log('[RHYTHMIC ANALYSIS] Detected onsets:', this.detectedOnsets.length);
+    console.log('[RHYTHMIC ANALYSIS] Metronome beats:', this.metronomeTimeline.length);
+    
+    const matches = [];
+    const unmatched = [];
+    
+    // For each onset, find nearest beat
+    for (let i = 0; i < this.detectedOnsets.length; i++) {
+      const onset = this.detectedOnsets[i];
+      const onsetTime = onset.time;
+      
+      // Find nearest beat
+      let nearestBeat = null;
+      let minDistance = Infinity;
+      
+      for (let j = 0; j < this.metronomeTimeline.length; j++) {
+        const beat = this.metronomeTimeline[j];
+        const distance = Math.abs(onsetTime - beat.scheduledTime);
+        
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestBeat = beat;
+        }
+      }
+      
+      if (nearestBeat) {
+        const timingError = (onsetTime - nearestBeat.scheduledTime) * 1000.0; // ms
+        
+        matches.push({
+          onsetIndex: i,
+          onsetTime: onsetTime,
+          beatIndex: nearestBeat.tickIndex,
+          beatTime: nearestBeat.scheduledTime,
+          timingError: timingError, // ms (negative = early, positive = late)
+          absError: Math.abs(timingError),
+          energy: onset.energy
+        });
+      } else {
+        unmatched.push(i);
+      }
+    }
+    
+    if (matches.length === 0) {
+      console.error('[RHYTHMIC ANALYSIS] ❌ No matches found');
+      return null;
+    }
+    
+    // Compute statistics
+    const errors = matches.map(m => m.timingError);
+    const absErrors = matches.map(m => m.absError);
+    
+    const meanError = errors.reduce((sum, e) => sum + e, 0) / errors.length;
+    const meanAbsError = absErrors.reduce((sum, e) => sum + e, 0) / absErrors.length;
+    const maxError = Math.max(...errors);
+    const minError = Math.min(...errors);
+    const maxAbsError = Math.max(...absErrors);
+    
+    // Standard deviation
+    const variance = errors.reduce((sum, e) => sum + Math.pow(e - meanError, 2), 0) / errors.length;
+    const stdDev = Math.sqrt(variance);
+    
+    // Categorize matches
+    const perfect = matches.filter(m => m.absError <= 20).length;
+    const good = matches.filter(m => m.absError > 20 && m.absError <= 50).length;
+    const ok = matches.filter(m => m.absError > 50 && m.absError <= 100).length;
+    const miss = matches.filter(m => m.absError > 100).length;
+    
+    // Compute score (0-100)
+    const score = this._computeRhythmicScore(matches);
+    
+    const results = {
+      totalOnsets: this.detectedOnsets.length,
+      totalBeats: this.metronomeTimeline.length,
+      matched: matches.length,
+      unmatched: unmatched.length,
+      
+      // Timing metrics (ms)
+      meanError,
+      meanAbsError,
+      maxError,
+      minError,
+      maxAbsError,
+      stdDev,
+      
+      // Categories
+      perfect, // ≤ 20ms
+      good,    // 21-50ms
+      ok,      // 51-100ms
+      miss,    // > 100ms
+      
+      // Score
+      score,
+      
+      // Detailed matches
+      matches
+    };
+    
+    // Print results
+    this._printRhythmicAnalysis(results);
+    
+    return results;
+  }
+  
+  /**
+   * Compute rhythmic score (0-100) based on timing accuracy
+   * @private
+   */
+  _computeRhythmicScore(matches) {
+    if (matches.length === 0) return 0;
+    
+    let totalScore = 0;
+    
+    for (const match of matches) {
+      const absError = match.absError;
+      
+      // Scoring curve (ms → points)
+      let points = 0;
+      
+      if (absError <= 10) {
+        points = 100; // Perfect
+      } else if (absError <= 20) {
+        points = 90 + (20 - absError); // 90-100
+      } else if (absError <= 50) {
+        points = 70 + ((50 - absError) / 30) * 20; // 70-90
+      } else if (absError <= 100) {
+        points = 40 + ((100 - absError) / 50) * 30; // 40-70
+      } else if (absError <= 200) {
+        points = 10 + ((200 - absError) / 100) * 30; // 10-40
+      } else {
+        points = 0; // Miss
+      }
+      
+      totalScore += points;
+    }
+    
+    return Math.round(totalScore / matches.length);
+  }
+  
+  /**
+   * Print rhythmic analysis results
+   * @private
+   */
+  _printRhythmicAnalysis(results) {
+    console.log('========================================');
+    console.log('PHASE 5B - RHYTHMIC TIMING ANALYSIS');
+    console.log('========================================\n');
+    
+    console.log('DETECTION SUMMARY:');
+    console.log(`  Total Onsets Detected: ${results.totalOnsets}`);
+    console.log(`  Total Metronome Beats: ${results.totalBeats}`);
+    console.log(`  Matched: ${results.matched}`);
+    console.log(`  Unmatched: ${results.unmatched}\n`);
+    
+    console.log('TIMING ACCURACY (ms):');
+    console.log(`  Mean Error: ${results.meanError.toFixed(3)} ms`);
+    console.log(`  Mean Absolute Error: ${results.meanAbsError.toFixed(3)} ms`);
+    console.log(`  Std Deviation: ${results.stdDev.toFixed(3)} ms`);
+    console.log(`  Range: ${results.minError.toFixed(3)} to ${results.maxError.toFixed(3)} ms`);
+    console.log(`  Worst Case: ${results.maxAbsError.toFixed(3)} ms\n`);
+    
+    console.log('PERFORMANCE CATEGORIES:');
+    console.log(`  ✅ Perfect (≤20ms): ${results.perfect} (${((results.perfect / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  🟢 Good (21-50ms): ${results.good} (${((results.good / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  🟡 OK (51-100ms): ${results.ok} (${((results.ok / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  🔴 Miss (>100ms): ${results.miss} (${((results.miss / results.matched) * 100).toFixed(1)}%)\n`);
+    
+    console.log('OVERALL SCORE:');
+    console.log(`  🎸 ${results.score}/100\n`);
+    
+    console.log('========================================\n');
+  }
 }
 
 // Export for use in other modules

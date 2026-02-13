@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED UP - Phase 5B Test (Onset Detection)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: #00ff00;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        h2 {
+            color: #ffaa00;
+            margin: 30px 0 15px 0;
+            border-bottom: 2px solid #ffaa00;
+            padding-bottom: 5px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 5px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #00cc00;
+            transform: scale(1.05);
+        }
+        
+        button:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+        }
+        
+        button.danger {
+            background: #ff4444;
+            color: #fff;
+        }
+        
+        button.danger:hover:not(:disabled) {
+            background: #cc0000;
+        }
+        
+        .stats {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            color: #888;
+        }
+        
+        .stat-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        .console-output {
+            background: #000;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .instruction {
+            background: #003300;
+            border-left: 4px solid #00ff00;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning {
+            background: #332200;
+            border-left: 4px solid #ffaa00;
+            color: #ffaa00;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .score-display {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-radius: 8px;
+            margin: 20px 0;
+            text-shadow: 0 0 20px #00ff00;
+        }
+        
+        .timing-bar {
+            width: 100%;
+            height: 40px;
+            background: #1a1a1a;
+            border: 2px solid #444;
+            border-radius: 4px;
+            position: relative;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .timing-marker {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: #ff0000;
+            transition: left 0.1s linear;
+        }
+        
+        .onset-indicator {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 0.5s ease-out;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(3);
+                opacity: 0;
+            }
+        }
+        
+        .onset-perfect { background: #00ff00; }
+        .onset-good { background: #ffaa00; }
+        .onset-ok { background: #ff6600; }
+        .onset-miss { background: #ff0000; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎸 SHRED UP - PHASE 5B TEST</h1>
+        <p>Onset Detection & Rhythmic Timing Analysis</p>
+        
+        <!-- Test 1: Initialize -->
+        <div class="test-section">
+            <h2>🔧 Test 1: Initialize Audio Engine</h2>
+            <div class="instruction">
+                Click "Initialize" to create AudioContext and MasterTimeEngine.
+            </div>
+            <button id="btn-init">Initialize AudioContext & Time Engine</button>
+            <div class="stats" id="init-stats"></div>
+        </div>
+        
+        <!-- Test 2: Metronome + Onset Detection -->
+        <div class="test-section">
+            <h2>🎵 Test 2: Metronome + Onset Detection</h2>
+            <div class="warning">
+                ⚠️ <strong>Microphone Required!</strong><br>
+                When you click "Start Test", your browser will ask for microphone permission.<br>
+                You must grant permission for onset detection to work.
+            </div>
+            <div class="instruction">
+                <strong>Instructions:</strong><br>
+                1. Click "Start Test" (metronome will start at 120 BPM)<br>
+                2. Wait for 4 count-in beats (listen to the clicks)<br>
+                3. Play along with the metronome on your instrument<br>
+                4. Test will run for 20 beats (~10 seconds)<br>
+                5. Results will analyze your timing accuracy
+            </div>
+            <button id="btn-start-test" disabled>Start Test (120 BPM, 20 beats)</button>
+            <button id="btn-stop-test" disabled class="danger">Stop Test</button>
+            <div class="stats" id="test-stats"></div>
+            
+            <!-- Timing visualization -->
+            <div class="timing-bar" id="timing-bar">
+                <div class="timing-marker" id="timing-marker"></div>
+            </div>
+            
+            <!-- Score display -->
+            <div class="score-display" id="score-display">
+                --/100
+            </div>
+        </div>
+        
+        <!-- Console Output -->
+        <div class="test-section">
+            <h2>📋 Console Output</h2>
+            <div class="console-output" id="console-output"></div>
+        </div>
+    </div>
+    
+    <script src="/static/metronome/timeEngine.js"></script>
+    <script>
+        let audioContext = null;
+        let timeEngine = null;
+        let isTestRunning = false;
+        let metronomeInterval = null;
+        let beatCount = 0;
+        let maxBeats = 20;
+        
+        // Console capture
+        const consoleOutput = document.getElementById('console-output');
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            consoleOutput.textContent += message + '\n';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        };
+        
+        // Test 1: Initialize
+        document.getElementById('btn-init').addEventListener('click', async () => {
+            try {
+                console.log('[TEST] Initializing AudioContext...');
+                
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                await audioContext.resume();
+                
+                console.log('[TEST] ✅ AudioContext created');
+                console.log('[TEST] Sample rate:', audioContext.sampleRate);
+                console.log('[TEST] Current time:', audioContext.currentTime.toFixed(6));
+                console.log('[TEST] State:', audioContext.state);
+                
+                timeEngine = new MasterTimeEngine(audioContext);
+                console.log('[TEST] ✅ MasterTimeEngine initialized\n');
+                
+                // Update UI
+                document.getElementById('init-stats').innerHTML = `
+                    <div class="stat-item">
+                        <span class="stat-label">Sample Rate:</span>
+                        <span class="stat-value">${audioContext.sampleRate} Hz</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Current Time:</span>
+                        <span class="stat-value">${audioContext.currentTime.toFixed(6)} s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">State:</span>
+                        <span class="stat-value">${audioContext.state}</span>
+                    </div>
+                `;
+                
+                document.getElementById('btn-init').disabled = true;
+                document.getElementById('btn-start-test').disabled = false;
+                
+            } catch (error) {
+                console.error('[TEST] ❌ ERROR:', error);
+            }
+        });
+        
+        // Test 2: Start test
+        document.getElementById('btn-start-test').addEventListener('click', async () => {
+            if (!timeEngine) {
+                console.error('[TEST] ❌ Time engine not initialized!');
+                return;
+            }
+            
+            try {
+                console.log('[TEST] Starting Phase 5B test...\n');
+                
+                // Start onset detection
+                await timeEngine.startOnsetDetection({
+                    energyThreshold: 0.01,
+                    cooldownMs: 50
+                });
+                
+                // UI callback for real-time onset display
+                timeEngine.onOnsetDetected = (onset) => {
+                    // Visual feedback
+                    const bar = document.getElementById('timing-bar');
+                    const indicator = document.createElement('div');
+                    indicator.className = 'onset-indicator onset-perfect';
+                    indicator.style.left = '50%';
+                    bar.appendChild(indicator);
+                    setTimeout(() => indicator.remove(), 500);
+                };
+                
+                // Start metronome
+                beatCount = 0;
+                const bpm = 120;
+                const interval = (60 / bpm) * 1000; // ms
+                
+                console.log('[TEST] Starting metronome at 120 BPM...');
+                console.log('[TEST] Playing for', maxBeats, 'beats (~' + (maxBeats * interval / 1000).toFixed(1) + ' seconds)\n');
+                
+                isTestRunning = true;
+                document.getElementById('btn-start-test').disabled = true;
+                document.getElementById('btn-stop-test').disabled = false;
+                
+                metronomeInterval = setInterval(() => {
+                    if (beatCount >= maxBeats) {
+                        stopTest();
+                        return;
+                    }
+                    
+                    // Play click
+                    const clickTime = audioContext.currentTime + 0.01;
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    
+                    osc.frequency.value = beatCount % 4 === 0 ? 1000 : 800;
+                    gain.gain.value = 0.3;
+                    
+                    gain.gain.setValueAtTime(0.3, clickTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, clickTime + 0.05);
+                    
+                    osc.start(clickTime);
+                    osc.stop(clickTime + 0.05);
+                    
+                    // Record in timeline
+                    timeEngine.metronomeTimeline.push({
+                        tickIndex: beatCount,
+                        scheduledTime: clickTime,
+                        actualPlayTime: clickTime,
+                        bpm: bpm,
+                        subdivision: 1
+                    });
+                    
+                    beatCount++;
+                    
+                    // Update UI
+                    document.getElementById('test-stats').innerHTML = `
+                        <div class="stat-item">
+                            <span class="stat-label">Beat:</span>
+                            <span class="stat-value">${beatCount}/${maxBeats}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Detected Onsets:</span>
+                            <span class="stat-value">${timeEngine.detectedOnsets.length}</span>
+                        </div>
+                    `;
+                }, interval);
+                
+            } catch (error) {
+                console.error('[TEST] ❌ ERROR:', error);
+                stopTest();
+            }
+        });
+        
+        // Stop test
+        document.getElementById('btn-stop-test').addEventListener('click', stopTest);
+        
+        function stopTest() {
+            if (!isTestRunning) return;
+            
+            console.log('\n[TEST] Stopping test...\n');
+            
+            isTestRunning = false;
+            clearInterval(metronomeInterval);
+            
+            // Stop onset detection
+            timeEngine.stopOnsetDetection();
+            
+            // Analyze timing
+            const results = timeEngine.analyzeRhythmicTiming();
+            
+            if (results) {
+                // Display score
+                document.getElementById('score-display').textContent = `${results.score}/100`;
+                
+                // Color code score
+                const scoreDisplay = document.getElementById('score-display');
+                if (results.score >= 90) {
+                    scoreDisplay.style.color = '#00ff00';
+                } else if (results.score >= 70) {
+                    scoreDisplay.style.color = '#ffaa00';
+                } else if (results.score >= 50) {
+                    scoreDisplay.style.color = '#ff6600';
+                } else {
+                    scoreDisplay.style.color = '#ff0000';
+                }
+            }
+            
+            // Reset UI
+            document.getElementById('btn-start-test').disabled = false;
+            document.getElementById('btn-stop-test').disabled = true;
+        }
+    </script>
+</body>
+</html>
