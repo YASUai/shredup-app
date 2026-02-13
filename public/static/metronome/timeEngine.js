@@ -1030,6 +1030,30 @@ class MasterTimeEngine {
     
     console.log('[RHYTHMIC ANALYSIS] Filtered onsets:', this.detectedOnsets.length, '→', filteredOnsets.length);
     
+    // DEBUG: Log first 5 timestamps for alignment verification
+    console.log('\n[ALIGNMENT DEBUG] First 5 beat timestamps:');
+    for (let i = 0; i < Math.min(5, this.metronomeTimeline.length); i++) {
+      const beat = this.metronomeTimeline[i];
+      console.log(`  Beat[${i}]: ${beat.scheduledTime.toFixed(6)}s`);
+    }
+    
+    console.log('\n[ALIGNMENT DEBUG] First 5 onset timestamps:');
+    for (let i = 0; i < Math.min(5, filteredOnsets.length); i++) {
+      const onset = filteredOnsets[i];
+      console.log(`  Onset[${i}]: ${onset.time.toFixed(6)}s`);
+    }
+    
+    // Calculate offset (if both have at least 1 element)
+    if (filteredOnsets.length > 0 && this.metronomeTimeline.length > 0) {
+      const offset = (filteredOnsets[0].time - this.metronomeTimeline[0].scheduledTime) * 1000.0;
+      console.log(`\n[ALIGNMENT DEBUG] Offset (onset[0] - beat[0]): ${offset.toFixed(3)} ms`);
+      if (Math.abs(offset) > 150) {
+        console.warn('[ALIGNMENT DEBUG] ⚠️ WARNING: Offset exceeds ±150ms matching window!');
+        console.warn('[ALIGNMENT DEBUG] This may indicate a timing reference mismatch.');
+      }
+    }
+    console.log('');
+    
     // STEP 2: Compute all possible matches (onset ↔ beat pairs)
     const MATCH_WINDOW_MS = 150; // ±150ms matching window
     const possibleMatches = [];

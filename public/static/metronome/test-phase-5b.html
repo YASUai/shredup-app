@@ -228,10 +228,10 @@
             <div class="instruction">
                 <strong>Instructions:</strong><br>
                 1. Click "Start Test" (metronome will start at 120 BPM)<br>
-                2. Listen to the clicks (metronome plays 20 beats)<br>
-                3. <strong>Play ONE note per click</strong> (quarter notes only)<br>
-                4. Test will run for 20 beats (~10 seconds)<br>
-                5. Results will analyze your timing accuracy
+                2. <strong>COUNT-IN: Listen to 4 preparation beats</strong> (lower pitch, 600 Hz)<br>
+                3. <strong>ANALYSIS: Play ONE note per click for 20 beats</strong> (higher pitch, 800-1000 Hz)<br>
+                4. Total duration: ~12 seconds (4 count-in + 20 analysis)<br>
+                5. Results will analyze your timing accuracy on the 20 analysis beats only
             </div>
             <button id="btn-start-test" disabled>Start Test (120 BPM, 20 beats)</button>
             <button id="btn-stop-test" disabled class="danger">Stop Test</button>
@@ -343,25 +343,32 @@
                     setTimeout(() => indicator.remove(), 500);
                 };
                 
-                // Start metronome
+                // Start metronome with 4-beat count-in
                 beatCount = 0;
                 const bpm = 120;
                 const interval = (60 / bpm) * 1000; // ms
+                const countInBeats = 4;
+                const totalBeats = countInBeats + maxBeats; // 4 + 20 = 24 total
                 
                 console.log('[TEST] Starting metronome at 120 BPM...');
-                console.log('[TEST] Playing for', maxBeats, 'beats (~' + (maxBeats * interval / 1000).toFixed(1) + ' seconds)\n');
+                console.log('[TEST] Count-in: 4 beats (preparation)');
+                console.log('[TEST] Analysis: 20 beats (scoring)');
+                console.log('[TEST] Total duration: ~' + (totalBeats * interval / 1000).toFixed(1) + ' seconds\n');
                 
                 isTestRunning = true;
                 document.getElementById('btn-start-test').disabled = true;
                 document.getElementById('btn-stop-test').disabled = false;
                 
+                // Clear metronome timeline (will only store analysis beats)
+                timeEngine.metronomeTimeline = [];
+                
                 metronomeInterval = setInterval(() => {
-                    if (beatCount >= maxBeats) {
+                    if (beatCount >= totalBeats) {
                         stopTest();
                         return;
                     }
                     
-                    // Play click
+                    // Play click (ALL beats play audio)
                     const clickTime = audioContext.currentTime + 0.01;
                     const osc = audioContext.createOscillator();
                     const gain = audioContext.createGain();
@@ -369,7 +376,9 @@
                     osc.connect(gain);
                     gain.connect(audioContext.destination);
                     
-                    osc.frequency.value = beatCount % 4 === 0 ? 1000 : 800;
+                    // Different pitch for count-in vs analysis
+                    const isCountIn = beatCount < countInBeats;
+                    osc.frequency.value = isCountIn ? 600 : (beatCount % 4 === 0 ? 1000 : 800);
                     gain.gain.value = 0.3;
                     
                     gain.gain.setValueAtTime(0.3, clickTime);
@@ -378,22 +387,29 @@
                     osc.start(clickTime);
                     osc.stop(clickTime + 0.05);
                     
-                    // Record in timeline
-                    timeEngine.metronomeTimeline.push({
-                        tickIndex: beatCount,
-                        scheduledTime: clickTime,
-                        actualPlayTime: clickTime,
-                        bpm: bpm,
-                        subdivision: 1
-                    });
+                    // Record in timeline ONLY analysis beats (skip count-in)
+                    if (!isCountIn) {
+                        const analysisIndex = beatCount - countInBeats; // 0, 1, 2... 19
+                        timeEngine.metronomeTimeline.push({
+                            tickIndex: analysisIndex,
+                            scheduledTime: clickTime,
+                            actualPlayTime: clickTime,
+                            bpm: bpm,
+                            subdivision: 1
+                        });
+                    }
                     
                     beatCount++;
                     
                     // Update UI
+                    const currentBeat = beatCount <= countInBeats ? 
+                        `Count-in: ${beatCount}/${countInBeats}` : 
+                        `Beat: ${beatCount - countInBeats}/${maxBeats}`;
+                    
                     document.getElementById('test-stats').innerHTML = `
                         <div class="stat-item">
-                            <span class="stat-label">Beat:</span>
-                            <span class="stat-value">${beatCount}/${maxBeats}</span>
+                            <span class="stat-label">${currentBeat}</span>
+                            <span class="stat-value">${beatCount}/${totalBeats}</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Detected Onsets:</span>
