@@ -249,35 +249,145 @@ class MasterTimeEngine {
   }
   
   /**
-   * Log time drift analysis
+   * PHASE 5A.1 - SCIENTIFIC VALIDATION
+   * 
+   * Compute strict mathematical metrics for timing stability
+   * NO approximations, ONLY numerical output
+   * 
+   * @param {number} expectedBPM - Expected BPM for theoretical interval calculation
+   * @returns {Object} Detailed validation metrics
    */
-  logTimeDrift() {
+  scientificValidation(expectedBPM = 120) {
     if (this.metronomeTimeline.length < 2) {
-      console.log('[TIME ENGINE] Not enough ticks to analyze drift');
-      return;
+      console.error('[VALIDATION] ❌ FAIL: Not enough ticks (minimum 2 required)');
+      return null;
     }
     
     const ticks = this.metronomeTimeline;
-    const deltas = [];
+    const n = ticks.length;
     
-    for (let i = 1; i < ticks.length; i++) {
-      const delta = (ticks[i].scheduledTime - ticks[i - 1].scheduledTime) * 1000;
+    // Theoretical interval (seconds)
+    const theoreticalInterval = 60.0 / expectedBPM;
+    const theoreticalIntervalMs = theoreticalInterval * 1000.0;
+    
+    // Compute deltas and errors
+    const deltas = []; // Actual intervals (ms)
+    const errors = []; // Error from theoretical (ms)
+    const absoluteErrors = []; // Absolute errors (ms)
+    
+    for (let i = 1; i < n; i++) {
+      // Use scheduledTime for strict deterministic validation
+      const delta = (ticks[i].scheduledTime - ticks[i - 1].scheduledTime) * 1000.0;
+      const error = delta - theoreticalIntervalMs;
+      
       deltas.push(delta);
+      errors.push(error);
+      absoluteErrors.push(Math.abs(error));
     }
     
-    const avgDelta = deltas.reduce((sum, d) => sum + d, 0) / deltas.length;
-    const maxDelta = Math.max(...deltas);
-    const minDelta = Math.min(...deltas);
-    const jitter = maxDelta - minDelta;
+    // Statistical metrics
+    const meanDelta = deltas.reduce((sum, d) => sum + d, 0) / deltas.length;
+    const meanError = errors.reduce((sum, e) => sum + e, 0) / errors.length;
+    const maxError = Math.max(...errors);
+    const minError = Math.min(...errors);
+    const worstAbsoluteError = Math.max(...absoluteErrors);
     
-    console.log('[TIME ENGINE] Drift Analysis:', {
-      totalTicks: ticks.length,
-      avgDelta: avgDelta.toFixed(3) + 'ms',
-      minDelta: minDelta.toFixed(3) + 'ms',
-      maxDelta: maxDelta.toFixed(3) + 'ms',
-      jitter: jitter.toFixed(3) + 'ms',
-      jitterStatus: jitter <= 0.5 ? '✅ PASS' : '❌ FAIL (> 0.5ms)'
-    });
+    // Standard deviation of errors
+    const variance = errors.reduce((sum, e) => sum + Math.pow(e - meanError, 2), 0) / errors.length;
+    const stdDeviation = Math.sqrt(variance);
+    
+    // Cumulative drift (total accumulated error)
+    const cumulativeDrift = errors.reduce((sum, e) => sum + e, 0);
+    
+    // ACCEPTANCE CRITERIA (STRICT)
+    const THRESHOLD_MEAN_ERROR = 0.2; // ms
+    const THRESHOLD_STD_DEV = 0.5; // ms
+    const THRESHOLD_WORST_CASE = 1.0; // ms
+    
+    const passedMeanError = Math.abs(meanError) < THRESHOLD_MEAN_ERROR;
+    const passedStdDev = stdDeviation < THRESHOLD_STD_DEV;
+    const passedWorstCase = worstAbsoluteError < THRESHOLD_WORST_CASE;
+    const passedCumulativeDrift = Math.abs(cumulativeDrift) < theoreticalIntervalMs; // Less than 1 beat
+    
+    const allPassed = passedMeanError && passedStdDev && passedWorstCase && passedCumulativeDrift;
+    
+    const results = {
+      // Test parameters
+      totalTicks: n,
+      expectedBPM,
+      theoreticalIntervalMs,
+      
+      // Statistical metrics (ms)
+      meanDelta,
+      meanError,
+      maxError,
+      minError,
+      stdDeviation,
+      worstAbsoluteError,
+      cumulativeDrift,
+      
+      // Pass/Fail status
+      passedMeanError,
+      passedStdDev,
+      passedWorstCase,
+      passedCumulativeDrift,
+      allPassed,
+      
+      // Thresholds
+      thresholds: {
+        meanError: THRESHOLD_MEAN_ERROR,
+        stdDev: THRESHOLD_STD_DEV,
+        worstCase: THRESHOLD_WORST_CASE
+      }
+    };
+    
+    // Print formatted results
+    console.log('\n========================================');
+    console.log('PHASE 5A.1 - SCIENTIFIC VALIDATION');
+    console.log('========================================\n');
+    
+    console.log('TEST PARAMETERS:');
+    console.log(`  Total Ticks: ${n}`);
+    console.log(`  Expected BPM: ${expectedBPM}`);
+    console.log(`  Theoretical Interval: ${theoreticalIntervalMs.toFixed(6)} ms\n`);
+    
+    console.log('DRIFT ANALYSIS RESULTS:');
+    console.log(`  Mean Delta: ${meanDelta.toFixed(6)} ms`);
+    console.log(`  Mean Error: ${meanError.toFixed(6)} ms ${passedMeanError ? '✅' : '❌'} (threshold: < ${THRESHOLD_MEAN_ERROR} ms)`);
+    console.log(`  Std Dev: ${stdDeviation.toFixed(6)} ms ${passedStdDev ? '✅' : '❌'} (threshold: < ${THRESHOLD_STD_DEV} ms)`);
+    console.log(`  Max Error: ${maxError.toFixed(6)} ms`);
+    console.log(`  Min Error: ${minError.toFixed(6)} ms`);
+    console.log(`  Worst Absolute Error: ${worstAbsoluteError.toFixed(6)} ms ${passedWorstCase ? '✅' : '❌'} (threshold: < ${THRESHOLD_WORST_CASE} ms)`);
+    console.log(`  Cumulative Drift: ${cumulativeDrift.toFixed(6)} ms ${passedCumulativeDrift ? '✅' : '❌'}\n`);
+    
+    console.log('ACCEPTANCE CRITERIA:');
+    console.log(`  Mean Error < ${THRESHOLD_MEAN_ERROR} ms: ${passedMeanError ? '✅ PASS' : '❌ FAIL'}`);
+    console.log(`  Std Dev < ${THRESHOLD_STD_DEV} ms: ${passedStdDev ? '✅ PASS' : '❌ FAIL'}`);
+    console.log(`  Worst Case < ${THRESHOLD_WORST_CASE} ms: ${passedWorstCase ? '✅ PASS' : '❌ FAIL'}`);
+    console.log(`  No Cumulative Drift: ${passedCumulativeDrift ? '✅ PASS' : '❌ FAIL'}\n`);
+    
+    console.log('========================================');
+    console.log(`PHASE 5A.1 STATUS: ${allPassed ? '✅ PASS' : '❌ FAIL'}`);
+    console.log('========================================\n');
+    
+    if (!allPassed) {
+      console.error('[VALIDATION] ❌ Phase 5A.1 FAILED - Timing stability not scientifically validated');
+      console.error('[VALIDATION] DO NOT proceed to Phase 5B until all criteria pass');
+    } else {
+      console.log('[VALIDATION] ✅ Phase 5A.1 PASSED - Timing stability scientifically validated');
+      console.log('[VALIDATION] Ready to proceed to Phase 5B');
+    }
+    
+    return results;
+  }
+  
+  /**
+   * Log time drift analysis (DEPRECATED - use scientificValidation instead)
+   * @deprecated Use scientificValidation() for strict mathematical validation
+   */
+  logTimeDrift() {
+    console.warn('[TIME ENGINE] ⚠️ logTimeDrift() is deprecated. Use scientificValidation() instead.');
+    return this.scientificValidation();
   }
   
   // ==================================================
@@ -310,12 +420,12 @@ class MasterTimeEngine {
       );
     }
     
-    // Analyze results
-    console.log('\n[TIME ENGINE] ========== VALIDATION RESULTS ==========');
-    this.logTimeDrift();
-    console.log('[TIME ENGINE] =====================================\n');
+    // Scientific validation
+    const results = this.scientificValidation(bpm);
     
     this.setDebugMode(originalDebugMode);
+    
+    return results;
   }
 }
 

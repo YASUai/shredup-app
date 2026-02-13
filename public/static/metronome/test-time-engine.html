@@ -86,7 +86,7 @@
         </div>
         
         <div class="test-section">
-            <h2>🎵 Test 2: Metronome Timeline (100 ticks)</h2>
+            <h2>🎵 Test 2: Scientific Validation (Phase 5A.1)</h2>
             <button id="btn-test-metronome" disabled>Run Metronome Test</button>
             <div class="stats" id="metronome-stats"></div>
         </div>
@@ -179,7 +179,7 @@
             }
         });
         
-        // Test 2: Metronome Timeline
+        // Test 2: Metronome Timeline (Scientific Validation)
         document.getElementById('btn-test-metronome').addEventListener('click', async () => {
             if (!timeEngine) {
                 console.error('❌ Time Engine not initialized');
@@ -190,56 +190,50 @@
             
             const bpm = 120;
             const tickCount = 100;
-            const interval = 60 / bpm; // seconds per beat
             
-            timeEngine.clearMetronomeTimeline();
+            const results = await timeEngine.runValidationTest(bpm, tickCount);
             
-            let scheduledTime = audioContext.currentTime;
-            
-            for (let i = 0; i < tickCount; i++) {
-                scheduledTime += interval;
-                timeEngine.recordMetronomeTick(i, scheduledTime, scheduledTime, bpm, 1);
+            if (results) {
+                const statusColor = results.allPassed ? '#4CAF50' : '#f44336';
+                const statusText = results.allPassed ? '✅ PASS' : '❌ FAIL';
+                
+                document.getElementById('metronome-stats').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">Total Ticks</div>
+                        <div class="stat-value">${results.totalTicks}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Mean Error</div>
+                        <div class="stat-value" style="color: ${results.passedMeanError ? '#4CAF50' : '#f44336'}">
+                            ${results.meanError.toFixed(6)} ms ${results.passedMeanError ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Std Dev</div>
+                        <div class="stat-value" style="color: ${results.passedStdDev ? '#4CAF50' : '#f44336'}">
+                            ${results.stdDeviation.toFixed(6)} ms ${results.passedStdDev ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Worst Absolute Error</div>
+                        <div class="stat-value" style="color: ${results.passedWorstCase ? '#4CAF50' : '#f44336'}">
+                            ${results.worstAbsoluteError.toFixed(6)} ms ${results.passedWorstCase ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Cumulative Drift</div>
+                        <div class="stat-value" style="color: ${results.passedCumulativeDrift ? '#4CAF50' : '#f44336'}">
+                            ${results.cumulativeDrift.toFixed(6)} ms ${results.passedCumulativeDrift ? '✅' : '❌'}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">PHASE 5A.1 STATUS</div>
+                        <div class="stat-value" style="color: ${statusColor}; font-size: 20px; font-weight: bold;">
+                            ${statusText}
+                        </div>
+                    </div>
+                `;
             }
-            
-            // Analyze results
-            const timeline = timeEngine.getMetronomeTimeline();
-            const deltas = [];
-            
-            for (let i = 1; i < timeline.length; i++) {
-                const delta = (timeline[i].scheduledTime - timeline[i - 1].scheduledTime) * 1000;
-                deltas.push(delta);
-            }
-            
-            const avgDelta = deltas.reduce((sum, d) => sum + d, 0) / deltas.length;
-            const maxDelta = Math.max(...deltas);
-            const minDelta = Math.min(...deltas);
-            const jitter = maxDelta - minDelta;
-            const jitterStatus = jitter <= 0.5 ? '✅ PASS' : '❌ FAIL';
-            
-            document.getElementById('metronome-stats').innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-label">Total Ticks</div>
-                    <div class="stat-value">${timeline.length}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Avg Delta</div>
-                    <div class="stat-value">${avgDelta.toFixed(3)}ms</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Min Delta</div>
-                    <div class="stat-value">${minDelta.toFixed(3)}ms</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Max Delta</div>
-                    <div class="stat-value">${maxDelta.toFixed(3)}ms</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Jitter</div>
-                    <div class="stat-value" style="color: ${jitter <= 0.5 ? '#4CAF50' : '#f44336'}">${jitter.toFixed(6)}ms ${jitterStatus}</div>
-                </div>
-            `;
-            
-            timeEngine.logTimeDrift();
         });
         
         // Test 3: Input Buffer
