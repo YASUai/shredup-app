@@ -711,29 +711,31 @@
       return NOTES[currentNoteIndex];
     }
     
-    // Update bars heights (subtle animation) + gradient based on tuning accuracy
+    // Update bars heights + gradient based on tuning accuracy (NO GLITCH)
     function updateBars() {
       bars.forEach((bar, i) => {
         const baseHeight = 48 + i * 6; // Base heights: 48, 54, 60, 66, 72, 78, 84
-        const activeBoost = (i === currentNoteIndex) ? 15 : 0;
-        const oscillation = Math.sin(Date.now() / 800 + i * 0.5) * 8;
-        const height = baseHeight + activeBoost + oscillation;
-        bar.style.height = `${Math.max(40, Math.min(100, height))}px`;
         
-        // Apply the same gradient as note hexagons based on cents accuracy
         if (i === currentNoteIndex) {
+          // Active bar: height grows as note becomes more accurate
+          const accuracy = Math.max(0, 1 - Math.abs(currentCents) / 12); // 1 = perfect, 0 = off by 12+ cents
+          const heightBoost = accuracy * 40; // 0-40px boost based on accuracy
+          const height = baseHeight + heightBoost;
+          bar.style.height = `${Math.max(40, Math.min(100, height))}px`;
+          
+          // Gradient: white tip when accurate, gray when off
           const { color } = getNoteColorAndGlow(currentCents);
-          // Extract RGB values from rgba string (e.g., "rgba(255, 255, 255, 0.9)")
           const rgbMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
           if (rgbMatch) {
             const r = rgbMatch[1];
             const g = rgbMatch[2];
             const b = rgbMatch[3];
-            // Create vertical gradient: white at top (accurate) → color at bottom
-            bar.style.background = `linear-gradient(180deg, rgba(${r}, ${g}, ${b}, 0.9) 0%, rgba(58, 58, 58, 1) 100%)`;
+            // Vertical gradient: tip color (white if accurate) → dark base
+            bar.style.background = `linear-gradient(180deg, rgba(${r}, ${g}, ${b}, 0.95) 0%, rgba(58, 58, 58, 1) 100%)`;
           }
         } else {
-          // Inactive bars use default dark gradient
+          // Inactive bars: static height and dark gradient
+          bar.style.height = `${baseHeight}px`;
           bar.style.background = 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%)';
         }
       });
