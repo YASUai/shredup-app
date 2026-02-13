@@ -760,6 +760,9 @@ class MasterTimeEngine {
               );
               
               resolve(results);
+            } else if (event.data.type === 'debug') {
+              // Debug message from audio thread
+              console.log(`[AUDIO THREAD DEBUG] ${event.data.message}`, event.data);
             }
           };
         }, waitTime);

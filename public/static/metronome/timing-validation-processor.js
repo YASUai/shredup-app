@@ -61,11 +61,37 @@ class TimingValidationProcessor extends AudioWorkletProcessor {
   }
   
   process(inputs, outputs, parameters) {
+    const input = inputs[0];
+    
+    // DEBUG: Check if we receive audio signal
+    if (input && input[0] && input[0].length > 0) {
+      const samples = input[0];
+      const hasSignal = samples.some(s => Math.abs(s) > 0.0001);
+      
+      // Log every second
+      if (hasSignal && currentFrame % 44100 === 0) {
+        this.port.postMessage({ 
+          type: 'debug', 
+          message: 'Audio signal received',
+          frame: currentFrame,
+          maxAmplitude: Math.max(...samples.map(s => Math.abs(s)))
+        });
+      }
+    } else {
+      // No input at all
+      if (currentFrame % 44100 === 0) {
+        this.port.postMessage({ 
+          type: 'debug', 
+          message: 'NO INPUT SIGNAL',
+          frame: currentFrame
+        });
+      }
+    }
+    
     if (!this.isCapturing || this.nextScheduledIndex >= this.scheduledFrames.length) {
       return true;
     }
     
-    const input = inputs[0];
     if (!input || !input[0]) {
       return true;
     }
