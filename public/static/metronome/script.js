@@ -1372,7 +1372,7 @@ function initTempoButtons() {
     const tapBtn = document.querySelector('.tap-btn');
     
     if (plusBtn) {
-        plusBtn.addEventListener('mousedown', async () => {
+        plusBtn.addEventListener('click', async () => {
             await playUIClick();  // Son UI click
             
             // Ajouter classe .clicking pour feedback visuel
@@ -1391,7 +1391,7 @@ function initTempoButtons() {
     }
     
     if (minusBtn) {
-        minusBtn.addEventListener('mousedown', async () => {
+        minusBtn.addEventListener('click', async () => {
             await playUIClick();  // Son UI click
             
             // Ajouter classe .clicking pour feedback visuel
@@ -1410,10 +1410,10 @@ function initTempoButtons() {
     }
     
     if (tapBtn) {
-        console.log('[TAP DEBUG] Bouton TAP trouvé, ajout listener mousedown');
+        console.log('[TAP DEBUG] Bouton TAP trouvé, ajout listener click');
         
-        tapBtn.addEventListener('mousedown', (e) => {
-            console.log('[TAP DEBUG] ===== MOUSEDOWN DÉCLENCHÉ =====');
+        tapBtn.addEventListener('click', (e) => {
+            console.log('[TAP DEBUG] ===== CLICK DÉCLENCHÉ =====');
             console.log('[TAP DEBUG] Event type:', e.type);
             console.log('[TAP DEBUG] Event target:', e.target);
             console.log('[TAP DEBUG] AudioContext state AVANT:', audioContext?.state);
@@ -1433,10 +1433,10 @@ function initTempoButtons() {
                 console.warn('[TAP DEBUG] Son indisponible:', err);
             });
             
-            console.log('[TAP DEBUG] ===== MOUSEDOWN TERMINÉ (instant) =====');
+            console.log('[TAP DEBUG] ===== CLICK TERMINÉ (instant) =====');
         });
         
-        console.log('[TAP DEBUG] Bouton TAP initialisé avec listener mousedown');
+        console.log('[TAP DEBUG] Bouton TAP initialisé avec listener click');
     }
 }
 
