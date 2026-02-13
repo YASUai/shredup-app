@@ -603,6 +603,12 @@
       hexes.push(document.getElementById(`hex-${i}`));
     }
     
+    // Initialize barHeights with base heights to prevent initial glitch
+    const barHeights = [];
+    for (let i = 0; i < 7; i++) {
+      barHeights.push(48 + i * 6); // Same as baseHeight calculation
+    }
+    
     // Calculate note color and glow based on cents
     // White at center (±2 cents), gradient to gray at extremes
     // Real cents range: approximately -12 to +12 (not -50 to +50)
@@ -711,19 +717,30 @@
       return NOTES[currentNoteIndex];
     }
     
+    // Smoothing factor to prevent bar glitches (lower = smoother)
+    const SMOOTH_FACTOR = 0.15;
+    
     // Update bars heights + gradient based on tuning accuracy (NO GLITCH)
     function updateBars() {
       bars.forEach((bar, i) => {
         const baseHeight = 48 + i * 6; // Base heights: 48, 54, 60, 66, 72, 78, 84
         
+        // Calculate target height
+        let targetHeight = baseHeight;
         if (i === currentNoteIndex) {
           // Active bar: height grows as note becomes more accurate
           const accuracy = Math.max(0, 1 - Math.abs(currentCents) / 12); // 1 = perfect, 0 = off by 12+ cents
           const heightBoost = accuracy * 40; // 0-40px boost based on accuracy
-          const height = baseHeight + heightBoost;
-          bar.style.height = `${Math.max(40, Math.min(100, height))}px`;
-          
-          // Gradient: white tip when accurate, gray when off
+          targetHeight = baseHeight + heightBoost;
+        }
+        
+        // Smooth transition to target height (prevents glitches)
+        barHeights[i] += (targetHeight - barHeights[i]) * SMOOTH_FACTOR;
+        const smoothHeight = Math.max(40, Math.min(100, barHeights[i]));
+        bar.style.height = `${smoothHeight}px`;
+        
+        // Apply gradient only to active bar
+        if (i === currentNoteIndex) {
           const { color } = getNoteColorAndGlow(currentCents);
           const rgbMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
           if (rgbMatch) {
@@ -734,8 +751,7 @@
             bar.style.background = `linear-gradient(180deg, rgba(${r}, ${g}, ${b}, 0.95) 0%, rgba(58, 58, 58, 1) 100%)`;
           }
         } else {
-          // Inactive bars: static height and dark gradient
-          bar.style.height = `${baseHeight}px`;
+          // Inactive bars: dark gradient
           bar.style.background = 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%)';
         }
       });
