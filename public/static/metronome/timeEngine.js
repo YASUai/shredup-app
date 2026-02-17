@@ -906,40 +906,27 @@ class MasterTimeEngine {
       const micSource = this.audioContext.createMediaStreamSource(stream);
       
       // ========================================
-      // METRONOME CLICK REJECTION FILTERS
+      // ULTRA-PRECISE METRONOME CLICK REJECTION
       // ========================================
-      // Create notch filters to eliminate metronome frequencies (600Hz, 800Hz, 1000Hz)
-      // This allows the system to detect guitar onsets while ignoring metronome clicks
+      // Analysis shows metronome uses EXACTLY 800 Hz (75%) and 1000 Hz (25%)
+      // Using Q=50 for surgical precision (±8-10 Hz bandwidth)
       
-      // High-pass filter to remove sub-bass noise (< 80Hz)
-      const highPassFilter = this.audioContext.createBiquadFilter();
-      highPassFilter.type = 'highpass';
-      highPassFilter.frequency.value = 80;
-      highPassFilter.Q.value = 0.7;
-      
-      // Notch filter #1: Remove 600 Hz (count-in clicks)
-      const notch600 = this.audioContext.createBiquadFilter();
-      notch600.type = 'notch';
-      notch600.frequency.value = 600;
-      notch600.Q.value = 20; // Narrow notch
-      
-      // Notch filter #2: Remove 800 Hz (regular beat clicks)
+      // Notch filter #1: Remove 800 Hz (regular beat clicks) - 75% of clicks
       const notch800 = this.audioContext.createBiquadFilter();
       notch800.type = 'notch';
-      notch800.frequency.value = 800;
-      notch800.Q.value = 20; // Narrow notch
+      notch800.frequency.value = 800.0; // EXACT frequency from code
+      notch800.Q.value = 50; // Ultra-narrow: ±8 Hz @ -40dB (792-808 Hz)
       
-      // Notch filter #3: Remove 1000 Hz (downbeat clicks)
+      // Notch filter #2: Remove 1000 Hz (downbeat clicks) - 25% of clicks
       const notch1000 = this.audioContext.createBiquadFilter();
       notch1000.type = 'notch';
-      notch1000.frequency.value = 1000;
-      notch1000.Q.value = 20; // Narrow notch
+      notch1000.frequency.value = 1000.0; // EXACT frequency from code
+      notch1000.Q.value = 50; // Ultra-narrow: ±10 Hz @ -40dB (990-1010 Hz)
       
-      console.log('[ONSET DETECTION] ✅ Metronome rejection filters enabled:');
-      console.log('[ONSET DETECTION]   - HPF @ 80 Hz (remove rumble)');
-      console.log('[ONSET DETECTION]   - Notch @ 600 Hz (count-in clicks)');
-      console.log('[ONSET DETECTION]   - Notch @ 800 Hz (beat clicks)');
-      console.log('[ONSET DETECTION]   - Notch @ 1000 Hz (downbeat clicks)');
+      console.log('[ONSET DETECTION] ✅ Ultra-precise metronome rejection filters:');
+      console.log('[ONSET DETECTION]   - Notch @ 800.0 Hz (Q=50, BW=±8Hz) - 75% of clicks');
+      console.log('[ONSET DETECTION]   - Notch @ 1000.0 Hz (Q=50, BW=±10Hz) - 25% of clicks');
+      console.log('[ONSET DETECTION]   - Guitar harmonics preserved (narrow surgical filtering)');
       
       // Load onset detector worklet
       await this.audioContext.audioWorklet.addModule('/static/metronome/onset-detector-processor.js');
@@ -948,14 +935,12 @@ class MasterTimeEngine {
       // Create worklet node
       const onsetDetector = new AudioWorkletNode(this.audioContext, 'onset-detector-processor');
       
-      // Audio routing: Microphone → HPF → Notch600 → Notch800 → Notch1000 → Onset Detector
-      micSource.connect(highPassFilter);
-      highPassFilter.connect(notch600);
-      notch600.connect(notch800);
+      // Audio routing: Microphone → Notch800 → Notch1000 → Onset Detector
+      micSource.connect(notch800);
       notch800.connect(notch1000);
       notch1000.connect(onsetDetector);
       
-      console.log('[ONSET DETECTION] ✅ Audio routing: Mic → Filters → Onset Detector');
+      console.log('[ONSET DETECTION] ✅ Audio routing: Mic → Ultra-Precise Filters → Onset Detector');
       
       // Store references
       this.micStream = stream;
