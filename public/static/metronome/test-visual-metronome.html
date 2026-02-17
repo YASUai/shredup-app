@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHRED UP - Métronome Visuel (Sans Son)</title>
+    <title>SHRED UP - Test Métronome (Audio + Visuel)</title>
     <style>
         * {
             margin: 0;
@@ -211,12 +211,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎸 SHRED UP - Métronome Visuel (Sans Son)</h1>
+        <h1>🎸 SHRED UP - Test Métronome (Audio + Visuel)</h1>
         
         <div class="warning">
-            🔇 <strong>MODE SILENCIEUX ACTIVÉ</strong><br>
-            Le métronome ne produit AUCUN son - uniquement des flashs visuels.<br>
-            Parfait pour tester la détection de guitare sans interférence sonore !
+            🔊 <strong>MÉTRONOME AUDIO ACTIVÉ</strong><br>
+            Paramètres calibrés pour guitare électrique avec distortion.<br>
+            Energy Threshold: 0.08 | Cooldown: 150ms<br>
+            Basé sur l'analyse de shredup-guitar-2026-02-17T17-27-34.wav
         </div>
         
         <div class="test-section">
@@ -308,17 +309,22 @@
         
         async function startTest() {
             console.log('\n[TEST] ========================================');
-            console.log('[TEST] Starting Phase 5B test - VISUAL METRONOME ONLY');
+            console.log('[TEST] Starting Phase 5B test - METRONOME WITH AUDIO + VISUAL');
             console.log('[TEST] ========================================\n');
             
-            // Start onset detection (NO SPECTRAL FILTERING - not needed without audio metronome)
+            // Start onset detection WITH CALIBRATED PARAMETERS FOR DISTORTED GUITAR
             await timeEngine.startOnsetDetection({
-                energyThreshold: 0.02,
-                cooldownMs: 60,
+                energyThreshold: 0.08,    // CALIBRATED for distorted guitar (was 0.02)
+                cooldownMs: 150,          // CALIBRATED for distorted guitar (was 60)
                 onOnsetDetected: (onset) => {
                     console.log(`[ONSET DETECTED] Time: ${onset.time.toFixed(6)}s, Energy: ${onset.energy.toFixed(6)}`);
                 }
             });
+            
+            console.log('[ONSET DETECTOR] ✅ CALIBRATED PARAMETERS LOADED');
+            console.log('[ONSET DETECTOR]   Energy Threshold: 0.08 (distorted guitar)');
+            console.log('[ONSET DETECTOR]   Cooldown: 150ms (distorted guitar)');
+            console.log('[ONSET DETECTOR]   Based on: shredup-guitar-2026-02-17T17-27-34.wav analysis\n');
             
             // Reset counter
             beatCount = 0;
@@ -331,10 +337,10 @@
             const totalBeats = countInBeats + analysisBeats;
             
             console.log('[TEST] Metronome: 120 BPM');
-            console.log('[TEST] Count-in: 4 beats (VISUAL ONLY)');
-            console.log('[TEST] Analysis: 20 beats (VISUAL ONLY)');
+            console.log('[TEST] Count-in: 4 beats (AUDIO + VISUAL)');
+            console.log('[TEST] Analysis: 20 beats (AUDIO + VISUAL)');
             console.log('[TEST] Total duration: ~' + (totalBeats * beatIntervalMs / 1000).toFixed(1) + ' seconds');
-            console.log('[TEST] 🔇 NO AUDIO CLICKS - Visual flashes only\n');
+            console.log('[TEST] 🔊 AUDIO CLICKS ENABLED\n');
             
             // UI updates
             document.getElementById('btn-start-test').disabled = true;
@@ -345,7 +351,7 @@
             // Clear timeline
             timeEngine.metronomeTimeline = [];
             
-            // Start visual metronome loop
+            // Start visual + AUDIO metronome loop
             testInterval = setInterval(() => {
                 beatCount++;
                 const isCountIn = beatCount <= countInBeats;
@@ -387,6 +393,26 @@
                     flashZone.classList.remove('flash-downbeat', 'flash-beat');
                 }, 50);
                 
+                // PLAY AUDIO CLICK
+                const scheduleAheadTime = 0.01; // 10ms ahead
+                const clickTime = audioContext.currentTime + scheduleAheadTime;
+                
+                const osc = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Frequency: 600Hz for count-in, 1000Hz for downbeat, 800Hz for other beats
+                osc.frequency.value = isCountIn ? 600 : (isDownbeat ? 1000 : 800);
+                
+                // Gain envelope (click sound)
+                gainNode.gain.setValueAtTime(0.3, clickTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, clickTime + 0.05);
+                
+                osc.start(clickTime);
+                osc.stop(clickTime + 0.05);
+                
                 // Record metronome timeline (for analysis beats only)
                 if (!isCountIn) {
                     const scheduledTime = audioContext.currentTime;
@@ -414,7 +440,7 @@
                 }
             }, beatIntervalMs);
             
-            console.log('[TEST] Visual metronome started (500ms intervals)');
+            console.log('[TEST] Audio + Visual metronome started (500ms intervals, 120 BPM)');
         }
         
         function stopTest() {
