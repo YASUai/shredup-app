@@ -504,6 +504,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeTempoSubdivision()
   initializeMetronome()
   initializeDateTime()
-  initializeGlobalKeyboardShortcuts()
-  initializeGlobalFocusManagement()
+  // TEMPORARILY DISABLED FOR DEBUGGING - These block input fields
+  // initializeGlobalKeyboardShortcuts()
+  // initializeGlobalFocusManagement()
+  console.log('⚠️ Keyboard shortcuts and focus management DISABLED for debugging')
+  console.log('✅ You should now be able to type in all input fields')
 })
