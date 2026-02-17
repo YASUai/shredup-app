@@ -509,7 +509,7 @@ function generateExercises() {
       <input 
         type="text" 
         class="exercise-name-input" 
-        defaultValue={ex.name} 
+        value={ex.name} 
         placeholder="Enter exercise name..."
       />
       <select class="sub-ryth-select">
@@ -528,7 +528,7 @@ function generateExercises() {
         </div>
       </div>
       <div class="tempo-goal-container">
-        <input type="text" class="tempo-goal-input" defaultValue={ex.tempoGoal} placeholder="---" maxlength="3" />
+        <input type="text" class="tempo-goal-input" value={ex.tempoGoal} placeholder="---" maxlength="3" />
       </div>
       <div class="exercise-param">{ex.tempsPasse}</div>
       <div class="exercise-checkbox">

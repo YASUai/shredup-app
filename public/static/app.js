@@ -500,6 +500,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // DOM Content Loaded - Initialize all modules
 document.addEventListener('DOMContentLoaded', () => {
+  // CRITICAL: Make all inputs editable by removing value binding
+  makeInputsEditable()
+  
   initializeRecordButtons()
   initializeTempoSubdivision()
   initializeMetronome()
@@ -510,3 +513,29 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('⚠️ Keyboard shortcuts and focus management DISABLED for debugging')
   console.log('✅ You should now be able to type in all input fields')
 })
+
+/**
+ * Make all inputs/textareas actually editable
+ * Remove value property binding so users can type
+ */
+function makeInputsEditable() {
+  // Find all text inputs and textareas
+  const editableElements = document.querySelectorAll(
+    'input[type="text"], textarea, select'
+  )
+  
+  editableElements.forEach(element => {
+    // Remove readonly attribute if present
+    element.removeAttribute('readonly')
+    element.removeAttribute('disabled')
+    
+    // Ensure they're focusable
+    if (!element.hasAttribute('tabindex') || element.getAttribute('tabindex') === '-1') {
+      element.removeAttribute('tabindex')
+    }
+    
+    console.log('✅ Made editable:', element.className || element.tagName)
+  })
+  
+  console.log(`✅ ${editableElements.length} inputs/textareas made editable`)
+}
