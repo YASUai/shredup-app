@@ -70,26 +70,27 @@ body {
    ================================================ */
 
 /* ================================================
-   ROOT - Enable horizontal scroll + Resizable layout
+   ROOT - Responsive layout
    ================================================ */
 
 body {
-  overflow-x: auto; /* Enable horizontal scroll */
-  overflow-y: hidden;
-  min-width: 100vw;
+  overflow-x: hidden; /* No horizontal scroll needed */
+  overflow-y: auto;
+  width: 100vw;
 }
 
 /* ================================================
-   APP CONTAINER - Grid Layout with minimum width
+   APP CONTAINER - Responsive Grid Layout
    ================================================ */
 
 .app-container {
-  min-width: 2740px; /* Changed from width to min-width */
+  width: 100%; /* Responsive width */
+  min-width: 1600px; /* Minimum to show all zones */
   height: 100vh;
   margin: 0 auto;
   display: grid;
-  /* Zone 1 (fixed) | Zone 2 (flexible) | Zones 3+4 (grouped, fixed) */
-  grid-template-columns: 400px 1fr 800px;
+  /* Zone 1 (fixed) | Zone 2 (responsive) | Zone 3 (fixed) | Zone 4 (fixed) */
+  grid-template-columns: 400px 1fr 400px 400px;
   grid-template-rows: 60px 140px 1fr;
   gap: 8px;
   background-color: var(--color-bg-primary);
@@ -580,26 +581,14 @@ body {
 }
 
 /* ================================================
-   ZONES 3+4 GROUPED CONTAINER - Column 3, Rows 2-4
-   No internal gap between zones 3 and 4
-   ================================================ */
-
-.zone-right-container {
-  grid-column: 3;
-  grid-row: 2 / 4;
-  display: grid;
-  grid-template-columns: 400px 400px; /* Zone 3 | Zone 4 */
-  gap: 0; /* NO GAP between zones 3 and 4 */
-}
-
-/* ================================================
-   METRONOME + SESSION SUMMARY (Zone 3)
+   METRONOME + SESSION SUMMARY COLUMN - Column 3, Rows 2-4
    ================================================ */
 
 .zone-metronome-tuner {
-  grid-column: 1; /* First column in container */
+  grid-column: 3;
+  grid-row: 2 / 4;
   display: grid;
-  grid-template-rows: 740px auto; /* ✅ CHANGÉ: 800px → 740px - conteneur réduit, contenu inchangé */
+  grid-template-rows: 740px auto;
   gap: 8px;
   width: 400px;
   max-width: 400px;
@@ -877,11 +866,12 @@ body {
    RIGHT COLUMN (Zone 4) - Date/Time + Tuner + Notepad
    ================================================ */
 
-/* Right Column - Second column in container */
+/* Right Column - Column 4, Rows 2-4 */
 .zone-right-top {
-  grid-column: 2; /* Second column in container */
+  grid-column: 4;
+  grid-row: 2 / 4;
   display: grid;
-  grid-template-rows: 140px 592px 1fr; /* ✅ CHANGÉ: 652px → 592px (740-140-8 = 592) pour s'aligner avec métronome 740px */
+  grid-template-rows: 140px 592px 1fr;
   gap: 8px;
 }
 
@@ -1027,41 +1017,6 @@ body {
   .app-container {
     grid-template-columns: 160px 1fr 240px 240px;
   }
-}
-
-/* ================================================
-   RESIZE HANDLES - Drag to resize zones
-   ================================================ */
-
-/* ================================================
-   RESIZE HANDLES - Attached to Zone Borders
-   ================================================ */
-
-/* Zone 1 and Zone 2 need relative positioning for handle attachment */
-.zone-left,
-.zone-practice {
-  position: relative; /* Required for absolute-positioned handles */
-}
-
-/* Base styles for resize handles - Attached to right border of parent zone */
-.resize-handle {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: -8px; /* Center on border: 8px inside + 8px outside = 16px total */
-  width: 16px; /* Doubled from 8px for easier grabbing */
-  cursor: col-resize;
-  background: transparent;
-  transition: background-color 0.2s;
-  z-index: 1000;
-}
-
-.resize-handle:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-.resize-handle:active {
-  background-color: rgba(255, 255, 255, 0.25);
 }
 
 /* ================================================

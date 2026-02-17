@@ -483,103 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Keyboard shortcuts will be initialized here from scratch
 })
 
-/**
- * Initialize Drag-to-Resize for Zone Borders
- * Only the dragged zone changes size, others use 1fr or stay fixed
- */
-function initializeResizeHandles() {
-  const appContainer = document.querySelector('.app-container')
-  if (!appContainer) return
-  
-  const handle1 = document.getElementById('resize-handle-1-2')
-  const handle2 = document.getElementById('resize-handle-2-3')
-  
-  // Handle 1: Resize Zone 1 only (Zone 2 takes remaining space with 1fr)
-  if (handle1) {
-    setupResizeHandleSingle(handle1, appContainer, {
-      columnIndex: 0,
-      minWidth: 200,
-      maxWidth: 800,
-      template: (width) => `${width}px 1fr 800px` // Zone 1 | Zone 2 (flex) | Zones 3+4 (fixed)
-    })
-  }
-  
-  // Handle 2: Resize Zones 3+4 container (Zone 2 still uses 1fr)
-  if (handle2) {
-    setupResizeHandleSingle(handle2, appContainer, {
-      columnIndex: 2,
-      minWidth: 600, // Min 600px for zones 3+4 together
-      maxWidth: 1000, // Max 1000px for zones 3+4 together
-      template: (width, zone1Width) => `${zone1Width}px 1fr ${width}px` // Zone 1 | Zone 2 (flex) | Zones 3+4
-    })
-  }
-  
-  console.log('✅ Resize handles initialized (single-zone resize)')
-}
-
-/**
- * Setup resize handle that only affects ONE zone
- */
-function setupResizeHandleSingle(handle, appContainer, config) {
-  let isResizing = false
-  let startX = 0
-  let startWidth = 0
-  let zone1Width = 400 // Track Zone 1 width for Handle 2
-  
-  handle.addEventListener('mousedown', (e) => {
-    isResizing = true
-    startX = e.clientX
-    
-    // Get current width of the target column
-    const computedStyle = window.getComputedStyle(appContainer)
-    const columns = computedStyle.gridTemplateColumns.split(' ')
-    
-    // Parse widths
-    const widths = columns.map(col => parseFloat(col))
-    startWidth = widths[config.columnIndex]
-    zone1Width = widths[0] // Always track Zone 1 for Handle 2
-    
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-    
-    e.preventDefault()
-  })
-  
-  document.addEventListener('mousemove', (e) => {
-    if (!isResizing) return
-    
-    const deltaX = e.clientX - startX
-    
-    // Calculate new width with constraints (only for this zone)
-    let newWidth
-    if (config.columnIndex === 0) {
-      // Zone 1: drag right = increase
-      newWidth = Math.max(config.minWidth, Math.min(config.maxWidth, startWidth + deltaX))
-    } else if (config.columnIndex === 2) {
-      // Zones 3+4: drag left = increase (reverse direction)
-      newWidth = Math.max(config.minWidth, Math.min(config.maxWidth, startWidth - deltaX))
-    }
-    
-    // Apply new template
-    if (config.columnIndex === 0) {
-      appContainer.style.gridTemplateColumns = config.template(newWidth)
-    } else {
-      appContainer.style.gridTemplateColumns = config.template(newWidth, zone1Width)
-    }
-    
-    e.preventDefault()
-  })
-  
-  document.addEventListener('mouseup', () => {
-    if (isResizing) {
-      isResizing = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-  })
-}
-
-// Add resize to initialization
+// DOM Content Loaded - Initialize all modules
 document.addEventListener('DOMContentLoaded', () => {
   initializeRecordButtons()
   initializeTempoSubdivision()
@@ -587,5 +491,4 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeDateTime()
   initializeGlobalKeyboardShortcuts()
   initializeGlobalFocusManagement()
-  initializeResizeHandles() // ✅ Added
 })
