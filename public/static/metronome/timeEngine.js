@@ -1192,11 +1192,12 @@ class MasterTimeEngine {
     const variance = errors.reduce((sum, e) => sum + Math.pow(e - meanError, 2), 0) / errors.length;
     const stdDev = Math.sqrt(variance);
     
-    // Categorize matches
-    const perfect = matches.filter(m => m.absError <= 20).length;
-    const good = matches.filter(m => m.absError > 20 && m.absError <= 50).length;
-    const ok = matches.filter(m => m.absError > 50 && m.absError <= 100).length;
-    const miss = matches.filter(m => m.absError > 100).length;
+    // Categorize matches (STRICT SHREDDER STANDARDS)
+    const perfect = matches.filter(m => m.absError <= 5).length;     // ≤5ms: Studio-grade timing
+    const excellent = matches.filter(m => m.absError > 5 && m.absError <= 15).length;  // 6-15ms: Concert-ready pro
+    const good = matches.filter(m => m.absError > 15 && m.absError <= 30).length;      // 16-30ms: Solid but improvable
+    const acceptable = matches.filter(m => m.absError > 30 && m.absError <= 50).length; // 31-50ms: Audible timing
+    const needsWork = matches.filter(m => m.absError > 50).length;                     // >50ms: Clearly off
     
     // Compute score (0-100)
     const score = this._computeRhythmicScore(matches);
@@ -1221,11 +1222,12 @@ class MasterTimeEngine {
       maxAbsError,
       stdDev,
       
-      // Categories
-      perfect, // ≤ 20ms
-      good,    // 21-50ms
-      ok,      // 51-100ms
-      miss,    // > 100ms
+      // Categories (STRICT SHREDDER STANDARDS)
+      perfect,    // ≤ 5ms: Studio-grade
+      excellent,  // 6-15ms: Concert-ready pro
+      good,       // 16-30ms: Solid
+      acceptable, // 31-50ms: Audible
+      needsWork,  // > 50ms: Clearly off
       
       // Score
       score,
@@ -1252,21 +1254,21 @@ class MasterTimeEngine {
     for (const match of matches) {
       const absError = match.absError;
       
-      // Scoring curve (ms → points)
+      // Scoring curve (ms → points) - STRICT SHREDDER STANDARDS
       let points = 0;
       
-      if (absError <= 10) {
-        points = 100; // Perfect
-      } else if (absError <= 20) {
-        points = 90 + (20 - absError); // 90-100
+      if (absError <= 5) {
+        points = 100; // Perfect: Studio-grade (≤5ms)
+      } else if (absError <= 15) {
+        points = 85 + ((15 - absError) / 10) * 15; // Excellent: 85-100 (6-15ms)
+      } else if (absError <= 30) {
+        points = 65 + ((30 - absError) / 15) * 20; // Good: 65-85 (16-30ms)
       } else if (absError <= 50) {
-        points = 70 + ((50 - absError) / 30) * 20; // 70-90
+        points = 40 + ((50 - absError) / 20) * 25; // Acceptable: 40-65 (31-50ms)
       } else if (absError <= 100) {
-        points = 40 + ((100 - absError) / 50) * 30; // 40-70
-      } else if (absError <= 200) {
-        points = 10 + ((200 - absError) / 100) * 30; // 10-40
+        points = 10 + ((100 - absError) / 50) * 30; // Needs Work: 10-40 (51-100ms)
       } else {
-        points = 0; // Miss
+        points = 0; // Completely off (>100ms)
       }
       
       totalScore += points;
@@ -1303,11 +1305,12 @@ class MasterTimeEngine {
     console.log(`  Range: ${results.minError.toFixed(3)} to ${results.maxError.toFixed(3)} ms`);
     console.log(`  Worst Case: ${results.maxAbsError.toFixed(3)} ms\n`);
     
-    console.log('PERFORMANCE CATEGORIES:');
-    console.log(`  ✅ Perfect (≤20ms): ${results.perfect} (${((results.perfect / results.matched) * 100).toFixed(1)}%)`);
-    console.log(`  🟢 Good (21-50ms): ${results.good} (${((results.good / results.matched) * 100).toFixed(1)}%)`);
-    console.log(`  🟡 OK (51-100ms): ${results.ok} (${((results.ok / results.matched) * 100).toFixed(1)}%)`);
-    console.log(`  🔴 Miss (>100ms): ${results.miss} (${((results.miss / results.matched) * 100).toFixed(1)}%)\n`);
+    console.log('PERFORMANCE CATEGORIES (STRICT SHREDDER STANDARDS):');
+    console.log(`  🏆 Perfect (≤5ms): ${results.perfect} (${((results.perfect / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  ✅ Excellent (6-15ms): ${results.excellent} (${((results.excellent / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  🟢 Good (16-30ms): ${results.good} (${((results.good / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  🟡 Acceptable (31-50ms): ${results.acceptable} (${((results.acceptable / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  🔴 Needs Work (>50ms): ${results.needsWork} (${((results.needsWork / results.matched) * 100).toFixed(1)}%)\n`);
     
     console.log('OVERALL SCORE:');
     console.log(`  🎸 ${results.score}/100\n`);
