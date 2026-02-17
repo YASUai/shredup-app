@@ -401,6 +401,15 @@ function initializeGlobalFocusManagement() {
   
   // Apply to ALL buttons, links, and interactive elements in PARENT
   const applyFocusProtection = (element) => {
+    // SKIP editable elements (inputs, textareas, selects)
+    if (element.tagName === 'INPUT' || 
+        element.tagName === 'TEXTAREA' || 
+        element.tagName === 'SELECT' ||
+        element.isContentEditable) {
+      console.log('⏭️ Skipping focus protection for editable element:', element.className || element.tagName)
+      return
+    }
+    
     element.setAttribute('tabindex', '-1')
     
     // Force blur on mousedown (before click, capture phase)
@@ -414,7 +423,7 @@ function initializeGlobalFocusManagement() {
     }, true)
   }
   
-  // Apply to all interactive elements in parent
+  // Apply to all interactive elements in parent (but applyFocusProtection will skip inputs)
   document.querySelectorAll('button, a, [role="button"], .toggle, [tabindex]').forEach(applyFocusProtection)
   
   // Helper function to apply protection to any iframe
