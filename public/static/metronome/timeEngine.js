@@ -1192,12 +1192,12 @@ class MasterTimeEngine {
     const variance = errors.reduce((sum, e) => sum + Math.pow(e - meanError, 2), 0) / errors.length;
     const stdDev = Math.sqrt(variance);
     
-    // Categorize matches (STRICT SHREDDER STANDARDS)
-    const perfect = matches.filter(m => m.absError <= 5).length;     // ≤5ms: Studio-grade timing
-    const excellent = matches.filter(m => m.absError > 5 && m.absError <= 15).length;  // 6-15ms: Concert-ready pro
-    const good = matches.filter(m => m.absError > 15 && m.absError <= 30).length;      // 16-30ms: Solid but improvable
-    const acceptable = matches.filter(m => m.absError > 30 && m.absError <= 50).length; // 31-50ms: Audible timing
-    const needsWork = matches.filter(m => m.absError > 50).length;                     // >50ms: Clearly off
+    // Categorize matches (BALANCED SHREDDER STANDARDS)
+    const perfect = matches.filter(m => m.absError <= 10).length;     // ≤10ms: Studio-grade timing
+    const excellent = matches.filter(m => m.absError > 10 && m.absError <= 20).length;  // 11-20ms: Concert-ready pro
+    const good = matches.filter(m => m.absError > 20 && m.absError <= 40).length;      // 21-40ms: Solid timing
+    const acceptable = matches.filter(m => m.absError > 40 && m.absError <= 60).length; // 41-60ms: Acceptable timing
+    const needsWork = matches.filter(m => m.absError > 60).length;                     // >60ms: Off-beat
     
     // Compute score (0-100)
     const score = this._computeRhythmicScore(matches);
@@ -1222,12 +1222,12 @@ class MasterTimeEngine {
       maxAbsError,
       stdDev,
       
-      // Categories (STRICT SHREDDER STANDARDS)
-      perfect,    // ≤ 5ms: Studio-grade
-      excellent,  // 6-15ms: Concert-ready pro
-      good,       // 16-30ms: Solid
-      acceptable, // 31-50ms: Audible
-      needsWork,  // > 50ms: Clearly off
+      // Categories (BALANCED SHREDDER STANDARDS)
+      perfect,    // ≤ 10ms: Studio-grade
+      excellent,  // 11-20ms: Concert-ready pro
+      good,       // 21-40ms: Solid
+      acceptable, // 41-60ms: Acceptable
+      needsWork,  // > 60ms: Off-beat
       
       // Score
       score,
@@ -1254,19 +1254,19 @@ class MasterTimeEngine {
     for (const match of matches) {
       const absError = match.absError;
       
-      // Scoring curve (ms → points) - STRICT SHREDDER STANDARDS
+      // Scoring curve (ms → points) - BALANCED SHREDDER STANDARDS
       let points = 0;
       
-      if (absError <= 5) {
-        points = 100; // Perfect: Studio-grade (≤5ms)
-      } else if (absError <= 15) {
-        points = 85 + ((15 - absError) / 10) * 15; // Excellent: 85-100 (6-15ms)
-      } else if (absError <= 30) {
-        points = 65 + ((30 - absError) / 15) * 20; // Good: 65-85 (16-30ms)
-      } else if (absError <= 50) {
-        points = 40 + ((50 - absError) / 20) * 25; // Acceptable: 40-65 (31-50ms)
+      if (absError <= 10) {
+        points = 100; // Perfect: Studio-grade (≤10ms)
+      } else if (absError <= 20) {
+        points = 85 + ((20 - absError) / 10) * 15; // Excellent: 85-100 (11-20ms)
+      } else if (absError <= 40) {
+        points = 65 + ((40 - absError) / 20) * 20; // Good: 65-85 (21-40ms)
+      } else if (absError <= 60) {
+        points = 40 + ((60 - absError) / 20) * 25; // Acceptable: 40-65 (41-60ms)
       } else if (absError <= 100) {
-        points = 10 + ((100 - absError) / 50) * 30; // Needs Work: 10-40 (51-100ms)
+        points = 10 + ((100 - absError) / 40) * 30; // Needs Work: 10-40 (61-100ms)
       } else {
         points = 0; // Completely off (>100ms)
       }
@@ -1305,12 +1305,12 @@ class MasterTimeEngine {
     console.log(`  Range: ${results.minError.toFixed(3)} to ${results.maxError.toFixed(3)} ms`);
     console.log(`  Worst Case: ${results.maxAbsError.toFixed(3)} ms\n`);
     
-    console.log('PERFORMANCE CATEGORIES (STRICT SHREDDER STANDARDS):');
-    console.log(`  🏆 Perfect (≤5ms): ${results.perfect} (${((results.perfect / results.matched) * 100).toFixed(1)}%)`);
-    console.log(`  ✅ Excellent (6-15ms): ${results.excellent} (${((results.excellent / results.matched) * 100).toFixed(1)}%)`);
-    console.log(`  🟢 Good (16-30ms): ${results.good} (${((results.good / results.matched) * 100).toFixed(1)}%)`);
-    console.log(`  🟡 Acceptable (31-50ms): ${results.acceptable} (${((results.acceptable / results.matched) * 100).toFixed(1)}%)`);
-    console.log(`  🔴 Needs Work (>50ms): ${results.needsWork} (${((results.needsWork / results.matched) * 100).toFixed(1)}%)\n`);
+    console.log('PERFORMANCE CATEGORIES (BALANCED SHREDDER STANDARDS):');
+    console.log(`  🏆 Perfect (≤10ms): ${results.perfect} (${((results.perfect / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  ✅ Excellent (11-20ms): ${results.excellent} (${((results.excellent / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  🟢 Good (21-40ms): ${results.good} (${((results.good / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  🟡 Acceptable (41-60ms): ${results.acceptable} (${((results.acceptable / results.matched) * 100).toFixed(1)}%)`);
+    console.log(`  🔴 Needs Work (>60ms): ${results.needsWork} (${((results.needsWork / results.matched) * 100).toFixed(1)}%)\n`);
     
     console.log('OVERALL SCORE:');
     console.log(`  🎸 ${results.score}/100\n`);

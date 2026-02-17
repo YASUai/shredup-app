@@ -26,7 +26,7 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     this.currentProcessedFrame = 0;
     
     // Energy-based detection parameters
-    this.energyThreshold = 0.03; // Minimum energy for onset - REDUCED for acoustic guitar
+    this.energyThreshold = 0.02; // Minimum energy for onset - FURTHER REDUCED for acoustic guitar
     this.energyHistory = new Float32Array(10); // Running average
     this.energyHistoryIndex = 0;
     this.previousEnergy = 0;
