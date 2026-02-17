@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED UP - Test Subdivisions Rythmiques</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: #00ff00;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 5px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #00cc00;
+            transform: scale(1.05);
+        }
+        
+        button:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+        }
+        
+        button.danger {
+            background: #ff4444;
+            color: #fff;
+        }
+        
+        button.active {
+            background: #ffaa00;
+            color: #000;
+            box-shadow: 0 0 20px #ffaa00;
+        }
+        
+        .warning {
+            background: #003366;
+            border-left: 4px solid #00ccff;
+            color: #00ccff;
+            padding: 15px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .subdivision-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .subdivision-card {
+            background: #1a1a1a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .subdivision-card:hover {
+            border-color: #00ff00;
+            transform: translateY(-2px);
+        }
+        
+        .subdivision-card.selected {
+            border-color: #00ff00;
+            background: #003300;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        .subdivision-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .subdivision-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .subdivision-notes {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .score-display {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-radius: 8px;
+            margin: 20px 0;
+            text-shadow: 0 0 20px #00ff00;
+        }
+        
+        /* Visual Metronome */
+        .visual-metronome {
+            margin: 30px 0;
+            padding: 40px;
+            background: #0a0a0a;
+            border: 3px solid #00ff00;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+        
+        .visual-metronome.active {
+            display: block;
+        }
+        
+        .metronome-title {
+            color: #ffaa00;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .beat-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .beat-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #222;
+            border: 3px solid #444;
+            transition: all 0.1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .beat-dot.active {
+            background: #fff;
+            border-color: #fff;
+            box-shadow: 0 0 30px #fff, 0 0 60px #fff;
+            transform: scale(1.5);
+            color: #000;
+        }
+        
+        .beat-dot.downbeat.active {
+            background: #ff0000;
+            border-color: #ff0000;
+            box-shadow: 0 0 40px #ff0000, 0 0 80px #ff0000;
+            color: #fff;
+        }
+        
+        .flash-zone {
+            width: 100%;
+            height: 200px;
+            border: 4px solid #333;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 72px;
+            font-weight: bold;
+            background: #050505;
+            transition: all 0.05s ease-out;
+            margin-bottom: 30px;
+        }
+        
+        .flash-zone.flash-downbeat {
+            background: #ff0000;
+            border-color: #ff0000;
+            box-shadow: 0 0 50px #ff0000;
+            color: #fff;
+            transform: scale(1.02);
+        }
+        
+        .flash-zone.flash-beat {
+            background: #ffffff;
+            border-color: #ffffff;
+            box-shadow: 0 0 50px #ffffff;
+            color: #000;
+            transform: scale(1.02);
+        }
+        
+        .flash-zone.flash-subdivision {
+            background: #ffaa00;
+            border-color: #ffaa00;
+            box-shadow: 0 0 30px #ffaa00;
+            color: #000;
+            transform: scale(1.01);
+        }
+        
+        .beat-counter {
+            font-size: 24px;
+            color: #00ff00;
+            margin-top: 10px;
+        }
+        
+        .stats {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .console-output {
+            background: #000;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎸 SHRED UP - Test Subdivisions Rythmiques</h1>
+        
+        <div class="warning">
+            🔊 <strong>DÉTECTEUR CALIBRÉ</strong><br>
+            Energy Threshold: 0.08 | Cooldown: 150ms | Guitare distortion<br>
+            Métronome audio + visuel | Test de précision rythmique avancée
+        </div>
+        
+        <!-- Subdivision Selector -->
+        <div class="test-section">
+            <h2>🎼 Sélectionnez la subdivision à tester</h2>
+            <div class="subdivision-selector">
+                <div class="subdivision-card" data-subdivision="quarter" onclick="selectSubdivision('quarter')">
+                    <div class="subdivision-icon">♩</div>
+                    <div class="subdivision-name">Noires</div>
+                    <div class="subdivision-notes">Quarter notes<br>1 note / temps</div>
+                </div>
+                
+                <div class="subdivision-card selected" data-subdivision="eighth" onclick="selectSubdivision('eighth')">
+                    <div class="subdivision-icon">♪</div>
+                    <div class="subdivision-name">Croches</div>
+                    <div class="subdivision-notes">Eighth notes<br>2 notes / temps</div>
+                </div>
+                
+                <div class="subdivision-card" data-subdivision="sixteenth" onclick="selectSubdivision('sixteenth')">
+                    <div class="subdivision-icon">♬</div>
+                    <div class="subdivision-name">Doubles Croches</div>
+                    <div class="subdivision-notes">Sixteenth notes<br>4 notes / temps</div>
+                </div>
+                
+                <div class="subdivision-card" data-subdivision="triplet" onclick="selectSubdivision('triplet')">
+                    <div class="subdivision-icon">⅗</div>
+                    <div class="subdivision-name">Triolets</div>
+                    <div class="subdivision-notes">Triplets<br>3 notes / temps</div>
+                </div>
+                
+                <div class="subdivision-card" data-subdivision="sextuplet" onclick="selectSubdivision('sextuplet')">
+                    <div class="subdivision-icon">⅙</div>
+                    <div class="subdivision-name">Sextolets</div>
+                    <div class="subdivision-notes">Sextuplets<br>6 notes / temps</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎯 Configuration du test</h2>
+            <p style="margin-bottom: 15px;">
+                <strong>Subdivision sélectionnée :</strong> <span id="selected-subdivision-display">Croches (2 notes/temps)</span><br>
+                <strong>Tempo :</strong> 120 BPM<br>
+                <strong>Durée :</strong> 4 temps de préparation + 20 temps analysés
+            </p>
+            
+            <button id="btn-init" onclick="initAudio()">Initialize AudioContext & Time Engine</button>
+            <button id="btn-start-test" disabled onclick="startTest()">Start Test</button>
+            <button id="btn-stop-test" class="danger" disabled onclick="stopTest()">Stop Test</button>
+            
+            <div class="stats" id="test-stats" style="display: none;">
+                <strong>Status:</strong> <span id="status-text">Not started</span><br>
+                <strong>Detected Onsets:</strong> <span id="onset-count">0</span><br>
+                <strong>Expected Notes:</strong> <span id="expected-notes">0</span>
+            </div>
+        </div>
+        
+        <!-- Visual Metronome -->
+        <div class="visual-metronome" id="visual-metronome">
+            <div class="metronome-title" id="metronome-title">🎵 Métronome Audio + Visuel</div>
+            
+            <div class="beat-indicators" id="beat-indicators">
+                <!-- Will be populated dynamically based on subdivision -->
+            </div>
+            
+            <div class="flash-zone" id="flash-zone">
+                <div id="beat-display">—</div>
+                <div class="beat-counter" id="beat-counter">Beat 0/20</div>
+            </div>
+        </div>
+        
+        <!-- Score Display -->
+        <div class="score-display" id="score-display">--/100</div>
+        
+        <!-- Console Output -->
+        <div class="console-output" id="console-output">
+            Console output will appear here...
+        </div>
+    </div>
+    
+    <script src="/static/metronome/timeEngine.js"></script>
+    <script>
+        let audioContext = null;
+        let timeEngine = null;
+        let testInterval = null;
+        let beatCount = 0;
+        let tickCount = 0;
+        let selectedSubdivision = 'eighth'; // Default
+        
+        const subdivisionConfig = {
+            quarter: { name: 'Noires (Quarter)', notesPerBeat: 1, icon: '♩' },
+            eighth: { name: 'Croches (Eighth)', notesPerBeat: 2, icon: '♪' },
+            sixteenth: { name: 'Doubles Croches (Sixteenth)', notesPerBeat: 4, icon: '♬' },
+            triplet: { name: 'Triolets (Triplets)', notesPerBeat: 3, icon: '⅗' },
+            sextuplet: { name: 'Sextolets (Sextuplets)', notesPerBeat: 6, icon: '⅙' }
+        };
+        
+        // Intercept console.log
+        const originalLog = console.log;
+        const consoleOutput = document.getElementById('console-output');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            consoleOutput.textContent += message + '\n';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        };
+        
+        function selectSubdivision(subdivision) {
+            selectedSubdivision = subdivision;
+            
+            // Update UI
+            document.querySelectorAll('.subdivision-card').forEach(card => {
+                if (card.dataset.subdivision === subdivision) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+            
+            const config = subdivisionConfig[subdivision];
+            document.getElementById('selected-subdivision-display').textContent = config.name + ' (' + config.notesPerBeat + ' notes/temps)';
+            
+            console.log('[SUBDIVISION] Selected:', config.name);
+        }
+        
+        async function initAudio() {
+            try {
+                console.log('[INIT] Creating AudioContext...');
+                audioContext = new AudioContext();
+                console.log('[INIT] AudioContext created:', {
+                    sampleRate: audioContext.sampleRate,
+                    currentTime: audioContext.currentTime,
+                    state: audioContext.state
+                });
+                
+                console.log('[INIT] Creating MasterTimeEngine...');
+                timeEngine = new MasterTimeEngine(audioContext);
+                
+                document.getElementById('btn-init').disabled = true;
+                document.getElementById('btn-start-test').disabled = false;
+                document.getElementById('test-stats').style.display = 'block';
+                document.getElementById('status-text').textContent = 'Ready';
+                
+                console.log('[INIT] ✅ Ready to start test');
+            } catch (error) {
+                console.error('[INIT] ❌ Error:', error);
+            }
+        }
+        
+        async function startTest() {
+            const config = subdivisionConfig[selectedSubdivision];
+            
+            console.log('\n[TEST] ========================================');
+            console.log('[TEST] TEST SUBDIVISIONS - ' + config.name.toUpperCase());
+            console.log('[TEST] ========================================\n');
+            
+            // Start onset detection WITH CALIBRATED PARAMETERS
+            await timeEngine.startOnsetDetection({
+                energyThreshold: 0.08,
+                cooldownMs: 150,
+                onOnsetDetected: (onset) => {
+                    console.log(`[ONSET] Time: ${onset.time.toFixed(6)}s, Energy: ${onset.energy.toFixed(6)}`);
+                }
+            });
+            
+            console.log('[DETECTOR] Energy: 0.08 | Cooldown: 150ms | Distorted guitar');
+            console.log('[SUBDIVISION] ' + config.name + ' - ' + config.notesPerBeat + ' notes per beat\n');
+            
+            // Reset counters
+            beatCount = 0;
+            tickCount = 0;
+            
+            // Test parameters
+            const BPM = 120;
+            const beatIntervalMs = 60000 / BPM; // 500ms
+            const tickIntervalMs = beatIntervalMs / config.notesPerBeat;
+            const countInBeats = 4;
+            const analysisBeats = 20;
+            const totalBeats = countInBeats + analysisBeats;
+            const expectedNotes = analysisBeats * config.notesPerBeat;
+            
+            console.log('[TEST] Tempo: 120 BPM');
+            console.log('[TEST] Beat interval: ' + beatIntervalMs + 'ms');
+            console.log('[TEST] Tick interval: ' + tickIntervalMs.toFixed(2) + 'ms');
+            console.log('[TEST] Count-in: 4 beats');
+            console.log('[TEST] Analysis: 20 beats');
+            console.log('[TEST] Expected notes: ' + expectedNotes + '\n');
+            
+            document.getElementById('expected-notes').textContent = expectedNotes;
+            
+            // Update UI
+            document.getElementById('btn-start-test').disabled = true;
+            document.getElementById('btn-stop-test').disabled = false;
+            document.getElementById('status-text').textContent = 'Testing...';
+            document.getElementById('visual-metronome').classList.add('active');
+            document.getElementById('metronome-title').textContent = '🎵 ' + config.icon + ' ' + config.name;
+            
+            // Generate beat indicators
+            const beatIndicators = document.getElementById('beat-indicators');
+            beatIndicators.innerHTML = '';
+            for (let i = 0; i < config.notesPerBeat; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'beat-dot' + (i === 0 ? ' downbeat' : '');
+                dot.dataset.tick = i;
+                dot.textContent = (i + 1);
+                beatIndicators.appendChild(dot);
+            }
+            
+            // Clear timeline
+            timeEngine.metronomeTimeline = [];
+            
+            // Start metronome with subdivision ticks
+            testInterval = setInterval(() => {
+                tickCount++;
+                const currentBeat = Math.floor((tickCount - 1) / config.notesPerBeat) + 1;
+                const tickInBeat = ((tickCount - 1) % config.notesPerBeat);
+                const isCountIn = currentBeat <= countInBeats;
+                const isBeatStart = (tickInBeat === 0);
+                const isDownbeat = (currentBeat % 4 === 1 && isBeatStart);
+                
+                // Visual flash
+                const flashZone = document.getElementById('flash-zone');
+                const beatDisplay = document.getElementById('beat-display');
+                const beatCounter = document.getElementById('beat-counter');
+                
+                if (isDownbeat) {
+                    flashZone.classList.add('flash-downbeat');
+                } else if (isBeatStart) {
+                    flashZone.classList.add('flash-beat');
+                } else {
+                    flashZone.classList.add('flash-subdivision');
+                }
+                
+                beatDisplay.textContent = currentBeat + '.' + (tickInBeat + 1);
+                
+                // Update beat counter
+                if (isCountIn) {
+                    beatCounter.textContent = `Count-in: ${currentBeat}/${countInBeats}`;
+                } else {
+                    const analysisBeat = currentBeat - countInBeats;
+                    beatCounter.textContent = `Beat ${analysisBeat}/${analysisBeats}`;
+                }
+                
+                // Update beat indicators
+                const beatDots = document.querySelectorAll('.beat-dot');
+                beatDots.forEach((dot, idx) => {
+                    if (idx === tickInBeat) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+                
+                // Remove flash
+                setTimeout(() => {
+                    flashZone.classList.remove('flash-downbeat', 'flash-beat', 'flash-subdivision');
+                }, 50);
+                
+                // PLAY AUDIO CLICK
+                const clickTime = audioContext.currentTime + 0.01;
+                const osc = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Different frequencies for beat vs subdivision
+                if (isBeatStart) {
+                    osc.frequency.value = isCountIn ? 600 : (isDownbeat ? 1000 : 800);
+                    gainNode.gain.setValueAtTime(0.3, clickTime);
+                } else {
+                    osc.frequency.value = 500;
+                    gainNode.gain.setValueAtTime(0.15, clickTime);
+                }
+                
+                gainNode.gain.exponentialRampToValueAtTime(0.01, clickTime + 0.03);
+                
+                osc.start(clickTime);
+                osc.stop(clickTime + 0.03);
+                
+                // Record timeline (analysis only)
+                if (!isCountIn) {
+                    const scheduledTime = audioContext.currentTime;
+                    timeEngine.metronomeTimeline.push({
+                        tickIndex: tickCount - (countInBeats * config.notesPerBeat) - 1,
+                        scheduledTime: scheduledTime,
+                        actualPlayTime: scheduledTime,
+                        bpm: BPM,
+                        subdivision: selectedSubdivision
+                    });
+                    
+                    if (currentBeat === countInBeats + 1 && tickInBeat === 0) {
+                        timeEngine.analysisStartTime = scheduledTime;
+                        console.log('[TEST] Analysis start:', scheduledTime.toFixed(6), 's');
+                    }
+                }
+                
+                // Update UI
+                document.getElementById('onset-count').textContent = timeEngine.detectedOnsets.length;
+                
+                // Stop after all ticks
+                if (currentBeat >= totalBeats && isBeatStart) {
+                    stopTest();
+                }
+            }, tickIntervalMs);
+            
+            console.log('[TEST] Metronome started (' + tickIntervalMs.toFixed(2) + 'ms intervals)');
+        }
+        
+        function stopTest() {
+            console.log('\n[TEST] Stopping test...');
+            
+            if (testInterval) {
+                clearInterval(testInterval);
+                testInterval = null;
+            }
+            
+            // Stop onset detection
+            timeEngine.stopOnsetDetection();
+            
+            // Hide visual metronome
+            document.getElementById('visual-metronome').classList.remove('active');
+            
+            // Analyze results
+            console.log('[TEST] Running timing analysis...');
+            const results = timeEngine.analyzeRhythmicTiming();
+            
+            if (results) {
+                document.getElementById('score-display').textContent = results.score + '/100';
+            }
+            
+            // UI updates
+            document.getElementById('btn-start-test').disabled = false;
+            document.getElementById('btn-stop-test').disabled = true;
+            document.getElementById('status-text').textContent = 'Test complete';
+            
+            console.log('\n[TEST] ========================================');
+            console.log('[TEST] Test complete - Check results above');
+            console.log('[TEST] ========================================\n');
+        }
+    </script>
+</body>
+</html>
