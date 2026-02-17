@@ -390,10 +390,10 @@ app.get('/', (c) => {
             Graph visualization
           </div>
         </div>
+        
+        {/* Resize Handle 1↔2 - ATTACHED to Zone 1 right border */}
+        <div class="resize-handle" id="resize-handle-1-2"></div>
       </div>
-
-      {/* Resize Handle between Zone 1 and Zone 2 */}
-      <div class="resize-handle" id="resize-handle-1-2"></div>
 
       {/* FOCUS POINTS - Distinct Block ABOVE Exercise List */}
       <div class="zone-focus">
@@ -425,6 +425,9 @@ app.get('/', (c) => {
         <div class="exercise-list">
           {generateExercises()}
         </div>
+        
+        {/* Resize Handle 2↔3 - ATTACHED to Zone 2 right border */}
+        <div class="resize-handle" id="resize-handle-2-3"></div>
       </div>
 
       {/* METRONOME + SESSION SUMMARY COLUMN - Stacked Vertically */}

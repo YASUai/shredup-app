@@ -484,33 +484,63 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 /**
- * Initialize Drag-to-Resize between Zone 1 and Zone 2
- * Allows user to drag the handle to resize the sidebar and exercise list
+ * Initialize Drag-to-Resize for Zone Borders
+ * Handles are attached to zone borders and follow them during resize
  */
 function initializeResizeHandles() {
-  const handle = document.getElementById('resize-handle-1-2')
-  if (!handle) return
-  
   const appContainer = document.querySelector('.app-container')
   if (!appContainer) return
   
+  const handle1 = document.getElementById('resize-handle-1-2')
+  const handle2 = document.getElementById('resize-handle-2-3')
+  
+  // Setup Handle 1 (Zone 1 ↔ Zone 2)
+  if (handle1) {
+    setupResizeHandle(handle1, appContainer, {
+      zone1Selector: '.zone-left',
+      zone2Selector: '.zone-focus',
+      zone1Min: 200,
+      zone1Max: 800,
+      zone2Min: 800,
+      zone2Max: 2000,
+      zone1Index: 0, // Column 0 in grid
+      zone2Index: 1, // Column 1 in grid
+    })
+  }
+  
+  // Setup Handle 2 (Zone 2 ↔ Zone 3)
+  if (handle2) {
+    setupResizeHandle(handle2, appContainer, {
+      zone1Selector: '.zone-focus',
+      zone2Selector: '.zone-metronome-tuner',
+      zone1Min: 800,
+      zone1Max: 2000,
+      zone2Min: 300,
+      zone2Max: 600,
+      zone1Index: 1, // Column 1 in grid
+      zone2Index: 2, // Column 2 in grid
+    })
+  }
+  
+  console.log('✅ Resize handles initialized (attached to zone borders)')
+}
+
+/**
+ * Setup a single resize handle
+ */
+function setupResizeHandle(handle, appContainer, config) {
   let isResizing = false
   let startX = 0
-  let startWidth1 = 400 // Initial width of zone-left
-  let startWidth2 = 1540 // Initial width of zone-focus/practice
+  let startWidths = []
   
   handle.addEventListener('mousedown', (e) => {
     isResizing = true
     startX = e.clientX
     
-    // Get current widths from computed styles
-    const zoneLeft = document.querySelector('.zone-left')
-    if (zoneLeft) {
-      startWidth1 = zoneLeft.offsetWidth
-    }
-    
-    // Calculate zone 2 width (focus + practice share same column)
-    startWidth2 = 1540 // Grid column 2 width
+    // Get all current column widths
+    const computedStyle = window.getComputedStyle(appContainer)
+    const columns = computedStyle.gridTemplateColumns.split(' ')
+    startWidths = columns.map(col => parseFloat(col))
     
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
@@ -522,12 +552,17 @@ function initializeResizeHandles() {
     if (!isResizing) return
     
     const deltaX = e.clientX - startX
-    const newWidth1 = Math.max(200, Math.min(800, startWidth1 + deltaX))
-    const newWidth2 = Math.max(800, Math.min(2000, startWidth2 - deltaX))
     
-    // Update grid-template-columns
-    // Format: zone1 zone2 zone3 zone4
-    appContainer.style.gridTemplateColumns = `${newWidth1}px ${newWidth2}px 400px 400px`
+    // Calculate new widths with constraints
+    const newWidth1 = Math.max(config.zone1Min, Math.min(config.zone1Max, startWidths[config.zone1Index] + deltaX))
+    const newWidth2 = Math.max(config.zone2Min, Math.min(config.zone2Max, startWidths[config.zone2Index] - deltaX))
+    
+    // Build new grid-template-columns
+    const newColumns = [...startWidths]
+    newColumns[config.zone1Index] = newWidth1
+    newColumns[config.zone2Index] = newWidth2
+    
+    appContainer.style.gridTemplateColumns = newColumns.map(w => `${w}px`).join(' ')
     
     e.preventDefault()
   })
@@ -539,8 +574,6 @@ function initializeResizeHandles() {
       document.body.style.userSelect = ''
     }
   })
-  
-  console.log('✅ Resize handles initialized (Zone 1 ↔ Zone 2)')
 }
 
 // Add resize to initialization
