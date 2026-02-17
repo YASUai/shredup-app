@@ -482,3 +482,74 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Keyboard shortcuts will be initialized here from scratch
 })
+
+/**
+ * Initialize Drag-to-Resize between Zone 1 and Zone 2
+ * Allows user to drag the handle to resize the sidebar and exercise list
+ */
+function initializeResizeHandles() {
+  const handle = document.getElementById('resize-handle-1-2')
+  if (!handle) return
+  
+  const appContainer = document.querySelector('.app-container')
+  if (!appContainer) return
+  
+  let isResizing = false
+  let startX = 0
+  let startWidth1 = 400 // Initial width of zone-left
+  let startWidth2 = 1540 // Initial width of zone-focus/practice
+  
+  handle.addEventListener('mousedown', (e) => {
+    isResizing = true
+    startX = e.clientX
+    
+    // Get current widths from computed styles
+    const zoneLeft = document.querySelector('.zone-left')
+    if (zoneLeft) {
+      startWidth1 = zoneLeft.offsetWidth
+    }
+    
+    // Calculate zone 2 width (focus + practice share same column)
+    startWidth2 = 1540 // Grid column 2 width
+    
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    
+    e.preventDefault()
+  })
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return
+    
+    const deltaX = e.clientX - startX
+    const newWidth1 = Math.max(200, Math.min(800, startWidth1 + deltaX))
+    const newWidth2 = Math.max(800, Math.min(2000, startWidth2 - deltaX))
+    
+    // Update grid-template-columns
+    // Format: zone1 zone2 zone3 zone4
+    appContainer.style.gridTemplateColumns = `${newWidth1}px ${newWidth2}px 400px 400px`
+    
+    e.preventDefault()
+  })
+  
+  document.addEventListener('mouseup', () => {
+    if (isResizing) {
+      isResizing = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  })
+  
+  console.log('✅ Resize handles initialized (Zone 1 ↔ Zone 2)')
+}
+
+// Add resize to initialization
+document.addEventListener('DOMContentLoaded', () => {
+  initializeRecordButtons()
+  initializeTempoSubdivision()
+  initializeMetronome()
+  initializeDateTime()
+  initializeGlobalKeyboardShortcuts()
+  initializeGlobalFocusManagement()
+  initializeResizeHandles() // ✅ Added
+})

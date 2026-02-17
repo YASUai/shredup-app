@@ -392,6 +392,9 @@ app.get('/', (c) => {
         </div>
       </div>
 
+      {/* Resize Handle between Zone 1 and Zone 2 */}
+      <div class="resize-handle" id="resize-handle-1-2"></div>
+
       {/* FOCUS POINTS - Distinct Block ABOVE Exercise List */}
       <div class="zone-focus">
         <div class="focus-title">FOCUS POINTS</div>
