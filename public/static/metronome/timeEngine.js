@@ -905,6 +905,40 @@ class MasterTimeEngine {
       // Create MediaStreamSource
       const micSource = this.audioContext.createMediaStreamSource(stream);
       
+      // Check if spectral filtering is enabled
+      const enableFiltering = options.enableSpectralFiltering !== false; // Default: true
+      
+      if (enableFiltering) {
+        console.log('[ONSET DETECTION] ✅ Spectral filtering ENABLED');
+        
+        // ========================================
+        // ULTRA-PRECISE METRONOME CLICK REJECTION
+        // ========================================
+        // For guitar with cable (amplified signal)
+        // Notch filters at exact metronome frequencies
+        
+        // Notch filter #1: Remove 800 Hz (regular beat clicks) - 75% of clicks
+        const notch800 = this.audioContext.createBiquadFilter();
+        notch800.type = 'notch';
+        notch800.frequency.value = 800.0;
+        notch800.Q.value = 50; // Ultra-narrow: ±8 Hz @ -40dB
+        
+        // Notch filter #2: Remove 1000 Hz (downbeat clicks) - 25% of clicks
+        const notch1000 = this.audioContext.createBiquadFilter();
+        notch1000.type = 'notch';
+        notch1000.frequency.value = 1000.0;
+        notch1000.Q.value = 50; // Ultra-narrow: ±10 Hz @ -40dB
+        
+        console.log('[ONSET DETECTION]   - Notch @ 800.0 Hz (Q=50, BW=±8Hz)');
+        console.log('[ONSET DETECTION]   - Notch @ 1000.0 Hz (Q=50, BW=±10Hz)');
+        
+        // Store filter references
+        this.notch800 = notch800;
+        this.notch1000 = notch1000;
+      } else {
+        console.log('[ONSET DETECTION] ⚠️  Spectral filtering DISABLED (use headphones!)');
+      }
+      
       // Load onset detector worklet
       await this.audioContext.audioWorklet.addModule('/static/metronome/onset-detector-processor.js');
       console.log('[ONSET DETECTION] ✅ Onset detector worklet loaded');
@@ -912,11 +946,18 @@ class MasterTimeEngine {
       // Create worklet node
       const onsetDetector = new AudioWorkletNode(this.audioContext, 'onset-detector-processor');
       
-      // Route: Microphone → Onset Detector (NO pre-filtering)
-      // Metronome rejection will be done via spectral analysis in the processor
-      micSource.connect(onsetDetector);
-      
-      console.log('[ONSET DETECTION] ✅ Audio routing: Mic → Onset Detector (spectral rejection enabled)');
+      // Audio routing
+      if (enableFiltering) {
+        // With filters: Mic → Notch800 → Notch1000 → Onset Detector
+        micSource.connect(this.notch800);
+        this.notch800.connect(this.notch1000);
+        this.notch1000.connect(onsetDetector);
+        console.log('[ONSET DETECTION] ✅ Audio routing: Mic → Filters → Onset Detector');
+      } else {
+        // Without filters: Mic → Onset Detector (direct)
+        micSource.connect(onsetDetector);
+        console.log('[ONSET DETECTION] ✅ Audio routing: Mic → Onset Detector (direct)');
+      }
       
       // Store references
       this.micStream = stream;
