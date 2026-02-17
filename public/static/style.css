@@ -85,12 +85,12 @@ body {
 
 .app-container {
   width: 100%; /* Responsive width */
-  min-width: 1600px; /* Minimum to show all zones */
+  min-width: 1400px; /* Minimum: 300+500+300+300 = 1400px + gaps */
   height: 100vh;
   margin: 0 auto;
   display: grid;
-  /* Zone 1 (fixed) | Zone 2 (responsive) | Zone 3 (fixed) | Zone 4 (fixed) */
-  grid-template-columns: 400px 1fr 400px 400px;
+  /* Zone 1 (300px) | Zone 2 (min 500px, flexible) | Zone 3 (min 300px) | Zone 4 (min 300px) */
+  grid-template-columns: 300px minmax(500px, 1fr) minmax(300px, 400px) minmax(300px, 400px);
   grid-template-rows: 60px 140px 1fr;
   gap: 8px;
   background-color: var(--color-bg-primary);
@@ -590,8 +590,9 @@ body {
   display: grid;
   grid-template-rows: 740px auto;
   gap: 8px;
-  width: 400px;
+  min-width: 300px;
   max-width: 400px;
+  width: 100%; /* Responsive within grid */
 }
 
 /* ================================================
@@ -600,8 +601,9 @@ body {
 
 .zone-metronome {
   height: 740px;
-  width: 400px;
+  min-width: 300px;
   max-width: 400px;
+  width: 100%;
   background-color: #141414;
   border-radius: var(--radius-md);  /* ✅ CHANGÉ: 0 → var(--radius-md) pour harmoniser avec les autres modules */
   border: 1px solid var(--color-border);
