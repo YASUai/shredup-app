@@ -3,14 +3,15 @@
  * Phase 1: Visual States Only (No Real Logic)
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-  initializeRecordButtons()
-  initializeTempoSubdivision()
-  initializeMetronome()
-  initializeDateTime()
-  initializeGlobalKeyboardShortcuts()
-  initializeGlobalFocusManagement()
-})
+// COMMENTED OUT - THIS IS A DUPLICATE, SEE LINE ~502
+// document.addEventListener('DOMContentLoaded', () => {
+//   initializeRecordButtons()
+//   initializeTempoSubdivision()
+//   initializeMetronome()
+//   initializeDateTime()
+//   initializeGlobalKeyboardShortcuts()
+//   initializeGlobalFocusManagement()
+// })
 
 /**
  * Initialize REC Buttons - Per Exercise
