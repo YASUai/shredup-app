@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED UP - Métronome Visuel (Sans Son)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: #00ff00;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 5px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #00cc00;
+            transform: scale(1.05);
+        }
+        
+        button:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+        }
+        
+        button.danger {
+            background: #ff4444;
+            color: #fff;
+        }
+        
+        .warning {
+            background: #003366;
+            border-left: 4px solid #00ccff;
+            color: #00ccff;
+            padding: 15px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .score-display {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-radius: 8px;
+            margin: 20px 0;
+            text-shadow: 0 0 20px #00ff00;
+        }
+        
+        /* Visual Metronome */
+        .visual-metronome {
+            margin: 30px 0;
+            padding: 40px;
+            background: #0a0a0a;
+            border: 3px solid #00ff00;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+        
+        .visual-metronome.active {
+            display: block;
+        }
+        
+        .metronome-title {
+            color: #ffaa00;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .beat-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .beat-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #222;
+            border: 3px solid #444;
+            transition: all 0.1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .beat-dot.active {
+            background: #fff;
+            border-color: #fff;
+            box-shadow: 0 0 30px #fff, 0 0 60px #fff;
+            transform: scale(1.5);
+            color: #000;
+        }
+        
+        .beat-dot.downbeat.active {
+            background: #ff0000;
+            border-color: #ff0000;
+            box-shadow: 0 0 40px #ff0000, 0 0 80px #ff0000;
+            color: #fff;
+        }
+        
+        .flash-zone {
+            width: 100%;
+            height: 200px;
+            border: 4px solid #333;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 72px;
+            font-weight: bold;
+            background: #050505;
+            transition: all 0.05s ease-out;
+            margin-bottom: 30px;
+        }
+        
+        .flash-zone.flash-downbeat {
+            background: #ff0000;
+            border-color: #ff0000;
+            box-shadow: 0 0 50px #ff0000;
+            color: #fff;
+            transform: scale(1.02);
+        }
+        
+        .flash-zone.flash-beat {
+            background: #ffffff;
+            border-color: #ffffff;
+            box-shadow: 0 0 50px #ffffff;
+            color: #000;
+            transform: scale(1.02);
+        }
+        
+        .beat-counter {
+            font-size: 24px;
+            color: #00ff00;
+            margin-top: 10px;
+        }
+        
+        .stats {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .console-output {
+            background: #000;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎸 SHRED UP - Métronome Visuel (Sans Son)</h1>
+        
+        <div class="warning">
+            🔇 <strong>MODE SILENCIEUX ACTIVÉ</strong><br>
+            Le métronome ne produit AUCUN son - uniquement des flashs visuels.<br>
+            Parfait pour tester la détection de guitare sans interférence sonore !
+        </div>
+        
+        <div class="test-section">
+            <h2>🎯 Configuration</h2>
+            <p style="margin-bottom: 15px;">
+                <strong>Test :</strong> 120 BPM, 4 temps de préparation, 20 temps analysés (~12 secondes)<br>
+                <strong>Méthode :</strong> Métronome visuel uniquement, détection audio guitare
+            </p>
+            
+            <button id="btn-init" onclick="initAudio()">Initialize AudioContext & Time Engine</button>
+            <button id="btn-start-test" disabled onclick="startTest()">Start Test (120 BPM, 20 beats)</button>
+            <button id="btn-stop-test" class="danger" disabled onclick="stopTest()">Stop Test</button>
+            
+            <div class="stats" id="test-stats" style="display: none;">
+                <strong>Status:</strong> <span id="status-text">Not started</span><br>
+                <strong>Detected Onsets:</strong> <span id="onset-count">0</span>
+            </div>
+        </div>
+        
+        <!-- Visual Metronome -->
+        <div class="visual-metronome" id="visual-metronome">
+            <div class="metronome-title">🔇 Métronome Silencieux</div>
+            
+            <div class="beat-indicators" id="beat-indicators">
+                <div class="beat-dot downbeat" data-beat="1">1</div>
+                <div class="beat-dot" data-beat="2">2</div>
+                <div class="beat-dot" data-beat="3">3</div>
+                <div class="beat-dot" data-beat="4">4</div>
+            </div>
+            
+            <div class="flash-zone" id="flash-zone">
+                <div id="beat-display">—</div>
+                <div class="beat-counter" id="beat-counter">Beat 0/20</div>
+            </div>
+        </div>
+        
+        <!-- Score Display -->
+        <div class="score-display" id="score-display">--/100</div>
+        
+        <!-- Console Output -->
+        <div class="console-output" id="console-output">
+            Console output will appear here...
+        </div>
+    </div>
+    
+    <script src="/static/metronome/timeEngine.js"></script>
+    <script>
+        let audioContext = null;
+        let timeEngine = null;
+        let testInterval = null;
+        let beatCount = 0;
+        
+        // Intercept console.log
+        const originalLog = console.log;
+        const consoleOutput = document.getElementById('console-output');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            consoleOutput.textContent += message + '\n';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        };
+        
+        async function initAudio() {
+            try {
+                console.log('[INIT] Creating AudioContext...');
+                audioContext = new AudioContext();
+                console.log('[INIT] AudioContext created:', {
+                    sampleRate: audioContext.sampleRate,
+                    currentTime: audioContext.currentTime,
+                    state: audioContext.state
+                });
+                
+                console.log('[INIT] Creating MasterTimeEngine...');
+                timeEngine = new MasterTimeEngine(audioContext);
+                
+                document.getElementById('btn-init').disabled = true;
+                document.getElementById('btn-start-test').disabled = false;
+                document.getElementById('test-stats').style.display = 'block';
+                document.getElementById('status-text').textContent = 'Ready';
+                
+                console.log('[INIT] ✅ Ready to start test');
+            } catch (error) {
+                console.error('[INIT] ❌ Error:', error);
+            }
+        }
+        
+        async function startTest() {
+            console.log('\n[TEST] ========================================');
+            console.log('[TEST] Starting Phase 5B test - VISUAL METRONOME ONLY');
+            console.log('[TEST] ========================================\n');
+            
+            // Start onset detection (NO SPECTRAL FILTERING - not needed without audio metronome)
+            await timeEngine.startOnsetDetection({
+                energyThreshold: 0.02,
+                cooldownMs: 60,
+                onOnsetDetected: (onset) => {
+                    console.log(`[ONSET DETECTED] Time: ${onset.time.toFixed(6)}s, Energy: ${onset.energy.toFixed(6)}`);
+                }
+            });
+            
+            // Reset counter
+            beatCount = 0;
+            
+            // Visual metronome parameters
+            const BPM = 120;
+            const beatIntervalMs = (60000 / BPM); // 500ms at 120 BPM
+            const countInBeats = 4;
+            const analysisBeats = 20;
+            const totalBeats = countInBeats + analysisBeats;
+            
+            console.log('[TEST] Metronome: 120 BPM');
+            console.log('[TEST] Count-in: 4 beats (VISUAL ONLY)');
+            console.log('[TEST] Analysis: 20 beats (VISUAL ONLY)');
+            console.log('[TEST] Total duration: ~' + (totalBeats * beatIntervalMs / 1000).toFixed(1) + ' seconds');
+            console.log('[TEST] 🔇 NO AUDIO CLICKS - Visual flashes only\n');
+            
+            // UI updates
+            document.getElementById('btn-start-test').disabled = true;
+            document.getElementById('btn-stop-test').disabled = false;
+            document.getElementById('status-text').textContent = 'Testing...';
+            document.getElementById('visual-metronome').classList.add('active');
+            
+            // Clear timeline
+            timeEngine.metronomeTimeline = [];
+            
+            // Start visual metronome loop
+            testInterval = setInterval(() => {
+                beatCount++;
+                const isCountIn = beatCount <= countInBeats;
+                const isDownbeat = (beatCount % 4 === 1);
+                
+                // Visual flash
+                const flashZone = document.getElementById('flash-zone');
+                const beatDisplay = document.getElementById('beat-display');
+                const beatCounter = document.getElementById('beat-counter');
+                
+                if (isDownbeat) {
+                    flashZone.classList.add('flash-downbeat');
+                    beatDisplay.textContent = beatCount;
+                } else {
+                    flashZone.classList.add('flash-beat');
+                    beatDisplay.textContent = beatCount;
+                }
+                
+                // Update beat counter
+                if (isCountIn) {
+                    beatCounter.textContent = `Count-in: ${beatCount}/${countInBeats}`;
+                } else {
+                    const analysisBeat = beatCount - countInBeats;
+                    beatCounter.textContent = `Beat ${analysisBeat}/${analysisBeats}`;
+                }
+                
+                // Update beat indicators
+                const beatDots = document.querySelectorAll('.beat-dot');
+                beatDots.forEach((dot, idx) => {
+                    if (idx === (beatCount - 1) % 4) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+                
+                // Remove flash after 50ms
+                setTimeout(() => {
+                    flashZone.classList.remove('flash-downbeat', 'flash-beat');
+                }, 50);
+                
+                // Record metronome timeline (for analysis beats only)
+                if (!isCountIn) {
+                    const scheduledTime = audioContext.currentTime;
+                    timeEngine.metronomeTimeline.push({
+                        tickIndex: beatCount - countInBeats - 1,
+                        scheduledTime: scheduledTime,
+                        actualPlayTime: scheduledTime, // No audio, so same
+                        bpm: BPM,
+                        subdivision: 'quarter'
+                    });
+                    
+                    // Set analysis start time on first analysis beat
+                    if (beatCount === countInBeats + 1) {
+                        timeEngine.analysisStartTime = scheduledTime;
+                        console.log('[TEST] Analysis start time set:', scheduledTime.toFixed(6), 's');
+                    }
+                }
+                
+                // Update UI
+                document.getElementById('onset-count').textContent = timeEngine.detectedOnsets.length;
+                
+                // Stop after all beats
+                if (beatCount >= totalBeats) {
+                    stopTest();
+                }
+            }, beatIntervalMs);
+            
+            console.log('[TEST] Visual metronome started (500ms intervals)');
+        }
+        
+        function stopTest() {
+            console.log('\n[TEST] Stopping test...');
+            
+            if (testInterval) {
+                clearInterval(testInterval);
+                testInterval = null;
+            }
+            
+            // Stop onset detection
+            timeEngine.stopOnsetDetection();
+            
+            // Hide visual metronome
+            document.getElementById('visual-metronome').classList.remove('active');
+            
+            // Analyze results
+            console.log('[TEST] Running timing analysis...');
+            const results = timeEngine.analyzeRhythmicTiming();
+            
+            if (results) {
+                document.getElementById('score-display').textContent = results.score + '/100';
+            }
+            
+            // UI updates
+            document.getElementById('btn-start-test').disabled = false;
+            document.getElementById('btn-stop-test').disabled = true;
+            document.getElementById('status-text').textContent = 'Test complete';
+            
+            console.log('\n[TEST] ========================================');
+            console.log('[TEST] Test complete - Check results above');
+            console.log('[TEST] ========================================\n');
+        }
+    </script>
+</body>
+</html>
