@@ -69,8 +69,22 @@ body {
    Col 4: SESSION SUMMARY/NOTEPAD (stacked vertically)
    ================================================ */
 
+/* ================================================
+   ROOT - Enable horizontal scroll + Resizable layout
+   ================================================ */
+
+body {
+  overflow-x: auto; /* Enable horizontal scroll */
+  overflow-y: hidden;
+  min-width: 100vw;
+}
+
+/* ================================================
+   APP CONTAINER - Grid Layout with minimum width
+   ================================================ */
+
 .app-container {
-  width: 2740px;
+  min-width: 2740px; /* Changed from width to min-width */
   height: 100vh;
   margin: 0 auto;
   display: grid;
@@ -1004,6 +1018,49 @@ body {
     grid-template-columns: 160px 1fr 240px 240px;
   }
 }
+
+/* ================================================
+   RESIZE HANDLES - Drag to resize zones
+   ================================================ */
+
+.resize-handle {
+  position: relative;
+  cursor: col-resize;
+  width: 8px;
+  background: transparent;
+  transition: background-color 0.2s;
+  z-index: 1000;
+}
+
+.resize-handle:hover {
+  background-color: var(--color-accent);
+}
+
+.resize-handle:active {
+  background-color: var(--color-accent-hover);
+}
+
+/* Resize handle between zone-left and zone-focus/practice */
+.zone-left::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background-color 0.2s;
+  z-index: 1000;
+}
+
+.zone-left:hover::after {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ================================================
+   MEDIA QUERIES
+   ================================================ */
 
 @media (max-width: 1024px) {
   .app-container {
