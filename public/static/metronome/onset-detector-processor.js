@@ -25,22 +25,26 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     // Frame counter (manual, for debugging)
     this.currentProcessedFrame = 0;
     
-    // Energy-based detection parameters
-    this.energyThreshold = 0.02; // Minimum energy for onset - FURTHER REDUCED for acoustic guitar
+    // Energy-based detection parameters - CALIBRATED FOR DISTORTED GUITAR
+    // Based on analysis: 35 onsets, energy range -4.2 to -3.1 dB, SNR ~48dB
+    this.energyThreshold = 0.08; // Minimum energy for onset (bypasses noise floor -52dB)
     this.energyHistory = new Float32Array(10); // Running average
     this.energyHistoryIndex = 0;
     this.previousEnergy = 0;
     
-    // Spectral flux parameters (frequency domain)
+    // Spectral flux parameters (frequency domain) - CALIBRATED FOR DISTORTED GUITAR
+    // Based on analysis: high spectral flux ~0.65 units, rich harmonics (12+ peaks)
     this.previousSpectrum = null;
-    this.spectralFluxThreshold = 0.05; // Minimum spectral change
+    this.spectralFluxThreshold = 0.45; // Minimum spectral change (distinguishes attack from sustain fizz)
     
-    // Onset cooldown (prevent double-triggering)
-    this.cooldownFrames = 2646; // ~60ms @ 44.1kHz - REDUCED for faster guitar notes
+    // Onset cooldown (prevent double-triggering) - CALIBRATED FOR DISTORTED GUITAR
+    // Based on analysis: avg spacing 412ms, min spacing ~350ms
+    this.cooldownFrames = 6615; // ~150ms @ 44.1kHz (prevents double-trigger on pick transient)
     this.framesSinceLastOnset = 9999;
     
-    // Adaptive threshold
-    this.adaptiveMultiplier = 2.5; // Onset must be 2.5x above average - BALANCED for acoustic guitar
+    // Adaptive threshold - CALIBRATED FOR DISTORTED GUITAR
+    // Based on analysis: dynamic range only 1.1dB (highly compressed)
+    this.adaptiveMultiplier = 1.15; // Low variance allows tight threshold
     
     // Listen for messages from main thread
     this.port.onmessage = (event) => {
