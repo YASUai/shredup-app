@@ -26,7 +26,7 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     this.currentProcessedFrame = 0;
     
     // Energy-based detection parameters
-    this.energyThreshold = 0.01; // Minimum energy for onset (adaptive)
+    this.energyThreshold = 0.03; // Minimum energy for onset - REDUCED for acoustic guitar
     this.energyHistory = new Float32Array(10); // Running average
     this.energyHistoryIndex = 0;
     this.previousEnergy = 0;
@@ -36,11 +36,11 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     this.spectralFluxThreshold = 0.05; // Minimum spectral change
     
     // Onset cooldown (prevent double-triggering)
-    this.cooldownFrames = 2205; // ~50ms @ 44.1kHz
+    this.cooldownFrames = 2646; // ~60ms @ 44.1kHz - REDUCED for faster guitar notes
     this.framesSinceLastOnset = 9999;
     
     // Adaptive threshold
-    this.adaptiveMultiplier = 3.0; // Onset must be 3x above average (was 1.5x)
+    this.adaptiveMultiplier = 2.5; // Onset must be 2.5x above average - BALANCED for acoustic guitar
     
     // Listen for messages from main thread
     this.port.onmessage = (event) => {
@@ -137,8 +137,8 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     const relativeIncrease = this.previousEnergy > 0.001 ? energyIncrease / this.previousEnergy : 0;
     
     const isOnset = (
-      energyIncrease > 0.02 &&                            // Absolute increase > 0.02 (significant jump)
-      relativeIncrease > 0.5 &&                           // Relative increase > 50%
+      energyIncrease > 0.01 &&                            // Absolute increase > 0.01 (lower for acoustic)
+      relativeIncrease > 0.3 &&                           // Relative increase > 30%
       rms > adaptiveThreshold &&                          // Above adaptive threshold
       this.framesSinceLastOnset >= this.cooldownFrames    // Cooldown expired
     );
