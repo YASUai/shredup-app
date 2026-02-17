@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHRED UP - Audio Recorder Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: #00ff00;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .section {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 5px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #00cc00;
+            transform: scale(1.05);
+        }
+        
+        button:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+        }
+        
+        button.danger {
+            background: #ff4444;
+            color: #fff;
+        }
+        
+        button.danger:hover:not(:disabled) {
+            background: #cc0000;
+        }
+        
+        .recording-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #666;
+            margin-right: 8px;
+            transition: all 0.3s;
+        }
+        
+        .recording-indicator.active {
+            background: #ff0000;
+            box-shadow: 0 0 20px #ff0000;
+            animation: pulse-red 1s infinite;
+        }
+        
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #00ff00;
+            text-align: center;
+            margin: 20px 0;
+            text-shadow: 0 0 20px #00ff00;
+        }
+        
+        .timer.recording {
+            color: #ff0000;
+            text-shadow: 0 0 20px #ff0000;
+        }
+        
+        .stats {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            color: #888;
+        }
+        
+        .stat-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        .info-box {
+            background: #003300;
+            border-left: 4px solid #00ff00;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning-box {
+            background: #332200;
+            border-left: 4px solid #ffaa00;
+            color: #ffaa00;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .console-output {
+            background: #000;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        audio {
+            width: 100%;
+            margin: 15px 0;
+            filter: invert(1) hue-rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ SHRED UP - Audio Recorder</h1>
+        
+        <div class="info-box">
+            <strong>📋 Instructions :</strong><br>
+            1. Cliquez "Initialize" pour accéder au micro/guitare<br>
+            2. Cliquez "Start Recording" et jouez 10-15 notes<br>
+            3. Cliquez "Stop Recording" pour terminer<br>
+            4. Écoutez la preview et téléchargez le fichier<br>
+            5. Envoyez le fichier pour analyse des onsets
+        </div>
+        
+        <div class="section">
+            <h2>🎛️ Contrôles</h2>
+            
+            <div style="margin: 20px 0;">
+                <span class="recording-indicator" id="rec-indicator"></span>
+                <span id="status-text">Not initialized</span>
+            </div>
+            
+            <div class="timer" id="timer">00:00.0</div>
+            
+            <button id="btn-init" onclick="initRecorder()">Initialize Recorder</button>
+            <button id="btn-start" disabled onclick="startRecording()">Start Recording</button>
+            <button id="btn-stop" class="danger" disabled onclick="stopRecording()">Stop Recording</button>
+            <button id="btn-download" disabled onclick="downloadRecording()">Download Recording</button>
+            
+            <div class="stats" id="stats" style="display: none;">
+                <div class="stat-item">
+                    <span class="stat-label">Status:</span>
+                    <span class="stat-value" id="stat-status">Ready</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Duration:</span>
+                    <span class="stat-value" id="stat-duration">0.0s</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">File Size:</span>
+                    <span class="stat-value" id="stat-size">0 KB</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">MIME Type:</span>
+                    <span class="stat-value" id="stat-mime">—</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section" id="preview-section" style="display: none;">
+            <h2>🎧 Preview</h2>
+            <audio id="audio-preview" controls></audio>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Console Output</h2>
+            <div class="console-output" id="console-output">
+                Console output will appear here...
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/metronome/audioRecorder.js"></script>
+    <script>
+        let audioContext = null;
+        let recorder = null;
+        let recordedBlob = null;
+        let timerInterval = null;
+        
+        // Intercept console.log
+        const originalLog = console.log;
+        const consoleOutput = document.getElementById('console-output');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            consoleOutput.textContent += message + '\n';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        };
+        
+        async function initRecorder() {
+            try {
+                console.log('[TEST] Initializing AudioContext...');
+                audioContext = new AudioContext();
+                console.log('[TEST] AudioContext created:', {
+                    sampleRate: audioContext.sampleRate,
+                    state: audioContext.state
+                });
+                
+                console.log('[TEST] Creating AudioRecorder...');
+                recorder = new AudioRecorder(audioContext);
+                
+                // Set callbacks
+                recorder.onRecordingStart = () => {
+                    updateUI('recording');
+                    startTimer();
+                };
+                
+                recorder.onRecordingStop = (duration) => {
+                    updateUI('stopped');
+                    stopTimer();
+                    document.getElementById('stat-duration').textContent = (duration / 1000).toFixed(1) + 's';
+                };
+                
+                recorder.onError = (error) => {
+                    console.error('[TEST] Recorder error:', error);
+                    alert('Recording error: ' + error.message);
+                };
+                
+                await recorder.init({
+                    sampleRate: 44100,
+                    channelCount: 1,
+                    bitrate: 128000
+                });
+                
+                console.log('[TEST] ✅ Recorder initialized');
+                
+                // Update UI
+                document.getElementById('btn-init').disabled = true;
+                document.getElementById('btn-start').disabled = false;
+                document.getElementById('status-text').textContent = 'Ready to record';
+                document.getElementById('stats').style.display = 'block';
+                document.getElementById('stat-status').textContent = 'Ready';
+                document.getElementById('stat-mime').textContent = recorder.mediaRecorder.mimeType;
+                
+            } catch (error) {
+                console.error('[TEST] ❌ Initialization failed:', error);
+                alert('Failed to initialize recorder: ' + error.message);
+            }
+        }
+        
+        function startRecording() {
+            console.log('[TEST] Starting recording...');
+            
+            if (recorder.startRecording()) {
+                console.log('[TEST] ✅ Recording started');
+            } else {
+                console.error('[TEST] ❌ Failed to start recording');
+            }
+        }
+        
+        async function stopRecording() {
+            try {
+                console.log('[TEST] Stopping recording...');
+                recordedBlob = await recorder.stopRecording();
+                
+                console.log('[TEST] ✅ Recording stopped');
+                console.log('[TEST] Blob size:', recordedBlob.size, 'bytes');
+                
+                // Update stats
+                document.getElementById('stat-size').textContent = (recordedBlob.size / 1024).toFixed(1) + ' KB';
+                
+                // Enable download
+                document.getElementById('btn-download').disabled = false;
+                
+                // Show preview
+                const audioURL = URL.createObjectURL(recordedBlob);
+                const audioPreview = document.getElementById('audio-preview');
+                audioPreview.src = audioURL;
+                document.getElementById('preview-section').style.display = 'block';
+                
+                console.log('[TEST] ✅ Preview ready');
+                
+            } catch (error) {
+                console.error('[TEST] ❌ Failed to stop recording:', error);
+            }
+        }
+        
+        function downloadRecording() {
+            if (!recordedBlob) {
+                console.error('[TEST] ❌ No recording to download');
+                return;
+            }
+            
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const filename = `shredup-guitar-${timestamp}.webm`;
+            
+            recorder.downloadRecording(recordedBlob, filename);
+            console.log('[TEST] ✅ Download initiated:', filename);
+        }
+        
+        function updateUI(state) {
+            const indicator = document.getElementById('rec-indicator');
+            const statusText = document.getElementById('status-text');
+            const btnStart = document.getElementById('btn-start');
+            const btnStop = document.getElementById('btn-stop');
+            const statStatus = document.getElementById('stat-status');
+            const timer = document.getElementById('timer');
+            
+            switch (state) {
+                case 'recording':
+                    indicator.classList.add('active');
+                    statusText.textContent = 'Recording...';
+                    btnStart.disabled = true;
+                    btnStop.disabled = false;
+                    statStatus.textContent = 'Recording';
+                    timer.classList.add('recording');
+                    break;
+                    
+                case 'stopped':
+                    indicator.classList.remove('active');
+                    statusText.textContent = 'Recording complete';
+                    btnStart.disabled = false;
+                    btnStop.disabled = true;
+                    statStatus.textContent = 'Complete';
+                    timer.classList.remove('recording');
+                    break;
+            }
+        }
+        
+        function startTimer() {
+            const startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const seconds = Math.floor(elapsed / 1000);
+                const tenths = Math.floor((elapsed % 1000) / 100);
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                
+                const display = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${tenths}`;
+                document.getElementById('timer').textContent = display;
+            }, 100);
+        }
+        
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+    </script>
+</body>
+</html>
