@@ -85,12 +85,12 @@ body {
 
 .app-container {
   width: 100%; /* Responsive width */
-  min-width: 1400px; /* Minimum: 300+500+300+300 = 1400px + gaps */
+  min-width: 1600px; /* Minimum: 300+500+400+400 = 1600px + gaps */
   height: 100vh;
   margin: 0 auto;
   display: grid;
-  /* Zone 1 (300px) | Zone 2 (min 500px, flexible) | Zone 3 (min 300px) | Zone 4 (min 300px) */
-  grid-template-columns: 300px minmax(500px, 1fr) minmax(300px, 400px) minmax(300px, 400px);
+  /* Zone 1 (300px) | Zone 2 (min 500px, flexible) | Zone 3 (400px fixed) | Zone 4 (400px fixed) */
+  grid-template-columns: 300px minmax(500px, 1fr) 400px 400px;
   grid-template-rows: 60px 140px 1fr;
   gap: 8px;
   background-color: var(--color-bg-primary);
@@ -248,6 +248,20 @@ body {
   font-size: 0.85rem;
   color: var(--color-text-secondary);
   line-height: 1.6;
+  background: transparent;
+  border: none;
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+  padding: 0;
+  min-height: 60px;
+}
+
+.focus-description:focus {
+  outline: 1px solid var(--color-border);
+  background-color: rgba(255, 255, 255, 0.02);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
 }
 
 /* ================================================
@@ -500,6 +514,39 @@ body {
   color: var(--color-text-tertiary);
 }
 
+/* Tempo Goal Input - Editable */
+.tempo-goal-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+}
+
+.tempo-goal-input {
+  width: 100%;
+  max-width: 60px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.tempo-goal-input:hover {
+  border-color: var(--color-border);
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.tempo-goal-input:focus {
+  border-color: var(--color-accent-red);
+  background-color: var(--color-bg-elevated);
+}
+
 /* 1 subdivision (default) */
 .tempo-column[data-subdivisions="1"] {
   grid-template-columns: 1fr;
@@ -590,9 +637,8 @@ body {
   display: grid;
   grid-template-rows: 740px auto;
   gap: 8px;
-  min-width: 300px;
+  width: 400px;
   max-width: 400px;
-  width: 100%; /* Responsive within grid */
 }
 
 /* ================================================
@@ -601,9 +647,8 @@ body {
 
 .zone-metronome {
   height: 740px;
-  min-width: 300px;
+  width: 400px;
   max-width: 400px;
-  width: 100%;
   background-color: #141414;
   border-radius: var(--radius-md);  /* ✅ CHANGÉ: 0 → var(--radius-md) pour harmoniser avec les autres modules */
   border: 1px solid var(--color-border);

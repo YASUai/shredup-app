@@ -395,10 +395,10 @@ app.get('/', (c) => {
       {/* FOCUS POINTS - Distinct Block ABOVE Exercise List */}
       <div class="zone-focus">
         <div class="focus-title">FOCUS POINTS</div>
-        <div class="focus-description">
-          Session intention: Work on alternate picking precision and timing.
-          Focus on clean transitions between strings while maintaining consistent tempo.
-        </div>
+        <textarea 
+          class="focus-description editable-focus"
+          placeholder="Session intention: Work on alternate picking precision and timing. Focus on clean transitions between strings while maintaining consistent tempo."
+        >Session intention: Work on alternate picking precision and timing. Focus on clean transitions between strings while maintaining consistent tempo.</textarea>
       </div>
 
       {/* PRACTICE ZONE - Exercise List (Main Workspace) */}
@@ -524,10 +524,12 @@ function generateExercises() {
       </select>
       <div class="tempo-columns-container" data-columns="1">
         <div class="tempo-column">
-          <input type="text" class="tempo-input" placeholder="---" maxlength="3" />
+          <input type="text" class="tempo-input tempo-atteints-input" placeholder="---" maxlength="3" />
         </div>
       </div>
-      <div class="exercise-param">{ex.tempoGoal}</div>
+      <div class="tempo-goal-container">
+        <input type="text" class="tempo-goal-input" value={ex.tempoGoal} placeholder="---" maxlength="3" />
+      </div>
       <div class="exercise-param">{ex.tempsPasse}</div>
       <div class="exercise-checkbox">
         <input type="checkbox" />
