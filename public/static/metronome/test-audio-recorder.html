@@ -181,7 +181,9 @@
             2. Cliquez "Start Recording" et jouez 10-15 notes<br>
             3. Cliquez "Stop Recording" pour terminer<br>
             4. Écoutez la preview et téléchargez le fichier<br>
-            5. Envoyez le fichier pour analyse des onsets
+            5. Envoyez le fichier pour analyse des onsets<br>
+            <br>
+            <strong>📊 Format :</strong> WAV 16-bit PCM, 44.1 kHz, Mono
         </div>
         
         <div class="section">
@@ -295,7 +297,7 @@
                 document.getElementById('status-text').textContent = 'Ready to record';
                 document.getElementById('stats').style.display = 'block';
                 document.getElementById('stat-status').textContent = 'Ready';
-                document.getElementById('stat-mime').textContent = recorder.mediaRecorder.mimeType;
+                document.getElementById('stat-mime').textContent = 'WAV 16-bit PCM / 44.1kHz';
                 
             } catch (error) {
                 console.error('[TEST] ❌ Initialization failed:', error);
@@ -347,7 +349,7 @@
             }
             
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-            const filename = `shredup-guitar-${timestamp}.webm`;
+            const filename = `shredup-guitar-${timestamp}.wav`;
             
             recorder.downloadRecording(recordedBlob, filename);
             console.log('[TEST] ✅ Download initiated:', filename);
