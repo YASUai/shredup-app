@@ -88,7 +88,8 @@ body {
   height: 100vh;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 400px 1540px 400px 400px;
+  /* Zone 1 (fixed) | Zone 2 (flexible) | Zones 3+4 (grouped, fixed) */
+  grid-template-columns: 400px 1fr 800px;
   grid-template-rows: 60px 140px 1fr;
   gap: 8px;
   background-color: var(--color-bg-primary);
@@ -579,13 +580,24 @@ body {
 }
 
 /* ================================================
-   METRONOME + TUNER COLUMN - Stacked Vertically
-   Column 3, Rows 2-3
+   ZONES 3+4 GROUPED CONTAINER - Column 3, Rows 2-4
+   No internal gap between zones 3 and 4
+   ================================================ */
+
+.zone-right-container {
+  grid-column: 3;
+  grid-row: 2 / 4;
+  display: grid;
+  grid-template-columns: 400px 400px; /* Zone 3 | Zone 4 */
+  gap: 0; /* NO GAP between zones 3 and 4 */
+}
+
+/* ================================================
+   METRONOME + SESSION SUMMARY (Zone 3)
    ================================================ */
 
 .zone-metronome-tuner {
-  grid-column: 3;
-  grid-row: 2 / 4;
+  grid-column: 1; /* First column in container */
   display: grid;
   grid-template-rows: 740px auto; /* ✅ CHANGÉ: 800px → 740px - conteneur réduit, contenu inchangé */
   gap: 8px;
@@ -862,14 +874,12 @@ body {
 }
 
 /* ================================================
-   RIGHT COLUMN - Date/Time + Session Summary + Notepad
-   Column 4, Rows 2-3
+   RIGHT COLUMN (Zone 4) - Date/Time + Tuner + Notepad
    ================================================ */
 
-/* Right Column - Rows 2-3 */
+/* Right Column - Second column in container */
 .zone-right-top {
-  grid-column: 4;
-  grid-row: 2 / 4;
+  grid-column: 2; /* Second column in container */
   display: grid;
   grid-template-rows: 140px 592px 1fr; /* ✅ CHANGÉ: 652px → 592px (740-140-8 = 592) pour s'aligner avec métronome 740px */
   gap: 8px;

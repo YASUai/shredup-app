@@ -430,31 +430,33 @@ app.get('/', (c) => {
         <div class="resize-handle" id="resize-handle-2-3"></div>
       </div>
 
-      {/* METRONOME + SESSION SUMMARY COLUMN - Stacked Vertically */}
-      <div class="zone-metronome-tuner">
-        {/* METRONOME - Top */}
-        <div class="zone-metronome">
-          <iframe 
-            src="/static/metronome/index.html" 
-            class="metronome-iframe"
-            title="SHRED-UP Metronome"
-            scrolling="no"
-            allow="autoplay"
-          ></iframe>
-        </div>
+      {/* ZONES 3+4 GROUPED - No gap between them */}
+      <div class="zone-right-container">
+        {/* ZONE 3: METRONOME + SESSION SUMMARY COLUMN - Stacked Vertically */}
+        <div class="zone-metronome-tuner">
+          {/* METRONOME - Top */}
+          <div class="zone-metronome">
+            <iframe 
+              src="/static/metronome/index.html" 
+              class="metronome-iframe"
+              title="SHRED-UP Metronome"
+              scrolling="no"
+              allow="autoplay"
+            ></iframe>
+          </div>
 
-        {/* SESSION SUMMARY - Bottom (was TUNER) */}
-        <div class="zone-session-summary-bottom">
-          <div class="block-title">SESSION<br />SUMMARY</div>
-          <div class="summary-placeholder">
-            Complete your practice session to see analysis and feedback here.
-            No real-time feedback during practice.
+          {/* SESSION SUMMARY - Bottom (was TUNER) */}
+          <div class="zone-session-summary-bottom">
+            <div class="block-title">SESSION<br />SUMMARY</div>
+            <div class="summary-placeholder">
+              Complete your practice session to see analysis and feedback here.
+              No real-time feedback during practice.
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* RIGHT COLUMN - Date/Time + Tuner + Notepad */}
-      <div class="zone-right-top">
+        {/* ZONE 4: RIGHT COLUMN - Date/Time + Tuner + Notepad */}
+        <div class="zone-right-top">
         {/* Date/Time Block - 140px */}
         <div class="datetime-container">
           <div class="datetime-block">
@@ -484,6 +486,9 @@ app.get('/', (c) => {
             placeholder="Take notes after your session..."
           ></textarea>
         </div>
+      </div>
+      
+      {/* End of zone-right-container (Zones 3+4 grouped) */}
       </div>
     </div>
   )

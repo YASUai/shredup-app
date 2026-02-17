@@ -485,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /**
  * Initialize Drag-to-Resize for Zone Borders
- * Handles are attached to zone borders and follow them during resize
+ * Only the dragged zone changes size, others use 1fr or stay fixed
  */
 function initializeResizeHandles() {
   const appContainer = document.querySelector('.app-container')
@@ -494,53 +494,50 @@ function initializeResizeHandles() {
   const handle1 = document.getElementById('resize-handle-1-2')
   const handle2 = document.getElementById('resize-handle-2-3')
   
-  // Setup Handle 1 (Zone 1 ↔ Zone 2)
+  // Handle 1: Resize Zone 1 only (Zone 2 takes remaining space with 1fr)
   if (handle1) {
-    setupResizeHandle(handle1, appContainer, {
-      zone1Selector: '.zone-left',
-      zone2Selector: '.zone-focus',
-      zone1Min: 200,
-      zone1Max: 800,
-      zone2Min: 800,
-      zone2Max: 2000,
-      zone1Index: 0, // Column 0 in grid
-      zone2Index: 1, // Column 1 in grid
+    setupResizeHandleSingle(handle1, appContainer, {
+      columnIndex: 0,
+      minWidth: 200,
+      maxWidth: 800,
+      template: (width) => `${width}px 1fr 800px` // Zone 1 | Zone 2 (flex) | Zones 3+4 (fixed)
     })
   }
   
-  // Setup Handle 2 (Zone 2 ↔ Zone 3)
+  // Handle 2: Resize Zones 3+4 container (Zone 2 still uses 1fr)
   if (handle2) {
-    setupResizeHandle(handle2, appContainer, {
-      zone1Selector: '.zone-focus',
-      zone2Selector: '.zone-metronome-tuner',
-      zone1Min: 800,
-      zone1Max: 2000,
-      zone2Min: 300,
-      zone2Max: 600,
-      zone1Index: 1, // Column 1 in grid
-      zone2Index: 2, // Column 2 in grid
+    setupResizeHandleSingle(handle2, appContainer, {
+      columnIndex: 2,
+      minWidth: 600, // Min 600px for zones 3+4 together
+      maxWidth: 1000, // Max 1000px for zones 3+4 together
+      template: (width, zone1Width) => `${zone1Width}px 1fr ${width}px` // Zone 1 | Zone 2 (flex) | Zones 3+4
     })
   }
   
-  console.log('✅ Resize handles initialized (attached to zone borders)')
+  console.log('✅ Resize handles initialized (single-zone resize)')
 }
 
 /**
- * Setup a single resize handle
+ * Setup resize handle that only affects ONE zone
  */
-function setupResizeHandle(handle, appContainer, config) {
+function setupResizeHandleSingle(handle, appContainer, config) {
   let isResizing = false
   let startX = 0
-  let startWidths = []
+  let startWidth = 0
+  let zone1Width = 400 // Track Zone 1 width for Handle 2
   
   handle.addEventListener('mousedown', (e) => {
     isResizing = true
     startX = e.clientX
     
-    // Get all current column widths
+    // Get current width of the target column
     const computedStyle = window.getComputedStyle(appContainer)
     const columns = computedStyle.gridTemplateColumns.split(' ')
-    startWidths = columns.map(col => parseFloat(col))
+    
+    // Parse widths
+    const widths = columns.map(col => parseFloat(col))
+    startWidth = widths[config.columnIndex]
+    zone1Width = widths[0] // Always track Zone 1 for Handle 2
     
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
@@ -553,16 +550,22 @@ function setupResizeHandle(handle, appContainer, config) {
     
     const deltaX = e.clientX - startX
     
-    // Calculate new widths with constraints
-    const newWidth1 = Math.max(config.zone1Min, Math.min(config.zone1Max, startWidths[config.zone1Index] + deltaX))
-    const newWidth2 = Math.max(config.zone2Min, Math.min(config.zone2Max, startWidths[config.zone2Index] - deltaX))
+    // Calculate new width with constraints (only for this zone)
+    let newWidth
+    if (config.columnIndex === 0) {
+      // Zone 1: drag right = increase
+      newWidth = Math.max(config.minWidth, Math.min(config.maxWidth, startWidth + deltaX))
+    } else if (config.columnIndex === 2) {
+      // Zones 3+4: drag left = increase (reverse direction)
+      newWidth = Math.max(config.minWidth, Math.min(config.maxWidth, startWidth - deltaX))
+    }
     
-    // Build new grid-template-columns
-    const newColumns = [...startWidths]
-    newColumns[config.zone1Index] = newWidth1
-    newColumns[config.zone2Index] = newWidth2
-    
-    appContainer.style.gridTemplateColumns = newColumns.map(w => `${w}px`).join(' ')
+    // Apply new template
+    if (config.columnIndex === 0) {
+      appContainer.style.gridTemplateColumns = config.template(newWidth)
+    } else {
+      appContainer.style.gridTemplateColumns = config.template(newWidth, zone1Width)
+    }
     
     e.preventDefault()
   })
