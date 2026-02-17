@@ -291,6 +291,9 @@ body {
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   margin-bottom: var(--spacing-sm);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .header-cell {
