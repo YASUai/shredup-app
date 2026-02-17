@@ -301,9 +301,15 @@ function initializeGlobalKeyboardShortcuts() {
     console.log('🎹 Global keyboard shortcuts initialized (work from anywhere)')
     
     document.addEventListener('keydown', (e) => {
-      // Ignore if typing in input/textarea
+      // Ignore if typing in input/textarea/select or contentEditable
       const target = e.target
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+      if (target && (
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' || 
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      )) {
+        console.log('⌨️ Keyboard input detected in editable field, skipping global shortcuts')
         return
       }
       
