@@ -1,6 +1,7 @@
 /**
- * AudioRecorder - Lightweight audio recording module for ShredUp
+ * AudioRecorder - High-quality audio recording module for ShredUp
  * Records microphone/guitar input and provides WAV download (16-bit/44.1kHz)
+ * Uses AudioWorklet for glitch-free recording
  * 
  * @class AudioRecorder
  */
@@ -9,14 +10,14 @@ class AudioRecorder {
     this.audioContext = audioContext;
     this.mediaStream = null;
     this.sourceNode = null;
-    this.processorNode = null;
-    this.audioChunks = [];
+    this.workletNode = null;
     this.recordedBuffers = [];
     this.isRecording = false;
     this.recordingStartTime = null;
     this.recordingDuration = 0;
     this.sampleRate = 44100;
     this.channelCount = 1;
+    this.workletLoaded = false;
     
     // Callbacks
     this.onRecordingStart = null;
@@ -43,13 +44,24 @@ class AudioRecorder {
           noiseSuppression: false,
           autoGainControl: false,
           sampleRate: this.sampleRate,
-          channelCount: this.channelCount
+          channelCount: this.channelCount,
+          // High-quality settings
+          latency: 0,
+          sampleSize: 16
         }
       };
       
       this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       console.log('[AUDIO RECORDER] ✅ Microphone access granted');
-      console.log('[AUDIO RECORDER] Sample rate:', this.sampleRate, 'Hz');
+      
+      // Load AudioWorklet module
+      if (!this.workletLoaded) {
+        await this.audioContext.audioWorklet.addModule('/static/metronome/audio-recorder-processor.js');
+        this.workletLoaded = true;
+        console.log('[AUDIO RECORDER] ✅ AudioWorklet loaded');
+      }
+      
+      console.log('[AUDIO RECORDER] Sample rate:', this.audioContext.sampleRate, 'Hz');
       console.log('[AUDIO RECORDER] Channels:', this.channelCount);
       
       return true;
@@ -80,40 +92,40 @@ class AudioRecorder {
       // Create audio nodes
       this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
       
-      // Create ScriptProcessorNode for raw PCM capture
-      const bufferSize = 4096;
-      this.processorNode = this.audioContext.createScriptProcessor(bufferSize, this.channelCount, this.channelCount);
+      // Create AudioWorklet node
+      this.workletNode = new AudioWorkletNode(this.audioContext, 'audio-recorder-processor', {
+        numberOfInputs: 1,
+        numberOfOutputs: 0,
+        channelCount: this.channelCount,
+        processorOptions: {
+          sampleRate: this.sampleRate
+        }
+      });
       
       // Reset buffers
       this.recordedBuffers = [];
       
-      // Process audio chunks
-      this.processorNode.onaudioprocess = (e) => {
-        if (!this.isRecording) return;
-        
-        // Get input buffer (mono or first channel)
-        const inputBuffer = e.inputBuffer.getChannelData(0);
-        
-        // Clone the buffer (important: copy the data)
-        const buffer = new Float32Array(inputBuffer.length);
-        buffer.set(inputBuffer);
-        
-        this.recordedBuffers.push(buffer);
-        
-        if (this.onDataAvailable) {
-          this.onDataAvailable(buffer);
+      // Handle messages from worklet
+      this.workletNode.port.onmessage = (event) => {
+        if (event.data.type === 'audiodata') {
+          this.recordedBuffers.push(event.data.buffer);
+          
+          if (this.onDataAvailable) {
+            this.onDataAvailable(event.data.buffer);
+          }
         }
       };
       
-      // Connect nodes
-      this.sourceNode.connect(this.processorNode);
-      this.processorNode.connect(this.audioContext.destination);
+      // Connect nodes (no output to destination = silent monitoring)
+      this.sourceNode.connect(this.workletNode);
       
       // Start recording
+      this.workletNode.port.postMessage({ command: 'START' });
+      
       this.isRecording = true;
       this.recordingStartTime = Date.now();
       
-      console.log('[AUDIO RECORDER] ✅ Recording started');
+      console.log('[AUDIO RECORDER] ✅ Recording started (AudioWorklet mode)');
       
       if (this.onRecordingStart) {
         this.onRecordingStart();
@@ -139,14 +151,22 @@ class AudioRecorder {
       return null;
     }
     
+    // Stop recording
+    if (this.workletNode) {
+      this.workletNode.port.postMessage({ command: 'STOP' });
+    }
+    
+    // Wait a bit for last buffers to arrive
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     this.isRecording = false;
     this.recordingDuration = Date.now() - this.recordingStartTime;
     
     // Disconnect nodes
-    if (this.processorNode) {
-      this.processorNode.disconnect();
-      this.processorNode.onaudioprocess = null;
-      this.processorNode = null;
+    if (this.workletNode) {
+      this.workletNode.disconnect();
+      this.workletNode.port.onmessage = null;
+      this.workletNode = null;
     }
     
     if (this.sourceNode) {
@@ -164,7 +184,8 @@ class AudioRecorder {
     console.log('[AUDIO RECORDER] WAV blob created:', {
       size: wavBlob.size,
       type: wavBlob.type,
-      duration: this.recordingDuration
+      duration: (this.recordingDuration / 1000).toFixed(2) + 's',
+      quality: '16-bit/44.1kHz PCM'
     });
     
     if (this.onRecordingStop) {
@@ -190,18 +211,22 @@ class AudioRecorder {
       offset += buffer.length;
     }
     
+    const actualSampleRate = this.audioContext.sampleRate;
+    const duration = (totalLength / actualSampleRate).toFixed(2);
+    
     console.log('[AUDIO RECORDER] Total samples:', totalLength);
-    console.log('[AUDIO RECORDER] Duration:', (totalLength / this.sampleRate).toFixed(2), 's');
+    console.log('[AUDIO RECORDER] Duration:', duration, 's');
+    console.log('[AUDIO RECORDER] Sample rate:', actualSampleRate, 'Hz');
     
     // Convert Float32 [-1, 1] to Int16 [-32768, 32767]
     const int16Buffer = new Int16Array(totalLength);
     for (let i = 0; i < totalLength; i++) {
-      const sample = Math.max(-1, Math.min(1, mergedBuffer[i])); // Clamp
+      const sample = Math.max(-1, Math.min(1, mergedBuffer[i])); // Clamp to prevent clipping
       int16Buffer[i] = sample < 0 ? sample * 32768 : sample * 32767;
     }
     
-    // Create WAV file
-    const wavBuffer = this._createWAVFile(int16Buffer);
+    // Create WAV file with actual sample rate
+    const wavBuffer = this._createWAVFile(int16Buffer, actualSampleRate);
     
     return new Blob([wavBuffer], { type: 'audio/wav' });
   }
@@ -210,11 +235,11 @@ class AudioRecorder {
    * Create WAV file with header
    * @private
    * @param {Int16Array} samples - PCM samples
+   * @param {number} sampleRate - Actual sample rate
    * @returns {ArrayBuffer} - Complete WAV file
    */
-  _createWAVFile(samples) {
+  _createWAVFile(samples, sampleRate) {
     const numChannels = this.channelCount;
-    const sampleRate = this.sampleRate;
     const bitsPerSample = 16;
     const bytesPerSample = bitsPerSample / 8;
     const blockAlign = numChannels * bytesPerSample;
@@ -306,9 +331,9 @@ class AudioRecorder {
       this.stopRecording();
     }
     
-    if (this.processorNode) {
-      this.processorNode.disconnect();
-      this.processorNode = null;
+    if (this.workletNode) {
+      this.workletNode.disconnect();
+      this.workletNode = null;
     }
     
     if (this.sourceNode) {
@@ -336,9 +361,10 @@ class AudioRecorder {
       isRecording: this.isRecording,
       duration: this.isRecording ? this.getCurrentDuration() : this.recordingDuration,
       buffersCount: this.recordedBuffers.length,
-      sampleRate: this.sampleRate,
+      sampleRate: this.audioContext.sampleRate,
       channelCount: this.channelCount,
-      format: 'WAV 16-bit PCM'
+      format: 'WAV 16-bit PCM',
+      engine: 'AudioWorklet (glitch-free)'
     };
   }
 }
