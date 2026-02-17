@@ -1082,7 +1082,33 @@ class MasterTimeEngine {
       }
     }
     
-    console.log('[RHYTHMIC ANALYSIS] Filtered onsets:', onsetsInWindow.length, '→', filteredOnsets.length);
+    console.log('[RHYTHMIC ANALYSIS] Filtered onsets (spacing):', onsetsInWindow.length, '→', filteredOnsets.length);
+    
+    // STEP 1.25: TEMPORAL FILTERING - Remove onsets near metronome clicks
+    console.log('[TEMPORAL FILTERING] Removing onsets near metronome clicks...');
+    const CLICK_EXCLUSION_WINDOW_MS = 30; // ±30ms around each click
+    const clickExclusionSeconds = CLICK_EXCLUSION_WINDOW_MS / 1000.0;
+    
+    // Build list of metronome click timestamps
+    const metronomeClickTimestamps = this.metronomeTimeline.map(beat => beat.scheduledTime);
+    
+    // Filter out onsets that are too close to metronome clicks
+    const temporallyFilteredOnsets = filteredOnsets.filter(onset => {
+      const isNearClick = metronomeClickTimestamps.some(clickTime => {
+        const timeDiff = Math.abs(onset.time - clickTime);
+        return timeDiff < clickExclusionSeconds;
+      });
+      
+      // Keep onset only if it's NOT near a click
+      return !isNearClick;
+    });
+    
+    const removedByTemporalFilter = filteredOnsets.length - temporallyFilteredOnsets.length;
+    console.log('[TEMPORAL FILTERING] Removed', removedByTemporalFilter, 'onsets near metronome clicks (±30ms)');
+    console.log('[TEMPORAL FILTERING] Onsets remaining:', temporallyFilteredOnsets.length);
+    
+    // Replace filteredOnsets with temporally filtered version
+    const finalFilteredOnsets = temporallyFilteredOnsets;
     
     // DEBUG: Log first 5 timestamps for alignment verification
     console.log('\n[ALIGNMENT DEBUG] Analysis start time:', analysisStartTime.toFixed(6), 's');
@@ -1092,15 +1118,15 @@ class MasterTimeEngine {
       console.log(`  Beat[${i}]: ${beat.scheduledTime.toFixed(6)}s`);
     }
     
-    console.log('\n[ALIGNMENT DEBUG] First 5 onset timestamps (after filtering):');
-    for (let i = 0; i < Math.min(5, filteredOnsets.length); i++) {
-      const onset = filteredOnsets[i];
+    console.log('\n[ALIGNMENT DEBUG] First 5 onset timestamps (after temporal filtering):');
+    for (let i = 0; i < Math.min(5, finalFilteredOnsets.length); i++) {
+      const onset = finalFilteredOnsets[i];
       console.log(`  Onset[${i}]: ${onset.time.toFixed(6)}s`);
     }
     
     // Calculate offset (if both have at least 1 element)
-    if (filteredOnsets.length > 0 && this.metronomeTimeline.length > 0) {
-      const offset = (filteredOnsets[0].time - this.metronomeTimeline[0].scheduledTime) * 1000.0;
+    if (finalFilteredOnsets.length > 0 && this.metronomeTimeline.length > 0) {
+      const offset = (finalFilteredOnsets[0].time - this.metronomeTimeline[0].scheduledTime) * 1000.0;
       console.log(`\n[ALIGNMENT DEBUG] Offset (onset[0] - beat[0]): ${offset.toFixed(3)} ms`);
       if (Math.abs(offset) > 150) {
         console.warn('[ALIGNMENT DEBUG] ⚠️ WARNING: Offset exceeds ±150ms matching window!');
@@ -1114,13 +1140,13 @@ class MasterTimeEngine {
     // STEP 1.5: AUTO-CALIBRATION - Measure global system latency
     console.log('[AUTO-CALIBRATION] Measuring system latency...');
     
-    const calibrationSamples = Math.min(10, filteredOnsets.length, this.metronomeTimeline.length);
+    const calibrationSamples = Math.min(10, finalFilteredOnsets.length, this.metronomeTimeline.length);
     let offsetSum = 0;
     let calibrationCount = 0;
     
     // For first 10 onset-beat pairs, compute raw offset (no strict tolerance)
     for (let i = 0; i < calibrationSamples; i++) {
-      const onset = filteredOnsets[i];
+      const onset = finalFilteredOnsets[i];
       const beat = this.metronomeTimeline[i]; // Assume sequential playing
       
       if (onset && beat) {
@@ -1142,7 +1168,7 @@ class MasterTimeEngine {
     }
     
     // Apply calibration to ALL onsets
-    const calibratedOnsets = filteredOnsets.map(onset => ({
+    const calibratedOnsets = finalFilteredOnsets.map(onset => ({
       ...onset,
       originalTime: onset.time,
       time: onset.time - (globalOffset / 1000.0) // Subtract latency
