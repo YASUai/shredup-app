@@ -328,8 +328,8 @@
                 
                 // Start onset detection
                 await timeEngine.startOnsetDetection({
-                    energyThreshold: 0.05,  // Increased from 0.01 to filter noise
-                    cooldownMs: 100          // Increased from 50ms to 100ms
+                    energyThreshold: 0.02,  // REDUCED for acoustic guitar pickup (was 0.05)
+                    cooldownMs: 60           // REDUCED to 60ms for faster note detection
                 });
                 
                 // UI callback for real-time onset display
