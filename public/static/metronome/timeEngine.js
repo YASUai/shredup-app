@@ -905,6 +905,42 @@ class MasterTimeEngine {
       // Create MediaStreamSource
       const micSource = this.audioContext.createMediaStreamSource(stream);
       
+      // ========================================
+      // METRONOME CLICK REJECTION FILTERS
+      // ========================================
+      // Create notch filters to eliminate metronome frequencies (600Hz, 800Hz, 1000Hz)
+      // This allows the system to detect guitar onsets while ignoring metronome clicks
+      
+      // High-pass filter to remove sub-bass noise (< 80Hz)
+      const highPassFilter = this.audioContext.createBiquadFilter();
+      highPassFilter.type = 'highpass';
+      highPassFilter.frequency.value = 80;
+      highPassFilter.Q.value = 0.7;
+      
+      // Notch filter #1: Remove 600 Hz (count-in clicks)
+      const notch600 = this.audioContext.createBiquadFilter();
+      notch600.type = 'notch';
+      notch600.frequency.value = 600;
+      notch600.Q.value = 20; // Narrow notch
+      
+      // Notch filter #2: Remove 800 Hz (regular beat clicks)
+      const notch800 = this.audioContext.createBiquadFilter();
+      notch800.type = 'notch';
+      notch800.frequency.value = 800;
+      notch800.Q.value = 20; // Narrow notch
+      
+      // Notch filter #3: Remove 1000 Hz (downbeat clicks)
+      const notch1000 = this.audioContext.createBiquadFilter();
+      notch1000.type = 'notch';
+      notch1000.frequency.value = 1000;
+      notch1000.Q.value = 20; // Narrow notch
+      
+      console.log('[ONSET DETECTION] ✅ Metronome rejection filters enabled:');
+      console.log('[ONSET DETECTION]   - HPF @ 80 Hz (remove rumble)');
+      console.log('[ONSET DETECTION]   - Notch @ 600 Hz (count-in clicks)');
+      console.log('[ONSET DETECTION]   - Notch @ 800 Hz (beat clicks)');
+      console.log('[ONSET DETECTION]   - Notch @ 1000 Hz (downbeat clicks)');
+      
       // Load onset detector worklet
       await this.audioContext.audioWorklet.addModule('/static/metronome/onset-detector-processor.js');
       console.log('[ONSET DETECTION] ✅ Onset detector worklet loaded');
@@ -912,10 +948,14 @@ class MasterTimeEngine {
       // Create worklet node
       const onsetDetector = new AudioWorkletNode(this.audioContext, 'onset-detector-processor');
       
-      // Route: Microphone → Onset Detector (do NOT connect to destination = no feedback)
-      micSource.connect(onsetDetector);
+      // Audio routing: Microphone → HPF → Notch600 → Notch800 → Notch1000 → Onset Detector
+      micSource.connect(highPassFilter);
+      highPassFilter.connect(notch600);
+      notch600.connect(notch800);
+      notch800.connect(notch1000);
+      notch1000.connect(onsetDetector);
       
-      console.log('[ONSET DETECTION] ✅ Audio routing: Mic → Onset Detector');
+      console.log('[ONSET DETECTION] ✅ Audio routing: Mic → Filters → Onset Detector');
       
       // Store references
       this.micStream = stream;
