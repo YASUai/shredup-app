@@ -51,8 +51,21 @@ class AudioRecorder {
         }
       };
       
+      // Add deviceId if specified
+      if (options.deviceId) {
+        constraints.audio.deviceId = { exact: options.deviceId };
+        console.log('[AUDIO RECORDER] Using specific device:', options.deviceId);
+      }
+      
       this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       console.log('[AUDIO RECORDER] ✅ Microphone access granted');
+      
+      // Log the actual device being used
+      const tracks = this.mediaStream.getAudioTracks();
+      if (tracks.length > 0) {
+        console.log('[AUDIO RECORDER] Device label:', tracks[0].label);
+        console.log('[AUDIO RECORDER] Device settings:', tracks[0].getSettings());
+      }
       
       // Load AudioWorklet module
       if (!this.workletLoaded) {

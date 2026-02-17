@@ -191,6 +191,15 @@
             <h2>🎛️ Contrôles</h2>
             
             <div style="margin: 20px 0;">
+                <label for="audio-source-select" style="color: #ffaa00; font-weight: bold; display: block; margin-bottom: 10px;">
+                    🎤 Sélectionner la source audio :
+                </label>
+                <select id="audio-source-select" style="width: 100%; padding: 10px; font-size: 14px; background: #1a1a1a; color: #00ff00; border: 2px solid #00ff00; border-radius: 4px; font-family: 'Courier New', monospace; margin-bottom: 20px;">
+                    <option value="">Chargement des sources...</option>
+                </select>
+            </div>
+            
+            <div style="margin: 20px 0;">
                 <span class="recording-indicator" id="rec-indicator"></span>
                 <span id="status-text">Not initialized</span>
             </div>
@@ -241,6 +250,8 @@
         let recorder = null;
         let recordedBlob = null;
         let timerInterval = null;
+        let availableDevices = [];
+        let selectedDeviceId = null;
         
         // Intercept console.log
         const originalLog = console.log;
@@ -254,6 +265,72 @@
             consoleOutput.textContent += message + '\n';
             consoleOutput.scrollTop = consoleOutput.scrollHeight;
         };
+        
+        // Enumerate audio input devices on page load
+        async function enumerateAudioDevices() {
+            try {
+                console.log('[DEVICE ENUM] Requesting device list...');
+                
+                // First request permission to access devices
+                await navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        // Stop the stream immediately, we just needed permission
+                        stream.getTracks().forEach(track => track.stop());
+                    });
+                
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                availableDevices = devices.filter(device => device.kind === 'audioinput');
+                
+                console.log('[DEVICE ENUM] Found', availableDevices.length, 'audio input devices');
+                
+                // Populate dropdown
+                const select = document.getElementById('audio-source-select');
+                select.innerHTML = '';
+                
+                if (availableDevices.length === 0) {
+                    select.innerHTML = '<option value="">Aucun périphérique audio trouvé</option>';
+                    return;
+                }
+                
+                availableDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `Périphérique ${index + 1}`;
+                    
+                    // Select default device
+                    if (index === 0 || device.deviceId === 'default') {
+                        option.selected = true;
+                        selectedDeviceId = device.deviceId;
+                    }
+                    
+                    select.appendChild(option);
+                    
+                    console.log('[DEVICE ENUM]', index + 1, ':', device.label || 'Unnamed', '(ID:', device.deviceId + ')');
+                });
+                
+                // Add change listener
+                select.addEventListener('change', (e) => {
+                    selectedDeviceId = e.target.value;
+                    console.log('[DEVICE SELECT] Selected device:', e.target.options[e.target.selectedIndex].text);
+                    console.log('[DEVICE SELECT] Device ID:', selectedDeviceId);
+                    
+                    // If recorder is already initialized, warn user
+                    if (recorder) {
+                        alert('⚠️ Source audio changée. Cliquez "Initialize Recorder" à nouveau pour appliquer.');
+                        document.getElementById('btn-init').disabled = false;
+                        document.getElementById('btn-start').disabled = true;
+                    }
+                });
+                
+            } catch (error) {
+                console.error('[DEVICE ENUM] ❌ Error:', error);
+                document.getElementById('audio-source-select').innerHTML = 
+                    '<option value="">Erreur: Accès micro refusé</option>';
+            }
+        }
+        
+        // Call on page load
+        window.addEventListener('load', enumerateAudioDevices);
         
         async function initRecorder() {
             try {
@@ -287,7 +364,8 @@
                 await recorder.init({
                     sampleRate: 44100,
                     channelCount: 1,
-                    bitrate: 128000
+                    bitrate: 128000,
+                    deviceId: selectedDeviceId  // Use selected device
                 });
                 
                 console.log('[TEST] ✅ Recorder initialized');
