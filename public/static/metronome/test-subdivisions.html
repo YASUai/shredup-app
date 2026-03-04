@@ -275,7 +275,9 @@
         <div class="warning">
             🔊 <strong>DÉTECTEUR CALIBRÉ</strong><br>
             Energy Threshold: 0.08 | Cooldown: 150ms | Guitare distortion<br>
-            Métronome audio + visuel | Test de précision rythmique avancée
+            <br>
+            ⚠️ <strong>IMPORTANT :</strong> Le métronome joue UNIQUEMENT les temps (noires).<br>
+            Vous devez jouer les subdivisions (croches, triolets, etc.) en suivant les flashes visuels oranges.
         </div>
         
         <!-- Subdivision Selector -->
@@ -319,7 +321,8 @@
             <p style="margin-bottom: 15px;">
                 <strong>Subdivision sélectionnée :</strong> <span id="selected-subdivision-display">Croches (2 notes/temps)</span><br>
                 <strong>Tempo :</strong> 120 BPM<br>
-                <strong>Durée :</strong> 4 temps de préparation + 20 temps analysés
+                <strong>Durée :</strong> 4 temps de préparation + 20 temps analysés<br>
+                <strong>Seuil d'énergie :</strong> <input type="range" id="energy-threshold-slider" min="0.02" max="0.30" step="0.01" value="0.12" style="width: 200px; vertical-align: middle;"> <span id="energy-threshold-display">0.12</span>
             </p>
             
             <button id="btn-init" onclick="initAudio()">Initialize AudioContext & Time Engine</button>
@@ -328,14 +331,21 @@
             
             <div class="stats" id="test-stats" style="display: none;">
                 <strong>Status:</strong> <span id="status-text">Not started</span><br>
+                <strong>Audio Input:</strong> <span id="audio-input-display" style="color: #ff4444;">Not initialized</span><br>
                 <strong>Detected Onsets:</strong> <span id="onset-count">0</span><br>
                 <strong>Expected Notes:</strong> <span id="expected-notes">0</span>
+            </div>
+            
+            <div class="warning" id="loopback-warning" style="display: none; background: #660000; border-color: #ff4444; color: #ff4444;">
+                ⚠️ <strong>ALERTE LOOPBACK DÉTECTÉ</strong><br>
+                Le détecteur capte l'audio du métronome au lieu de votre guitare.<br>
+                Vérifiez que vous avez bien sélectionné votre interface audio (Focusrite) comme source d'entrée.
             </div>
         </div>
         
         <!-- Visual Metronome -->
         <div class="visual-metronome" id="visual-metronome">
-            <div class="metronome-title" id="metronome-title">🎵 Métronome Audio + Visuel</div>
+            <div class="metronome-title" id="metronome-title">🎵 Métronome Audio (Noires) + Visuel (Subdivisions)</div>
             
             <div class="beat-indicators" id="beat-indicators">
                 <!-- Will be populated dynamically based on subdivision -->
@@ -537,27 +547,24 @@
                     flashZone.classList.remove('flash-downbeat', 'flash-beat', 'flash-subdivision');
                 }, 50);
                 
-                // PLAY AUDIO CLICK
-                const clickTime = audioContext.currentTime + 0.01;
-                const osc = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                osc.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                // Different frequencies for beat vs subdivision
+                // PLAY AUDIO CLICK - ONLY FOR QUARTER NOTES (BEAT START)
+                // Subdivisions are SILENT - user must play them!
                 if (isBeatStart) {
+                    const clickTime = audioContext.currentTime + 0.01;
+                    const osc = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Frequency: 600Hz for count-in, 1000Hz for downbeat, 800Hz for other beats
                     osc.frequency.value = isCountIn ? 600 : (isDownbeat ? 1000 : 800);
                     gainNode.gain.setValueAtTime(0.3, clickTime);
-                } else {
-                    osc.frequency.value = 500;
-                    gainNode.gain.setValueAtTime(0.15, clickTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, clickTime + 0.05);
+                    
+                    osc.start(clickTime);
+                    osc.stop(clickTime + 0.05);
                 }
-                
-                gainNode.gain.exponentialRampToValueAtTime(0.01, clickTime + 0.03);
-                
-                osc.start(clickTime);
-                osc.stop(clickTime + 0.03);
                 
                 // Record timeline (analysis only)
                 if (!isCountIn) {
