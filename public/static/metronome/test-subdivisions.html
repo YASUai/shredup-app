@@ -424,6 +424,36 @@
                     state: audioContext.state
                 });
                 
+                // REQUEST MICROPHONE ACCESS IMMEDIATELY
+                console.log('[INIT] Requesting microphone access...');
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        } 
+                    });
+                    
+                    // Get device label
+                    const audioTrack = stream.getAudioTracks()[0];
+                    const deviceLabel = audioTrack.label || 'Unknown device';
+                    
+                    console.log('[INIT] ✅ Microphone access granted:', deviceLabel);
+                    document.getElementById('audio-input-display').textContent = deviceLabel;
+                    document.getElementById('audio-input-display').style.color = '#00ff00';
+                    
+                    // Stop the test stream (we'll request it again in startTest)
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                } catch (micError) {
+                    console.error('[INIT] ❌ Microphone access DENIED:', micError);
+                    document.getElementById('audio-input-display').textContent = 'DENIED - Please allow microphone';
+                    document.getElementById('audio-input-display').style.color = '#ff4444';
+                    alert('⚠️ MICROPHONE ACCESS REQUIRED\n\nPlease allow microphone access to use the onset detector.\nWithout microphone, the detector will capture metronome clicks instead of your guitar.');
+                    return;
+                }
+                
                 console.log('[INIT] Creating MasterTimeEngine...');
                 timeEngine = new MasterTimeEngine(audioContext);
                 
@@ -445,17 +475,26 @@
             console.log('[TEST] TEST SUBDIVISIONS - ' + config.name.toUpperCase());
             console.log('[TEST] ========================================\n');
             
-            // Start onset detection WITH CALIBRATED PARAMETERS
+            // ADAPTIVE COOLDOWN based on subdivision
+            const BPM = 120;
+            const beatIntervalMs = 60000 / BPM; // 500ms
+            const noteIntervalMs = beatIntervalMs / config.notesPerBeat;
+            
+            // Cooldown = 35% of note interval (safe margin)
+            const adaptiveCooldownMs = Math.floor(noteIntervalMs * 0.35);
+            
+            // Start onset detection WITH ADAPTIVE PARAMETERS
             await timeEngine.startOnsetDetection({
                 energyThreshold: 0.08,
-                cooldownMs: 150,
+                cooldownMs: adaptiveCooldownMs,
                 onOnsetDetected: (onset) => {
                     console.log(`[ONSET] Time: ${onset.time.toFixed(6)}s, Energy: ${onset.energy.toFixed(6)}`);
                 }
             });
             
-            console.log('[DETECTOR] Energy: 0.08 | Cooldown: 150ms | Distorted guitar');
-            console.log('[SUBDIVISION] ' + config.name + ' - ' + config.notesPerBeat + ' notes per beat\n');
+            console.log('[DETECTOR] Energy: 0.08 | Cooldown: ' + adaptiveCooldownMs + 'ms (adaptive) | Distorted guitar');
+            console.log('[SUBDIVISION] ' + config.name + ' - ' + config.notesPerBeat + ' notes per beat');
+            console.log('[SUBDIVISION] Note interval: ' + noteIntervalMs.toFixed(1) + 'ms, Cooldown ratio: 35%\n');
             
             // Reset counters
             beatCount = 0;
