@@ -696,16 +696,21 @@ function downloadSessionReport() {
  * Show visual confirmation after save
  */
 function showSaveConfirmation() {
-  const btn = document.querySelector('.save-session-btn')
+  const btn = document.querySelector('.save-session-btn-neumorph')
   if (!btn) return
   
-  const originalText = btn.innerHTML
-  btn.innerHTML = '✅ Session sauvegardée'
+  const originalHTML = btn.innerHTML
+  btn.innerHTML = `
+    <svg class="save-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="save-text">Session sauvegardée</span>
+  `
   btn.classList.add('saved')
   btn.disabled = true
   
   setTimeout(() => {
-    btn.innerHTML = originalText
+    btn.innerHTML = originalHTML
     btn.classList.remove('saved')
     btn.disabled = false
   }, 3000)

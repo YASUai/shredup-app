@@ -876,57 +876,6 @@ body {
   gap: var(--spacing-sm);
 }
 
-/* Save Session Button */
-.save-session-btn {
-  width: 100%;
-  padding: 10px 16px;
-  margin-top: var(--spacing-md);
-  background-color: #141414;
-  color: #858585;
-  border: 2px solid #353535;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-transform: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.save-session-btn:hover {
-  background-color: #1a1a1a;
-  border-color: #ef4444;
-  color: #ef4444;
-  transform: translateY(-1px);
-}
-
-.save-session-btn:active {
-  transform: translateY(0);
-}
-
-.save-session-btn:focus {
-  outline: 2px solid #ef4444;
-  outline-offset: 2px;
-}
-
-.save-session-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Save button success state */
-.save-session-btn.saved {
-  background-color: #141414;
-  border-color: #4CAF50;
-  color: #4CAF50;
-}
-
 /* ================================================
    TUNER ZONE - Moved to Right Column
    ================================================ */
@@ -1112,6 +1061,88 @@ body {
 
 .notepad-textarea::placeholder {
   color: var(--color-text-tertiary);
+}
+
+/* ================================================
+   SESSION SAVE BLOCK - Neumorphic Button
+   ================================================ */
+
+.session-save-block {
+  height: 120px;
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.session-save-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Neumorphic Save Button - Inspired by Metronome Play/Stop */
+.save-session-btn-neumorph {
+  width: 100%;
+  max-width: 250px;
+  height: 60px;
+  background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  color: rgba(80, 80, 80, 0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: none;
+  box-shadow: 1.9px 1.9px 5.7px rgba(0, 0, 0, 0.56);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.save-session-btn-neumorph:hover {
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.save-session-btn-neumorph:active {
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.56);
+}
+
+.save-session-btn-neumorph .save-icon {
+  width: 24px;
+  height: 24px;
+  transition: none;
+}
+
+.save-session-btn-neumorph .save-text {
+  transition: none;
+}
+
+/* Active/Saved state - White glow like Play button */
+.save-session-btn-neumorph.saved {
+  box-shadow: 1px 1px 0.2px rgba(0, 0, 0, 0.56);
+}
+
+.save-session-btn-neumorph.saved .save-icon,
+.save-session-btn-neumorph.saved .save-text {
+  color: #ffffff;
+  filter: 
+    drop-shadow(0 0 1px rgba(255, 255, 255, 0.4))
+    drop-shadow(0 0 3px rgba(220, 235, 250, 0.15))
+    drop-shadow(0 0 6px rgba(200, 225, 245, 0.08));
+}
+
+/* Disabled state */
+.save-session-btn-neumorph:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ================================================
