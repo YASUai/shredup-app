@@ -486,21 +486,21 @@ app.get('/', (c) => {
 // Helper function to generate exercise rows with proper columns
 function generateExercises() {
   const exercises = [
-    { name: 'Chromatic Scale Warm-up', subRyth: '', tempoAtteints: '', tempoGoal: '120', tempsPasse: '' },
-    { name: 'Alternate Picking Exercise 1', subRyth: '', tempoAtteints: '', tempoGoal: '140', tempsPasse: '' },
-    { name: 'String Skipping Pattern', subRyth: '', tempoAtteints: '', tempoGoal: '100', tempsPasse: '' },
-    { name: 'Pentatonic Scale - Position 1', subRyth: '', tempoAtteints: '', tempoGoal: '130', tempsPasse: '' },
-    { name: 'Legato Exercise - Hammer-ons', subRyth: '', tempoAtteints: '', tempoGoal: '110', tempsPasse: '' },
-    { name: 'Sweep Picking Arpeggios', subRyth: '', tempoAtteints: '', tempoGoal: '90', tempsPasse: '' },
-    { name: 'Economy Picking Drill', subRyth: '', tempoAtteints: '', tempoGoal: '150', tempsPasse: '' },
-    { name: 'Tremolo Picking Exercise', subRyth: '', tempoAtteints: '', tempoGoal: '160', tempsPasse: '' },
-    { name: 'Finger Independence Study', subRyth: '', tempoAtteints: '', tempoGoal: '80', tempsPasse: '' },
-    { name: 'Stretching Exercise - Wide Intervals', subRyth: '', tempoAtteints: '', tempoGoal: '70', tempsPasse: '' },
-    { name: 'Rhythm Patterns - Syncopation', subRyth: '', tempoAtteints: '', tempoGoal: '125', tempsPasse: '' },
-    { name: 'Scale Sequences - 3NPS', subRyth: '', tempoAtteints: '', tempoGoal: '135', tempsPasse: '' },
-    { name: 'Hybrid Picking Patterns', subRyth: '', tempoAtteints: '', tempoGoal: '105', tempsPasse: '' },
-    { name: 'Fingerstyle Exercise', subRyth: '', tempoAtteints: '', tempoGoal: '95', tempsPasse: '' },
-    { name: 'Tapping Exercise', subRyth: '', tempoAtteints: '', tempoGoal: '115', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '120', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '140', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '100', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '130', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '110', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '90', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '150', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '160', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '80', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '70', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '125', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '135', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '105', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '95', tempsPasse: '' },
+    { name: '', subRyth: '', tempoAtteints: '', tempoGoal: '115', tempsPasse: '' },
   ]
 
   return exercises.map((ex, index) => (
@@ -530,7 +530,7 @@ function generateExercises() {
       <div class="tempo-goal-container">
         <input type="text" class="tempo-goal-input" value={ex.tempoGoal} placeholder="---" maxlength="3" />
       </div>
-      <div class="exercise-param">{ex.tempsPasse}</div>
+      <input type="text" class="temps-passe-input" placeholder="---" maxlength="10" />
       <div class="exercise-checkbox">
         <input type="checkbox" />
       </div>

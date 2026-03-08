@@ -550,6 +550,32 @@ body {
   background-color: var(--color-bg-elevated);
 }
 
+/* Temps Passé Input - Editable */
+.temps-passe-input {
+  width: 100%;
+  max-width: 80px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.temps-passe-input:hover {
+  border-color: var(--color-border);
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.temps-passe-input:focus {
+  border-color: var(--color-accent-red);
+  background-color: var(--color-bg-elevated);
+}
+
 /* 1 subdivision (default) */
 .tempo-column[data-subdivisions="1"] {
   grid-template-columns: 1fr;
