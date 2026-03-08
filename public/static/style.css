@@ -1068,7 +1068,7 @@ body {
    ================================================ */
 
 .session-save-block {
-  height: 120px;
+  height: 90px;
   background-color: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
@@ -1089,7 +1089,7 @@ body {
 .save-session-btn-neumorph {
   width: 100%;
   max-width: 250px;
-  height: 60px;
+  height: 48px;
   background: linear-gradient(145deg, #181817 0%, #1d1d1c 100%);
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 6px;

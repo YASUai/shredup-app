@@ -481,7 +481,7 @@ app.get('/', (c) => {
 
         {/* Session Save Block - Same width as Tuner */}
         <div class="right-block session-save-block">
-          <div class="block-title">SESSION</div>
+          <div class="block-title">SAVE SESSION</div>
           <div class="session-save-container">
             <button class="save-session-btn-neumorph" onclick="downloadSessionReport()">
               <svg class="save-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
