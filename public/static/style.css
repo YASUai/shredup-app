@@ -550,8 +550,8 @@ body {
   background-color: var(--color-bg-elevated);
 }
 
-/* Temps Passé Input - Editable */
-.temps-passe-input {
+/* Temps Passé Select - Dropdown with presets */
+.temps-passe-select {
   width: 100%;
   max-width: 80px;
   background-color: transparent;
@@ -564,16 +564,22 @@ body {
   color: var(--color-text-primary);
   outline: none;
   transition: all 0.2s;
+  cursor: pointer;
 }
 
-.temps-passe-input:hover {
+.temps-passe-select:hover {
   border-color: var(--color-border);
   background-color: rgba(255, 255, 255, 0.02);
 }
 
-.temps-passe-input:focus {
+.temps-passe-select:focus {
   border-color: var(--color-accent-red);
   background-color: var(--color-bg-elevated);
+}
+
+.temps-passe-select option {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
 }
 
 /* 1 subdivision (default) */

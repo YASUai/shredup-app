@@ -530,7 +530,13 @@ function generateExercises() {
       <div class="tempo-goal-container">
         <input type="text" class="tempo-goal-input" value={ex.tempoGoal} placeholder="---" maxlength="3" />
       </div>
-      <input type="text" class="temps-passe-input" placeholder="---" maxlength="10" />
+      <select class="temps-passe-select">
+        <option value="">---</option>
+        <option value="2:00">2:00</option>
+        <option value="2:30">2:30</option>
+        <option value="5:00">5:00</option>
+        <option value="custom">Custom</option>
+      </select>
       <div class="exercise-checkbox">
         <input type="checkbox" />
       </div>

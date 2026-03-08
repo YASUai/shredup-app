@@ -540,3 +540,181 @@ function makeInputsEditable() {
   
   console.log(`✅ ${editableElements.length} inputs/textareas made editable`)
 }
+
+/**
+ * ============================================================
+ * SESSION SAVE FEATURE - Capture practice data before closing
+ * ============================================================
+ */
+
+/**
+ * Collect all session data from the practice interface
+ */
+function collectSessionData() {
+  const sessionData = {
+    timestamp: new Date().toISOString(),
+    date: new Date().toLocaleDateString('fr-FR'),
+    time: new Date().toLocaleTimeString('fr-FR'),
+    exercises: [],
+    focusPoints: '',
+    notepad: '',
+  }
+
+  // Collect Focus Points
+  const focusTextarea = document.querySelector('.editable-focus')
+  if (focusTextarea) {
+    sessionData.focusPoints = focusTextarea.value.trim()
+  }
+
+  // Collect Notepad
+  const notepadTextarea = document.querySelector('.notepad-textarea')
+  if (notepadTextarea) {
+    sessionData.notepad = notepadTextarea.value.trim()
+  }
+
+  // Collect all exercises
+  const exerciseRows = document.querySelectorAll('.exercise-row')
+  exerciseRows.forEach((row, index) => {
+    const exerciseName = row.querySelector('.exercise-name-input')?.value.trim() || ''
+    const subRyth = row.querySelector('.sub-ryth-select')?.value || ''
+    const tempoGoal = row.querySelector('.tempo-goal-input')?.value || ''
+    const tempsPasse = row.querySelector('.temps-passe-select')?.value || ''
+    const isDone = row.querySelector('.exercise-checkbox input')?.checked || false
+
+    // Collect all tempo atteints (multiple columns possible)
+    const tempoInputs = row.querySelectorAll('.tempo-atteints-input')
+    const tempoAtteints = Array.from(tempoInputs)
+      .map(input => input.value.trim())
+      .filter(val => val !== '')
+
+    // Only include exercises that have at least one field filled
+    if (exerciseName || subRyth || tempoAtteints.length > 0 || tempoGoal || tempsPasse || isDone) {
+      sessionData.exercises.push({
+        index: index + 1,
+        name: exerciseName,
+        subdivision: subRyth,
+        temposAtteints: tempoAtteints,
+        tempoGoal: tempoGoal,
+        tempsPasse: tempsPasse,
+        done: isDone
+      })
+    }
+  })
+
+  return sessionData
+}
+
+/**
+ * Format session data as readable text for download
+ */
+function formatSessionReport(data) {
+  let report = '═══════════════════════════════════════════════════\n'
+  report += '         SHRED UP - SESSION REPORT\n'
+  report += '═══════════════════════════════════════════════════\n\n'
+  report += `📅 Date: ${data.date}\n`
+  report += `🕒 Time: ${data.time}\n`
+  report += `📝 ISO Timestamp: ${data.timestamp}\n\n`
+
+  // Focus Points
+  if (data.focusPoints) {
+    report += '─────────────────────────────────────────────────\n'
+    report += '🎯 FOCUS POINTS\n'
+    report += '─────────────────────────────────────────────────\n'
+    report += data.focusPoints + '\n\n'
+  }
+
+  // Exercises
+  if (data.exercises.length > 0) {
+    report += '─────────────────────────────────────────────────\n'
+    report += '🎸 EXERCISES PRACTICED\n'
+    report += '─────────────────────────────────────────────────\n\n'
+
+    data.exercises.forEach((ex) => {
+      report += `${ex.index}. ${ex.name || '(No name)'}\n`
+      if (ex.subdivision) report += `   Subdivision: ${ex.subdivision}\n`
+      if (ex.temposAtteints.length > 0) {
+        report += `   Tempos Atteints: ${ex.temposAtteints.join(', ')} BPM\n`
+      }
+      if (ex.tempoGoal) report += `   Tempo Goal: ${ex.tempoGoal} BPM\n`
+      if (ex.tempsPasse) report += `   Temps Passé: ${ex.tempsPasse}\n`
+      report += `   Completed: ${ex.done ? '✓ Yes' : '✗ No'}\n\n`
+    })
+  } else {
+    report += '─────────────────────────────────────────────────\n'
+    report += 'ℹ️  No exercises recorded\n\n'
+  }
+
+  // Notepad
+  if (data.notepad) {
+    report += '─────────────────────────────────────────────────\n'
+    report += '📓 NOTEPAD\n'
+    report += '─────────────────────────────────────────────────\n'
+    report += data.notepad + '\n\n'
+  }
+
+  report += '═══════════════════════════════════════════════════\n'
+  report += 'End of Session Report\n'
+  report += '═══════════════════════════════════════════════════\n'
+
+  return report
+}
+
+/**
+ * Download session data as a text file
+ */
+function downloadSessionReport() {
+  const sessionData = collectSessionData()
+  const reportText = formatSessionReport(sessionData)
+  
+  // Create download link
+  const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  
+  const filename = `shredup-session-${sessionData.date.replace(/\//g, '-')}-${sessionData.time.replace(/:/g, '-')}.txt`
+  link.href = url
+  link.download = filename
+  link.click()
+  
+  // Clean up
+  URL.revokeObjectURL(url)
+  
+  console.log('✅ Session report downloaded:', filename)
+  console.log('📊 Session data:', sessionData)
+}
+
+/**
+ * Initialize beforeunload handler to prompt save on page close
+ */
+function initializeSessionSave() {
+  window.addEventListener('beforeunload', (event) => {
+    const sessionData = collectSessionData()
+    
+    // Check if there's any meaningful data to save
+    const hasData = 
+      sessionData.exercises.length > 0 || 
+      sessionData.focusPoints.length > 0 || 
+      sessionData.notepad.length > 0
+
+    if (hasData) {
+      // Show browser's default confirmation dialog
+      event.preventDefault()
+      event.returnValue = '' // Required for Chrome
+      
+      // Note: Modern browsers don't allow custom messages in beforeunload dialogs
+      // The browser will show a generic "Leave site?" message
+      
+      return ''
+    }
+  })
+  
+  // Add manual save button (optional - for testing)
+  console.log('💾 Session save initialized')
+  console.log('💡 To manually save session, run: downloadSessionReport()')
+}
+
+// Initialize session save on page load
+document.addEventListener('DOMContentLoaded', () => {
+  initializeSessionSave()
+})
+
