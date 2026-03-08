@@ -681,6 +681,34 @@ function downloadSessionReport() {
   
   console.log('✅ Session report downloaded:', filename)
   console.log('📊 Session data:', sessionData)
+  
+  // Show visual confirmation
+  showSaveConfirmation()
+  
+  // Temporarily disable beforeunload warning (5 seconds)
+  window.sessionSaved = true
+  setTimeout(() => {
+    window.sessionSaved = false
+  }, 5000)
+}
+
+/**
+ * Show visual confirmation after save
+ */
+function showSaveConfirmation() {
+  const btn = document.querySelector('.save-session-btn')
+  if (!btn) return
+  
+  const originalText = btn.innerHTML
+  btn.innerHTML = '✅ Session sauvegardée !'
+  btn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)'
+  btn.disabled = true
+  
+  setTimeout(() => {
+    btn.innerHTML = originalText
+    btn.style.background = ''
+    btn.disabled = false
+  }, 3000)
 }
 
 /**
@@ -688,6 +716,11 @@ function downloadSessionReport() {
  */
 function initializeSessionSave() {
   window.addEventListener('beforeunload', (event) => {
+    // Don't warn if session was just saved (5 second grace period)
+    if (window.sessionSaved) {
+      return
+    }
+    
     const sessionData = collectSessionData()
     
     // Check if there's any meaningful data to save
@@ -710,7 +743,8 @@ function initializeSessionSave() {
   
   // Add manual save button (optional - for testing)
   console.log('💾 Session save initialized')
-  console.log('💡 To manually save session, run: downloadSessionReport()')
+  console.log('💡 Click "💾 Sauvegarder Session" button to save manually')
+  console.log('⚠️  Closing tab with unsaved data will show "Leave site?" warning')
 }
 
 // Initialize session save on page load

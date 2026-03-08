@@ -444,6 +444,9 @@ app.get('/', (c) => {
             Complete your practice session to see analysis and feedback here.
             No real-time feedback during practice.
           </div>
+          <button class="save-session-btn" onclick="downloadSessionReport()">
+            💾 Sauvegarder Session
+          </button>
         </div>
       </div>
 

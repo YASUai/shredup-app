@@ -876,6 +876,41 @@ body {
   gap: var(--spacing-sm);
 }
 
+/* Save Session Button */
+.save-session-btn {
+  width: 100%;
+  padding: 12px 20px;
+  margin-top: var(--spacing-md);
+  background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+  text-transform: uppercase;
+}
+
+.save-session-btn:hover {
+  background: linear-gradient(135deg, #E53935 0%, #D32F2F 100%);
+  box-shadow: 0 6px 20px rgba(211, 47, 47, 0.5);
+  transform: translateY(-2px);
+}
+
+.save-session-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);
+}
+
+.save-session-btn:focus {
+  outline: 2px solid var(--color-accent-red);
+  outline-offset: 2px;
+}
+
 /* ================================================
    TUNER ZONE - Moved to Right Column
    ================================================ */
