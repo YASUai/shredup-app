@@ -953,7 +953,7 @@ body {
   grid-column: 4;
   grid-row: 2 / 4;
   display: grid;
-  grid-template-rows: 140px 592px minmax(100px, 1fr) 90px;
+  grid-template-rows: 140px 592px 130px 90px;
   gap: 8px;
 }
 
@@ -974,8 +974,9 @@ body {
   display: none;
 }
 
-/* Notepad Block - Flexible, takes remaining space */
+/* Notepad Block - Fixed height, locked */
 .notepad-block {
+  height: 130px;
   background-color: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
@@ -1072,11 +1073,15 @@ body {
   background-color: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  padding: 8px var(--spacing-md);
+  padding: 2px var(--spacing-md);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0px;
   overflow: hidden;
+}
+
+.session-save-block .block-title {
+  margin-bottom: 2px;
 }
 
 .session-save-container {
