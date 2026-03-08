@@ -36,6 +36,8 @@ class OctaveConsistencyStabilizer {
         this.recentDetections = [];            // Circular buffer: [{frequency, confidence, timestamp}]
         this.dominantFundamental = null;       // Current dominant fundamental (Hz)
         this.dominantConfidence = 0;           // Confidence of dominant fundamental
+        this.lastDetectionTimestamp = null;    // Last detection time for timeout
+        this.DOMINANT_TIMEOUT = 1000;          // Reset dominant after 1s inactivity (ms)
         
         // Dominant Lock Mechanism
         this.dominantShiftCounter = 0;         // Counter for consecutive shift attempts
@@ -98,6 +100,18 @@ class OctaveConsistencyStabilizer {
                 snapCount: this.totalSnapEvents
             };
         }
+        
+        // TIMEOUT RESET: Clear dominant after 1s of inactivity
+        if (this.lastDetectionTimestamp && 
+            (timestamp - this.lastDetectionTimestamp) > this.DOMINANT_TIMEOUT) {
+            console.log('[OCTAVE-STABILIZER] Timeout reset: clearing dominant after inactivity');
+            this.dominantFundamental = null;
+            this.dominantConfidence = 0;
+            this.recentDetections = [];
+            this.dominantShiftCounter = 0;
+            this.pendingDominantCandidate = null;
+        }
+        this.lastDetectionTimestamp = timestamp;
         
         // Add current detection to temporal buffer
         this.addDetection(frequency, confidence, timestamp);
@@ -301,14 +315,15 @@ class OctaveConsistencyStabilizer {
                         // HARMONIC VALIDATION before accepting shift
                         // Reject shifts to any harmonic multiple of current dominant
                         const ratio = newDominant / oldDominant;
-                        const harmonicRatios = [2, 3, 4, 5, 6, 0.5, 0.333, 0.25, 0.2, 0.167]; 
-                        // 2×, 3×, 4×, 5×, 6×, 1/2×, 1/3×, 1/4×, 1/5×, 1/6× harmonic relationships
+                        const harmonicRatios = [2, 3, 4, 5, 6]; 
+                        // Only check upward harmonics (2×-6×) to allow string changes
+                        // Removed sub-harmonics (0.5×, 0.33×, etc.) to allow lower string detection
                         
                         let isHarmonicShift = false;
                         for (const harmonicRatio of harmonicRatios) {
                             const ratioError = Math.abs(ratio - harmonicRatio) / harmonicRatio;
                             
-                            if (ratioError < 0.05) {
+                            if (ratioError < 0.04) { // Tightened from 0.05 to reduce false positives
                                 // New dominant is a harmonic of old dominant
                                 // REJECT SHIFT (presumed fundamental)
                                 console.log(`[OCTAVE-STABILIZER] Dominant shift rejected (harmonic): ${newDominant.toFixed(1)} Hz is ${harmonicRatio.toFixed(2)}× of ${oldDominant.toFixed(1)} Hz → Keep old dominant`);
