@@ -879,36 +879,52 @@ body {
 /* Save Session Button */
 .save-session-btn {
   width: 100%;
-  padding: 12px 20px;
+  padding: 10px 16px;
   margin-top: var(--spacing-md);
-  background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  font-family: var(--font-sans);
-  font-size: 0.95rem;
-  font-weight: 700;
+  background-color: #141414;
+  color: #858585;
+  border: 2px solid #353535;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
   letter-spacing: 0.5px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
-  text-transform: uppercase;
+  transition: all 0.2s ease;
+  text-transform: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .save-session-btn:hover {
-  background: linear-gradient(135deg, #E53935 0%, #D32F2F 100%);
-  box-shadow: 0 6px 20px rgba(211, 47, 47, 0.5);
-  transform: translateY(-2px);
+  background-color: #1a1a1a;
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: translateY(-1px);
 }
 
 .save-session-btn:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);
 }
 
 .save-session-btn:focus {
-  outline: 2px solid var(--color-accent-red);
+  outline: 2px solid #ef4444;
   outline-offset: 2px;
+}
+
+.save-session-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Save button success state */
+.save-session-btn.saved {
+  background-color: #141414;
+  border-color: #4CAF50;
+  color: #4CAF50;
 }
 
 /* ================================================

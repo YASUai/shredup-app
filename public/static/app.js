@@ -587,8 +587,8 @@ function collectSessionData() {
       .map(input => input.value.trim())
       .filter(val => val !== '')
 
-    // Only include exercises that have at least one field filled
-    if (exerciseName || subRyth || tempoAtteints.length > 0 || tempoGoal || tempsPasse || isDone) {
+    // Only include exercises that are marked as DONE
+    if (isDone && (exerciseName || subRyth || tempoAtteints.length > 0 || tempoGoal || tempsPasse)) {
       sessionData.exercises.push({
         index: index + 1,
         name: exerciseName,
@@ -623,25 +623,25 @@ function formatSessionReport(data) {
     report += data.focusPoints + '\n\n'
   }
 
-  // Exercises
+  // Exercises (Only completed ones)
   if (data.exercises.length > 0) {
     report += '─────────────────────────────────────────────────\n'
-    report += '🎸 EXERCISES PRACTICED\n'
+    report += '🎸 EXERCISES COMPLETED\n'
     report += '─────────────────────────────────────────────────\n\n'
 
     data.exercises.forEach((ex) => {
       report += `${ex.index}. ${ex.name || '(No name)'}\n`
       if (ex.subdivision) report += `   Subdivision: ${ex.subdivision}\n`
       if (ex.temposAtteints.length > 0) {
-        report += `   Tempos Atteints: ${ex.temposAtteints.join(', ')} BPM\n`
+        report += `   Tempos Travaillés: ${ex.temposAtteints.join(' → ')} BPM\n`
       }
       if (ex.tempoGoal) report += `   Tempo Goal: ${ex.tempoGoal} BPM\n`
       if (ex.tempsPasse) report += `   Temps Passé: ${ex.tempsPasse}\n`
-      report += `   Completed: ${ex.done ? '✓ Yes' : '✗ No'}\n\n`
+      report += `\n`
     })
   } else {
     report += '─────────────────────────────────────────────────\n'
-    report += 'ℹ️  No exercises recorded\n\n'
+    report += 'ℹ️  No completed exercises\n\n'
   }
 
   // Notepad
@@ -700,13 +700,13 @@ function showSaveConfirmation() {
   if (!btn) return
   
   const originalText = btn.innerHTML
-  btn.innerHTML = '✅ Session sauvegardée !'
-  btn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)'
+  btn.innerHTML = '✅ Session sauvegardée'
+  btn.classList.add('saved')
   btn.disabled = true
   
   setTimeout(() => {
     btn.innerHTML = originalText
-    btn.style.background = ''
+    btn.classList.remove('saved')
     btn.disabled = false
   }, 3000)
 }
