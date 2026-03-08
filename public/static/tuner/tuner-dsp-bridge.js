@@ -344,50 +344,6 @@ class TunerDSPBridge {
     }
     
     /**
-     * Reset all detection state (use when switching contexts)
-     */
-    resetDetectionState() {
-        console.log('[TUNER-DSP] Resetting detection state...');
-        
-        // Reset last detection
-        this.lastDetection = {
-            frequency: null,
-            note: null,
-            cents: null,
-            string: null,
-            confidence: null,
-            timestamp: null
-        };
-        
-        // Reset audio engine pitch detection state if available
-        if (this.audioEngine && this.audioEngine.pitchDetection) {
-            const pd = this.audioEngine.pitchDetection;
-            
-            // Reset octave stabilizer
-            if (pd.octaveStabilizer) {
-                pd.octaveStabilizer.dominantFundamental = null;
-                pd.octaveStabilizer.recentDetections = [];
-                pd.octaveStabilizer.dominantShiftCounter = 0;
-                pd.octaveStabilizer.pendingDominantCandidate = null;
-                console.log('[TUNER-DSP] Octave stabilizer reset');
-            }
-            
-            // Reset low frequency specialist buffer
-            if (pd.lowFreqSpecialist && pd.lowFreqSpecialist.reset) {
-                pd.lowFreqSpecialist.reset();
-                console.log('[TUNER-DSP] Low frequency specialist reset');
-            }
-            
-            // Reset energy gate
-            pd.energyGateCounter = 0;
-            pd.isEnergyGateClosed = false;
-            console.log('[TUNER-DSP] Energy gate reset');
-        }
-        
-        console.log('[TUNER-DSP] ✓ Detection state reset complete');
-    }
-    
-    /**
      * Check if currently detecting a note
      * @returns {boolean}
      */

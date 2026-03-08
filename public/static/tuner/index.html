@@ -704,11 +704,15 @@
         
         // DETECT STRING CHANGE: Reset stabilizer when switching strings
         if (lastDetectedString !== null && detection.string !== lastDetectedString) {
-          console.log(`[TUNER] String change detected: ${lastDetectedString} → ${detection.string}, resetting all detection state`);
-          
-          // Use new resetDetectionState method for complete reset
-          if (tunerDSP && tunerDSP.resetDetectionState) {
-            tunerDSP.resetDetectionState();
+          console.log(`[TUNER] String change detected: ${lastDetectedString} → ${detection.string}, resetting stabilizer`);
+          // Reset octave stabilizer to allow new string detection
+          if (tunerDSP.audioEngine && tunerDSP.audioEngine.pitchDetection && 
+              tunerDSP.audioEngine.pitchDetection.octaveStabilizer) {
+            const stabilizer = tunerDSP.audioEngine.pitchDetection.octaveStabilizer;
+            stabilizer.dominantFundamental = null;
+            stabilizer.recentDetections = [];
+            stabilizer.dominantShiftCounter = 0;
+            stabilizer.pendingDominantCandidate = null;
           }
         }
         lastDetectedString = detection.string;
@@ -733,10 +737,13 @@
         console.log('[TUNER] Auto-reset: clearing stabilizer after 30 frames without detection');
         noDetectionFrames = 0;
         lastDetectedString = null;
-        
-        // Use new resetDetectionState method for complete reset
-        if (tunerDSP && tunerDSP.resetDetectionState) {
-          tunerDSP.resetDetectionState();
+        if (tunerDSP.audioEngine && tunerDSP.audioEngine.pitchDetection && 
+            tunerDSP.audioEngine.pitchDetection.octaveStabilizer) {
+          const stabilizer = tunerDSP.audioEngine.pitchDetection.octaveStabilizer;
+          stabilizer.dominantFundamental = null;
+          stabilizer.recentDetections = [];
+          stabilizer.dominantShiftCounter = 0;
+          stabilizer.pendingDominantCandidate = null;
         }
       }
       

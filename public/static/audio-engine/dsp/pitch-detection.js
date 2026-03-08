@@ -37,8 +37,8 @@ class PitchDetection {
         this.DEVIATION_CONFIDENCE_THRESHOLD = 0.65;
         
         // Energy Gate (Release Phase Detection) - RELAXED for sustained notes
-        this.ENERGY_GATE_THRESHOLD = 0.002; // RMS threshold - FURTHER REDUCED for A1 sensitivity
-        this.ENERGY_GATE_FRAMES = 8; // Consecutive frames under threshold - INCREASED to avoid premature cutoff
+        this.ENERGY_GATE_THRESHOLD = 0.003; // RMS threshold - REDUCED for better sensitivity
+        this.ENERGY_GATE_FRAMES = 5; // Consecutive frames under threshold - INCREASED to avoid premature cutoff
         this.energyGateCounter = 0; // Counter for low-energy frames
         this.isEnergyGateClosed = false; // Gate state
         this.lastValidFrequency = null; // Last stable frequency before gate
@@ -129,7 +129,6 @@ class PitchDetection {
                 this.lowFreqSpecialist.init();
                 logger.info('PITCH-DETECTION', 'Low Frequency Specialist: ACTIVE (<70 Hz correction)');
                 logger.info('PITCH-DETECTION', 'Mode: Structural harmonic analysis + median smoothing');
-                logger.warn('PITCH-DETECTION', 'NOTE: Disabled for tuner mode to prevent buffer pollution');
             } else {
                 logger.warn('PITCH-DETECTION', 'Low Frequency Specialist: NOT LOADED (baseline only)');
             }
@@ -288,10 +287,12 @@ class PitchDetection {
             
             // LOW FREQUENCY SPECIALIST (<70 Hz correction with context-aware gating)
             // Post-processing for harmonic detection/correction
-            // DISABLED FOR TUNER MODE: Low Frequency Specialist causes buffer pollution
-            // when switching strings (A1 buffer affects D2, G2, etc.)
-            // YIN baseline (2048/4096) is sufficient for tuner accuracy
-            /*
+            // CONTEXTUAL CONSTRAINT:
+            //   - Only apply correction if corrected frequency < 70 Hz
+            //   - AND current dominant fundamental < 70 Hz (from Octave Stabilizer)
+            //   - This prevents D2 (73 Hz) harmonics from polluting the detection
+            // Example: A1 context (dominant ~55 Hz): 275 Hz → 55 Hz ✅
+            //          D2 context (dominant ~73 Hz): 220 Hz → 73 Hz ❌ (skipped)
             if (this.lowFreqSpecialist && frequency && confidence >= 0.5 && frequency <= 420) {
                 const correctedResult = this.lowFreqSpecialist.correctFrequency(frequency, confidence, buffer, windowSize, timestamp);
                 
@@ -311,7 +312,6 @@ class PitchDetection {
                     }
                 }
             }
-            */
 
             // ENERGY GATE: Calculate RMS to detect release phase
             const rms = this.calculateRMS(buffer, windowSize);
