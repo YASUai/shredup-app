@@ -22,11 +22,11 @@
 
 class OctaveConsistencyStabilizer {
     constructor() {
-        // Configuration
+        // Configuration - OPTIMIZED for tuner stability
         this.WINDOW_SIZE = 5;                  // Frames to determine dominant fundamental
         this.HARMONIC_RATIOS = [2, 3, 4, 5, 6, 7]; // Harmonic ratios to check (ascending, added 7×)
-        this.RATIO_TOLERANCE = 0.05;           // ±5% tolerance for harmonic match
-        this.MIN_CONFIDENCE = 0.5;             // Minimum confidence threshold
+        this.RATIO_TOLERANCE = 0.06;           // ±6% tolerance for harmonic match - RELAXED
+        this.MIN_CONFIDENCE = 0.45;            // Minimum confidence threshold - REDUCED for better response
         this.CLUSTER_TOLERANCE = 0.10;         // ±10% for frequency clustering
         this.CONFIDENCE_PENALTY = 0.9;         // Confidence penalty for snapped detections
         this.DOMINANT_SHIFT_THRESHOLD = 0.15;  // ±15% for cluster change detection

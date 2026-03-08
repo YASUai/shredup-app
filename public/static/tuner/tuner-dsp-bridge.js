@@ -202,9 +202,9 @@ class TunerDSPBridge {
                     }
                 } else {
                     // Clear detection if no valid signal
-                    // Keep last detection for max 150ms to avoid flicker
+                    // Keep last detection for max 300ms to avoid flicker - INCREASED
                     if (this.lastDetection.timestamp && 
-                        (performance.now() - this.lastDetection.timestamp) > 150) {
+                        (performance.now() - this.lastDetection.timestamp) > 300) {
                         this.lastDetection = {
                             frequency: null,
                             note: null,
@@ -216,7 +216,7 @@ class TunerDSPBridge {
                     }
                 }
             }
-        }, 20); // 50 Hz update rate
+        }, 15); // ~67 Hz update rate - FASTER for smoother response
     }
     
     /**

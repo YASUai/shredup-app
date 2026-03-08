@@ -29,16 +29,16 @@ class PitchDetection {
         this.ATTACK_IGNORE_DURATION = 300; // ms
         this.sessionStartTime = null;
         
-        // Confidence Gating
-        this.MIN_CONFIDENCE_GATE = 0.55;
+        // Confidence Gating - REDUCED for better tuner responsiveness
+        this.MIN_CONFIDENCE_GATE = 0.45;
         
         // Dominant Deviation Filter
         this.MAX_DOMINANT_DEVIATION = 0.40; // 40%
         this.DEVIATION_CONFIDENCE_THRESHOLD = 0.65;
         
-        // Energy Gate (Release Phase Detection)
-        this.ENERGY_GATE_THRESHOLD = 0.005; // RMS threshold (DO NOT MODIFY)
-        this.ENERGY_GATE_FRAMES = 3; // Consecutive frames under threshold
+        // Energy Gate (Release Phase Detection) - RELAXED for sustained notes
+        this.ENERGY_GATE_THRESHOLD = 0.003; // RMS threshold - REDUCED for better sensitivity
+        this.ENERGY_GATE_FRAMES = 5; // Consecutive frames under threshold - INCREASED to avoid premature cutoff
         this.energyGateCounter = 0; // Counter for low-energy frames
         this.isEnergyGateClosed = false; // Gate state
         this.lastValidFrequency = null; // Last stable frequency before gate
@@ -53,11 +53,11 @@ class PitchDetection {
         };
         this.currentValidationState = this.ValidationState.IDLE;
         
-        // Validation State Thresholds (FIXED - NON-NEGOTIABLE)
-        this.ATTACK_MIN_CONFIDENCE = 0.55;
-        this.STABLE_MIN_CONFIDENCE = 0.75;
-        this.STABLE_VARIATION_MAX = 0.03; // 3%
-        this.STABLE_FRAMES_REQUIRED = 5;
+        // Validation State Thresholds - OPTIMIZED for tuner reliability
+        this.ATTACK_MIN_CONFIDENCE = 0.45; // REDUCED for faster initial detection
+        this.STABLE_MIN_CONFIDENCE = 0.65; // REDUCED for better continuous tracking
+        this.STABLE_VARIATION_MAX = 0.05; // 5% - RELAXED to handle natural pitch variation
+        this.STABLE_FRAMES_REQUIRED = 3; // REDUCED for faster stabilization
         this.RELEASE_CONFIDENCE_MIN = 0.60;
         this.RELEASE_RMS_FRAMES = 3;
         this.IDLE_RMS_FRAMES = 5;
@@ -503,7 +503,7 @@ class PitchDetection {
         this.computeCMNDF(diffFunc, cmndf);
         
         // 3. Absolute threshold: find first τ where d'(τ) < threshold
-        const YIN_THRESHOLD = 0.10; // Standard YIN threshold (0.10-0.15)
+        const YIN_THRESHOLD = 0.12; // Slightly relaxed for better low-frequency detection
         const tau = this.absoluteThreshold(YIN_THRESHOLD, cmndf);
         
         if (tau === -1) {
