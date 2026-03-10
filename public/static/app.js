@@ -779,7 +779,7 @@ window.addEventListener('message', (event) => {
  * Auto-fill current exercise with metronome data
  */
 function autoFillCurrentExercise(data) {
-  const rows = document.querySelectorAll('.focus-tbody .exercise-row')
+  const rows = document.querySelectorAll('.exercise-row')
   
   if (currentExerciseIndex >= rows.length) {
     console.warn('[FOCUS ZONE] Aucun exercice disponible (index:', currentExerciseIndex, ')')
@@ -788,46 +788,43 @@ function autoFillCurrentExercise(data) {
   
   const currentRow = rows[currentExerciseIndex]
   
-  // Fill TEMPS PASSÉ
-  const timeCell = currentRow.querySelector('.duration-cell')
-  if (timeCell) {
-    const select = timeCell.querySelector('select')
-    if (select) {
-      // Check if formatted duration matches a preset
-      const matchingOption = Array.from(select.options).find(
-        opt => opt.value === data.formattedDuration
-      )
-      
-      if (matchingOption) {
-        select.value = data.formattedDuration
-      } else {
-        // Use Custom option
-        const customOption = select.querySelector('option[value="custom"]')
-        if (customOption) {
-          customOption.value = data.formattedDuration
-          customOption.textContent = data.formattedDuration
-          select.value = data.formattedDuration
-        }
+  // Fill TEMPS PASSÉ (select dropdown)
+  const tempsPasseSelect = currentRow.querySelector('.temps-passe-select')
+  if (tempsPasseSelect) {
+    // Check if formatted duration matches a preset
+    const matchingOption = Array.from(tempsPasseSelect.options).find(
+      opt => opt.value === data.formattedDuration
+    )
+    
+    if (matchingOption) {
+      tempsPasseSelect.value = data.formattedDuration
+    } else {
+      // Use Custom option and set its value
+      const customOption = tempsPasseSelect.querySelector('option[value="custom"]')
+      if (customOption) {
+        customOption.value = data.formattedDuration
+        customOption.textContent = data.formattedDuration
+        tempsPasseSelect.value = data.formattedDuration
       }
-      
-      // Flash green
-      timeCell.style.backgroundColor = 'rgba(80, 255, 80, 0.2)'
-      setTimeout(() => {
-        timeCell.style.backgroundColor = ''
-      }, 500)
     }
-  }
-  
-  // Fill TEMPO ATTEINT
-  const tempoCell = currentRow.querySelector('.tempo-cell')
-  if (tempoCell) {
-    const tempoText = data.tempos.join(' → ')
-    tempoCell.textContent = tempoText
     
     // Flash green
-    tempoCell.style.backgroundColor = 'rgba(80, 255, 80, 0.2)'
+    tempsPasseSelect.style.backgroundColor = 'rgba(80, 255, 80, 0.2)'
     setTimeout(() => {
-      tempoCell.style.backgroundColor = ''
+      tempsPasseSelect.style.backgroundColor = ''
+    }, 500)
+  }
+  
+  // Fill TEMPO ATTEINT (input field)
+  const tempoInput = currentRow.querySelector('.tempo-atteints-input')
+  if (tempoInput) {
+    const tempoText = data.tempos.join(' → ')
+    tempoInput.value = tempoText
+    
+    // Flash green
+    tempoInput.style.backgroundColor = 'rgba(80, 255, 80, 0.2)'
+    setTimeout(() => {
+      tempoInput.style.backgroundColor = ''
     }, 500)
   }
   
@@ -841,17 +838,19 @@ function autoFillCurrentExercise(data) {
  * Setup DONE checkbox auto-advance
  */
 function setupDoneCheckboxes() {
-  const checkboxes = document.querySelectorAll('.done-checkbox')
+  const checkboxes = document.querySelectorAll('.exercise-checkbox input[type="checkbox"]')
   
   checkboxes.forEach((checkbox, index) => {
     checkbox.addEventListener('change', () => {
       if (checkbox.checked && index === currentExerciseIndex) {
         // Flash yellow to indicate advancing
         const row = checkbox.closest('.exercise-row')
-        row.style.backgroundColor = 'rgba(255, 200, 80, 0.15)'
-        setTimeout(() => {
-          row.style.backgroundColor = ''
-        }, 400)
+        if (row) {
+          row.style.backgroundColor = 'rgba(255, 200, 80, 0.15)'
+          setTimeout(() => {
+            row.style.backgroundColor = ''
+          }, 400)
+        }
         
         // Advance to next exercise
         currentExerciseIndex++
@@ -859,6 +858,8 @@ function setupDoneCheckboxes() {
       }
     })
   })
+  
+  console.log(`[FOCUS ZONE] ${checkboxes.length} checkboxes initialisées`)
 }
 
 // Initialize session save on page load
