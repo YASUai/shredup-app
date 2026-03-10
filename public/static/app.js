@@ -762,15 +762,17 @@ let currentExerciseIndex = 0
  * Handle postMessage from metronome iframe
  */
 window.addEventListener('message', (event) => {
+  console.log('[FOCUS ZONE] 📨 Message reçu:', event.data)
+  
   const { type, payload } = event.data
   
   if (type === 'METRONOME_TIMER_START') {
-    console.log('[FOCUS ZONE] Timer démarré:', payload)
+    console.log('[FOCUS ZONE] ⏱️ Timer démarré:', payload)
     // Optional: Visual feedback when timer starts
   }
   
   if (type === 'METRONOME_TIMER_COMPLETE') {
-    console.log('[FOCUS ZONE] Timer terminé:', payload)
+    console.log('[FOCUS ZONE] ✅ Timer terminé:', payload)
     autoFillCurrentExercise(payload)
   }
 })
