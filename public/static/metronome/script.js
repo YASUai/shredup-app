@@ -28,11 +28,6 @@ let timerSeconds = 0;
 let timerInterval = null;
 let isTimerActive = false;
 
-// SHRED UP INTEGRATION: Track session data
-let sessionStartTime = null;
-let sessionTempos = []; // Track all tempos played during session
-let sessionDuration = 0; // Total duration in seconds
-
 // Variables pour SESSION DURATION (chronomètre)
 let sessionStartTime = null;
 let sessionElapsedSeconds = 0;
@@ -564,23 +559,6 @@ function startTimer() {
     
     isTimerActive = true;
     
-    // SHRED UP INTEGRATION: Track session start
-    sessionStartTime = Date.now();
-    sessionTempos = [bpm]; // Start with current BPM
-    sessionDuration = timerMinutes * 60 + timerSeconds;
-    
-    // Notify parent window that timer started
-    if (window.parent !== window) {
-        window.parent.postMessage({
-            type: 'METRONOME_TIMER_START',
-            data: {
-                duration: sessionDuration,
-                initialTempo: bpm,
-                timestamp: sessionStartTime
-            }
-        }, '*');
-    }
-    
     timerInterval = setInterval(() => {
         if (timerSeconds > 0) {
             timerSeconds--;
@@ -592,23 +570,6 @@ function startTimer() {
             stopTimer();
             stopMetronome();
             console.log('[TIMER] Compte à rebours terminé - Métronome arrêté');
-            
-            // SHRED UP INTEGRATION: Send session completion data
-            const uniqueTempos = [...new Set(sessionTempos)].sort((a, b) => a - b);
-            const elapsedSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
-            
-            if (window.parent !== window) {
-                window.parent.postMessage({
-                    type: 'METRONOME_TIMER_COMPLETE',
-                    data: {
-                        tempos: uniqueTempos,
-                        duration: elapsedSeconds,
-                        formattedDuration: formatDuration(elapsedSeconds),
-                        timestamp: Date.now()
-                    }
-                }, '*');
-            }
-            
             // Flash visuel ou notification
             flashTimerNotification();
         }
@@ -1030,7 +991,6 @@ function handleTapLogic() {
         // Mettre à jour le BPM
         bpm = newBPM;
         updateBPMDisplay(bpm);
-        trackTempoChange(bpm); // Track tempo change
         const percentage = bpmToSliderPosition(bpm);
         updateVerticalSliderPosition(percentage);
         
@@ -1108,7 +1068,6 @@ function initVerticalSlider() {
             if (newBpm !== bpm) {
                 bpm = newBpm;
                 updateBPMDisplay(bpm);
-                trackTempoChange(bpm); // Track tempo change
                 
                 if (isPlaying) {
                     restartMetronome();
@@ -1422,7 +1381,6 @@ function initTempoButtons() {
             
             bpm = Math.min(MAX_BPM, bpm + 1);
             updateBPMDisplay(bpm);
-            trackTempoChange(bpm); // Track tempo change
             const percentage = bpmToSliderPosition(bpm);
             updateVerticalSliderPosition(percentage);
             
@@ -1442,7 +1400,6 @@ function initTempoButtons() {
             
             bpm = Math.max(MIN_BPM, bpm - 1);
             updateBPMDisplay(bpm);
-            trackTempoChange(bpm); // Track tempo change
             const percentage = bpmToSliderPosition(bpm);
             updateVerticalSliderPosition(percentage);
             
@@ -1795,36 +1752,6 @@ function updateBeatIndicators() {
     });
     
     console.log(`[LED] Beat ${currentBeat + 1}/${beatsPerMeasure} | BPM ${bpm} | Beat duration: ${(60000 / bpm).toFixed(1)}ms | Peak: 0.2ms`);
-}
-
-
-// ============================================================================
-// SHRED UP INTEGRATION: Helper Functions
-// ============================================================================
-
-/**
- * Track tempo change during active session
- * @param {number} newBpm - New BPM value
- */
-function trackTempoChange(newBpm) {
-    if (isTimerActive && sessionStartTime) {
-        // Only track if tempo actually changed
-        if (sessionTempos.length === 0 || sessionTempos[sessionTempos.length - 1] !== newBpm) {
-            sessionTempos.push(newBpm);
-            console.log(`[SHRED-UP] Tempo tracked: ${newBpm} BPM (total: ${sessionTempos.length} tempos)`);
-        }
-    }
-}
-
-/**
- * Format duration in seconds to MM:SS format
- * @param {number} seconds - Duration in seconds
- * @returns {string} Formatted duration (e.g., "2:30", "5:00")
- */
-function formatDuration(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 
