@@ -755,5 +755,142 @@ function initializeSessionSave() {
 // Initialize session save on page load
 document.addEventListener('DOMContentLoaded', () => {
   initializeSessionSave()
+  initializeMetronomeIntegration()
 })
+
+
+// ============================================================================
+// METRONOME INTEGRATION: Auto-fill Focus Zone
+// ============================================================================
+
+let currentExerciseIndex = 0 // Track current exercise row
+
+/**
+ * Initialize metronome integration
+ * Listens for timer events from metronome iframe
+ */
+function initializeMetronomeIntegration() {
+  window.addEventListener('message', (event) => {
+    // Security: only accept messages from same origin or trusted domains
+    // For now, accept all (adjust if needed for production)
+    
+    const { type, data } = event.data
+    
+    if (type === 'METRONOME_TIMER_START') {
+      handleTimerStart(data)
+    } else if (type === 'METRONOME_TIMER_COMPLETE') {
+      handleTimerComplete(data)
+    }
+  })
+  
+  // Initialize DONE checkbox listeners
+  initializeDoneCheckboxes()
+  
+  console.log('🎵 Metronome integration initialized')
+  console.log('📍 Current exercise index:', currentExerciseIndex)
+}
+
+/**
+ * Handle timer start event
+ * @param {Object} data - { duration, initialTempo, timestamp }
+ */
+function handleTimerStart(data) {
+  console.log(`[METRONOME→FOCUS] Timer started:`, data)
+  console.log(`  Duration: ${data.duration}s`)
+  console.log(`  Initial Tempo: ${data.initialTempo} BPM`)
+  console.log(`  Exercise row: ${currentExerciseIndex + 1}`)
+}
+
+/**
+ * Handle timer complete event - Auto-fill current exercise
+ * @param {Object} data - { tempos, duration, formattedDuration, timestamp }
+ */
+function handleTimerComplete(data) {
+  console.log(`[METRONOME→FOCUS] Timer complete:`, data)
+  console.log(`  Tempos played: ${data.tempos.join(', ')} BPM`)
+  console.log(`  Duration: ${data.formattedDuration}`)
+  
+  // Find current exercise row
+  const exerciseRows = document.querySelectorAll('.exercise-row')
+  if (currentExerciseIndex >= exerciseRows.length) {
+    console.warn('[METRONOME→FOCUS] No more exercise rows available')
+    return
+  }
+  
+  const currentRow = exerciseRows[currentExerciseIndex]
+  
+  // Auto-fill TEMPS PASSÉ
+  const tempsPasseSelect = currentRow.querySelector('.temps-passe-select')
+  if (tempsPasseSelect) {
+    // Try to match the formatted duration to an option
+    const matchingOption = Array.from(tempsPasseSelect.options).find(
+      opt => opt.value === data.formattedDuration
+    )
+    
+    if (matchingOption) {
+      tempsPasseSelect.value = data.formattedDuration
+    } else {
+      // If no match, select "Custom" and could set a custom value
+      // For now, just use the first available option or display in console
+      console.log(`[METRONOME→FOCUS] Duration ${data.formattedDuration} not in dropdown, consider adding "Custom"`)
+      // You could add logic here to set a custom field
+      tempsPasseSelect.value = data.formattedDuration // Try anyway
+    }
+  }
+  
+  // Auto-fill TEMPO ATTEINT (first tempo column)
+  const tempoInput = currentRow.querySelector('.tempo-atteints-input')
+  if (tempoInput && data.tempos.length > 0) {
+    // Join all tempos with arrows
+    tempoInput.value = data.tempos.join(' → ')
+    console.log(`[METRONOME→FOCUS] Tempos filled: ${data.tempos.join(' → ')}`)
+  }
+  
+  // Visual feedback
+  currentRow.style.backgroundColor = 'rgba(80, 255, 80, 0.1)'
+  setTimeout(() => {
+    currentRow.style.backgroundColor = ''
+  }, 1000)
+  
+  console.log(`[METRONOME→FOCUS] ✓ Exercise ${currentExerciseIndex + 1} auto-filled`)
+}
+
+/**
+ * Initialize DONE checkbox listeners
+ * When DONE is checked, move to next exercise
+ */
+function initializeDoneCheckboxes() {
+  const checkboxes = document.querySelectorAll('.exercise-checkbox')
+  
+  checkboxes.forEach((checkbox, index) => {
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        console.log(`[FOCUS] Exercise ${index + 1} marked as DONE`)
+        
+        // Move to next exercise
+        if (index === currentExerciseIndex) {
+          currentExerciseIndex++
+          console.log(`[FOCUS] → Moving to exercise ${currentExerciseIndex + 1}`)
+          
+          // Visual feedback on next row
+          const exerciseRows = document.querySelectorAll('.exercise-row')
+          if (currentExerciseIndex < exerciseRows.length) {
+            const nextRow = exerciseRows[currentExerciseIndex]
+            nextRow.style.backgroundColor = 'rgba(255, 255, 80, 0.15)'
+            setTimeout(() => {
+              nextRow.style.backgroundColor = ''
+            }, 1500)
+          } else {
+            console.log('[FOCUS] ✓ All exercises completed!')
+          }
+        }
+      } else {
+        // If unchecked, could handle going back, but let's keep it simple for now
+        console.log(`[FOCUS] Exercise ${index + 1} unmarked`)
+      }
+    })
+  })
+  
+  console.log(`[FOCUS] Initialized ${checkboxes.length} DONE checkboxes`)
+}
 
