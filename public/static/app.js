@@ -13,8 +13,41 @@
 //   initializeGlobalFocusManagement()
 // })
 
+// ============================================================================
+// AUDIO RECORDING & PRECISION ANALYSIS SYSTEM
+// ============================================================================
+
+// Global recording state
+const recordingState = {
+  mediaRecorder: null,
+  audioChunks: [],
+  stream: null,
+  exerciseIndex: null,
+  startTime: null
+}
+
 /**
- * Initialize REC Buttons - Per Exercise
+ * Get current metronome BPM from iframe
+ */
+async function getMetronomeBPM() {
+  try {
+    const metronomeIframe = document.querySelector('.metronome-iframe')
+    if (!metronomeIframe || !metronomeIframe.contentWindow) {
+      console.warn('[RECORDING] Métronome iframe not accessible')
+      return 120 // Default BPM
+    }
+    
+    // Try to access BPM from metronome iframe
+    const bpm = metronomeIframe.contentWindow.bpm || 120
+    return bpm
+  } catch (error) {
+    console.warn('[RECORDING] Cannot access metronome BPM:', error)
+    return 120
+  }
+}
+
+/**
+ * Initialize REC Buttons - Per Exercise with Audio Recording
  * CRITICAL: Each button controls recording for ONE specific exercise
  */
 function initializeRecordButtons() {
@@ -23,20 +56,170 @@ function initializeRecordButtons() {
   recButtons.forEach((button) => {
     let isRecording = false
     
-    button.addEventListener('click', () => {
-      isRecording = !isRecording
+    button.addEventListener('click', async () => {
+      const exerciseIndex = parseInt(button.dataset.exercise)
       
-      if (isRecording) {
-        // Visual state: Recording
-        button.classList.add('recording')
-        console.log(`Recording started for exercise: ${button.dataset.exercise}`)
+      if (!isRecording) {
+        // Start recording
+        try {
+          await startRecording(exerciseIndex, button)
+          isRecording = true
+          button.classList.add('recording')
+          console.log(`[RECORDING] ✅ Started for exercise ${exerciseIndex}`)
+        } catch (error) {
+          console.error('[RECORDING] ❌ Failed to start:', error)
+          alert(`❌ Erreur d'enregistrement !\n\n${error.message}\n\nVérifie les permissions du microphone.`)
+        }
       } else {
-        // Visual state: Stopped
+        // Stop recording
+        await stopRecording(button)
+        isRecording = false
         button.classList.remove('recording')
-        console.log(`Recording stopped for exercise: ${button.dataset.exercise}`)
+        console.log(`[RECORDING] ⏹️  Stopped for exercise ${exerciseIndex}`)
       }
     })
   })
+  
+  console.log(`[RECORDING] ${recButtons.length} boutons REC initialisés`)
+}
+
+/**
+ * Start audio recording for exercise
+ */
+async function startRecording(exerciseIndex, button) {
+  // Request microphone access
+  const stream = await navigator.mediaDevices.getUserMedia({ 
+    audio: {
+      channelCount: 1,
+      sampleRate: 48000,
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false
+    } 
+  })
+  
+  recordingState.stream = stream
+  recordingState.exerciseIndex = exerciseIndex
+  recordingState.startTime = Date.now()
+  recordingState.audioChunks = []
+  
+  // Create MediaRecorder with high quality settings
+  const options = {
+    mimeType: 'audio/webm;codecs=opus',
+    audioBitsPerSecond: 320000 // 320 kbps
+  }
+  
+  recordingState.mediaRecorder = new MediaRecorder(stream, options)
+  
+  recordingState.mediaRecorder.ondataavailable = (event) => {
+    if (event.data.size > 0) {
+      recordingState.audioChunks.push(event.data)
+    }
+  }
+  
+  recordingState.mediaRecorder.onstop = async () => {
+    await processRecording()
+  }
+  
+  recordingState.mediaRecorder.start()
+  
+  console.log('[RECORDING] MediaRecorder started:', {
+    exerciseIndex,
+    mimeType: options.mimeType,
+    bitrate: options.audioBitsPerSecond
+  })
+}
+
+/**
+ * Stop audio recording
+ */
+async function stopRecording(button) {
+  if (recordingState.mediaRecorder && recordingState.mediaRecorder.state !== 'inactive') {
+    recordingState.mediaRecorder.stop()
+    
+    // Stop all tracks
+    if (recordingState.stream) {
+      recordingState.stream.getTracks().forEach(track => track.stop())
+    }
+  }
+}
+
+/**
+ * Process recorded audio - Download and analyze
+ */
+async function processRecording() {
+  const { audioChunks, exerciseIndex, startTime } = recordingState
+  
+  if (audioChunks.length === 0) {
+    console.warn('[RECORDING] No audio data recorded')
+    return
+  }
+  
+  // Create blob from chunks
+  const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+  
+  console.log('[RECORDING] Audio blob created:', {
+    size: (audioBlob.size / 1024).toFixed(2) + ' KB',
+    duration: duration + 's',
+    type: audioBlob.type
+  })
+  
+  // Get exercise details
+  const exerciseRow = document.querySelector(`.exercise-row[data-exercise="${exerciseIndex}"]`)
+  const exerciseName = exerciseRow?.querySelector('.exercise-name-input')?.value || `Exercise-${exerciseIndex + 1}`
+  const bpm = await getMetronomeBPM()
+  const date = new Date().toISOString().split('T')[0]
+  const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-')
+  
+  // Generate filename
+  const filename = `${exerciseName.replace(/[^a-z0-9]/gi, '_')}_${bpm}BPM_${date}_${time}.webm`
+  
+  // Download file
+  downloadAudioFile(audioBlob, filename)
+  
+  // Analyze precision (async, non-blocking)
+  analyzePrecision(audioBlob, bpm, exerciseName).catch(error => {
+    console.error('[ANALYSIS] ❌ Erreur:', error)
+  })
+}
+
+/**
+ * Download audio file to user's computer
+ */
+function downloadAudioFile(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  
+  URL.revokeObjectURL(url)
+  
+  console.log('[RECORDING] 💾 File downloaded:', filename)
+}
+
+/**
+ * Analyze recording precision vs metronome
+ * This is a placeholder - will be implemented with proper DSP analysis
+ */
+async function analyzePrecision(audioBlob, targetBPM, exerciseName) {
+  console.log('[ANALYSIS] 🔍 Starting precision analysis...')
+  console.log('[ANALYSIS] Target BPM:', targetBPM)
+  console.log('[ANALYSIS] Exercise:', exerciseName)
+  
+  // TODO: Implement DSP analysis
+  // 1. Convert WebM to WAV
+  // 2. Detect onsets (note attacks)
+  // 3. Calculate timing deviation from metronome grid
+  // 4. Compute precision score (% of notes within tolerance)
+  // 5. Display results to user
+  
+  console.log('[ANALYSIS] ⚠️  Full DSP analysis not yet implemented')
+  console.log('[ANALYSIS] 📝 Placeholder: Would analyze audio against', targetBPM, 'BPM grid')
 }
 
 /**
@@ -1078,7 +1261,6 @@ function loadTemplate() {
         applyTemplate(template.data)
         
         console.log('[TEMPLATE] ✅ Template chargé:', template.name)
-        alert(`✅ Template "${template.name}" chargé avec succès !\n\n${template.data.exercises.length} exercices restaurés.`)
       } catch (error) {
         console.error('[TEMPLATE] Erreur de chargement:', error)
         alert(`❌ Erreur lors du chargement du template !\n\n${error.message}`)
