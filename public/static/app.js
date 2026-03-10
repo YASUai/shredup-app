@@ -778,6 +778,34 @@ window.addEventListener('message', (event) => {
 })
 
 /**
+ * Parse une durée MM:SS en secondes
+ * @param {string} duration - Format MM:SS
+ * @returns {number} Durée en secondes
+ */
+function parseDuration(duration) {
+  if (!duration || duration === '---' || duration === '') return 0
+  
+  const parts = duration.split(':')
+  if (parts.length !== 2) return 0
+  
+  const minutes = parseInt(parts[0]) || 0
+  const seconds = parseInt(parts[1]) || 0
+  
+  return minutes * 60 + seconds
+}
+
+/**
+ * Formate des secondes en MM:SS
+ * @param {number} totalSeconds - Durée en secondes
+ * @returns {string} Format MM:SS
+ */
+function formatSeconds(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60)
+  const secs = totalSeconds % 60
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
+
+/**
  * Auto-fill current exercise with metronome data
  */
 function autoFillCurrentExercise(data) {
@@ -790,23 +818,38 @@ function autoFillCurrentExercise(data) {
   
   const currentRow = rows[currentExerciseIndex]
   
-  // Fill TEMPS PASSÉ (select dropdown)
+  // Fill TEMPS PASSÉ (select dropdown) - ADDITIONNER les temps
   const tempsPasseSelect = currentRow.querySelector('.temps-passe-select')
   if (tempsPasseSelect) {
-    // Check if formatted duration matches a preset
+    // Récupérer le temps existant
+    const existingValue = tempsPasseSelect.value
+    const existingSeconds = parseDuration(existingValue)
+    
+    // Additionner avec le nouveau temps
+    const newSeconds = data.elapsedSeconds
+    const totalSeconds = existingSeconds + newSeconds
+    const totalFormatted = formatSeconds(totalSeconds)
+    
+    console.log('[FOCUS ZONE] ⏱️  Addition des temps:', {
+      existant: existingValue,
+      nouveau: data.formattedDuration,
+      total: totalFormatted
+    })
+    
+    // Check if total matches a preset
     const matchingOption = Array.from(tempsPasseSelect.options).find(
-      opt => opt.value === data.formattedDuration
+      opt => opt.value === totalFormatted
     )
     
     if (matchingOption) {
-      tempsPasseSelect.value = data.formattedDuration
+      tempsPasseSelect.value = totalFormatted
     } else {
       // Use Custom option and set its value
       const customOption = tempsPasseSelect.querySelector('option[value="custom"]')
       if (customOption) {
-        customOption.value = data.formattedDuration
-        customOption.textContent = data.formattedDuration
-        tempsPasseSelect.value = data.formattedDuration
+        customOption.value = totalFormatted
+        customOption.textContent = totalFormatted
+        tempsPasseSelect.value = totalFormatted
       }
     }
     
@@ -817,11 +860,28 @@ function autoFillCurrentExercise(data) {
     }, 500)
   }
   
-  // Fill TEMPO ATTEINT (input field)
+  // Fill TEMPO ATTEINT (input field) - AJOUTER les nouveaux tempos
   const tempoInput = currentRow.querySelector('.tempo-atteints-input')
   if (tempoInput) {
-    const tempoText = data.tempos.join(' → ')
-    tempoInput.value = tempoText
+    const existingTempos = tempoInput.value.trim()
+    const newTempos = data.tempos.join(' → ')
+    
+    let finalTempos
+    if (existingTempos && existingTempos !== '---') {
+      // Ajouter les nouveaux tempos à la suite
+      finalTempos = existingTempos + ' | ' + newTempos
+    } else {
+      // Premier passage
+      finalTempos = newTempos
+    }
+    
+    tempoInput.value = finalTempos
+    
+    console.log('[FOCUS ZONE] 🎵 Addition des tempos:', {
+      existant: existingTempos,
+      nouveau: newTempos,
+      final: finalTempos
+    })
     
     // Flash green
     tempoInput.style.backgroundColor = 'rgba(80, 255, 80, 0.2)'
@@ -830,9 +890,9 @@ function autoFillCurrentExercise(data) {
     }, 500)
   }
   
-  console.log(`[FOCUS ZONE] ✅ Exercice ${currentExerciseIndex + 1} auto-rempli:`, {
-    temps: data.formattedDuration,
-    tempos: data.tempos.join(' → ')
+  console.log(`[FOCUS ZONE] ✅ Exercice ${currentExerciseIndex + 1} auto-rempli (cumulatif):`, {
+    tempsTotal: tempsPasseSelect ? tempsPasseSelect.value : 'N/A',
+    temposTotal: tempoInput ? tempoInput.value : 'N/A'
   })
 }
 
