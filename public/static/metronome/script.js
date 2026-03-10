@@ -1606,10 +1606,10 @@ function initPlaybackControls() {
     const stopBtn = document.querySelector('.stop-btn');
     
     if (playBtn) {
-        playBtn.addEventListener('click', () => {
+        playBtn.addEventListener('click', async () => {
             if (!isPlaying) {
                 // Pas de son UI pour PLAY
-                startMetronome();
+                await startMetronome();  // ✅ Await for AudioContext resume
                 playBtn.classList.add('active');  // Ajoute la classe active
             } else {
                 // Pas de son UI pour PLAY
@@ -1635,8 +1635,25 @@ function initPlaybackControls() {
     }
 }
 
-function startMetronome() {
+async function startMetronome() {
     if (isPlaying) return;
+    
+    // ✅ CRITICAL: Resume AudioContext if suspended (browser auto-suspend protection)
+    if (audioContext && audioContext.state === 'suspended') {
+        console.log('[METRONOME] AudioContext suspended, resuming...');
+        try {
+            await audioContext.resume();
+            console.log('✅ AudioContext resumed, state:', audioContext.state);
+        } catch (error) {
+            console.error('❌ Error resuming AudioContext:', error);
+            return; // Don't start metronome if audio can't resume
+        }
+    }
+    
+    if (!audioContext) {
+        console.error('❌ AudioContext not initialized!');
+        return;
+    }
     
     isPlaying = true;
     currentBeat = 0;

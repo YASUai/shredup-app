@@ -1165,11 +1165,20 @@ function collectTemplateData() {
     const goalInput = row.querySelector('.tempo-goal-input')
     const tempoGoal = goalInput ? goalInput.value : ''
     
+    // Get reference audio if exists
+    const referenceAudio = getReferenceAudio(index)
+    
     exercises.push({
       index,
       name,
       subdivision,
-      tempoGoal
+      tempoGoal,
+      referenceAudio: referenceAudio ? {
+        filename: referenceAudio.filename,
+        audioData: referenceAudio.audioData,
+        size: referenceAudio.size,
+        type: referenceAudio.type
+      } : null
     })
   })
   
@@ -1310,6 +1319,25 @@ function applyTemplate(templateData) {
       goalInput.value = exercise.tempoGoal
     }
     
+    // Restore reference audio if exists
+    if (exercise.referenceAudio) {
+      referenceAudioStore[exercise.index] = {
+        filename: exercise.referenceAudio.filename,
+        audioData: exercise.referenceAudio.audioData,
+        size: exercise.referenceAudio.size,
+        type: exercise.referenceAudio.type,
+        uploadDate: new Date().toISOString()
+      }
+      
+      // Show indicator
+      const indicator = document.querySelector(`.reference-indicator[data-exercise="${exercise.index}"]`)
+      if (indicator) {
+        indicator.style.display = 'flex'
+      }
+      
+      console.log(`[TEMPLATE] Reference audio restored for exercise ${exercise.index}:`, exercise.referenceAudio.filename)
+    }
+    
     // Clear progress data (temps passé, tempos atteints, done checkbox)
     const tempsSelect = row.querySelector('.temps-passe-select')
     if (tempsSelect) {
@@ -1358,6 +1386,135 @@ function applyTemplate(templateData) {
   console.log('[TEMPLATE] Template appliqué:', templateData.exercises.length, 'exercices')
 }
 
+// ============================================================================
+// REFERENCE AUDIO MANAGEMENT SYSTEM
+// ============================================================================
+
+/**
+ * Storage for reference audio files (Base64 or Blob URLs)
+ * Structure: { exerciseIndex: { filename, audioData, uploadDate } }
+ */
+const referenceAudioStore = {}
+
+/**
+ * Initialize reference audio upload buttons
+ */
+function initializeReferenceUpload() {
+  const uploadButtons = document.querySelectorAll('.upload-reference-btn')
+  const fileInputs = document.querySelectorAll('.reference-audio-input')
+  
+  uploadButtons.forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+      const exerciseIndex = btn.getAttribute('data-exercise')
+      const fileInput = document.querySelector(`.reference-audio-input[data-exercise="${exerciseIndex}"]`)
+      
+      if (fileInput) {
+        console.log(`[REFERENCE] Opening file picker for exercise ${exerciseIndex}`)
+        fileInput.click()
+      }
+    })
+  })
+  
+  fileInputs.forEach((input) => {
+    input.addEventListener('change', async (e) => {
+      const exerciseIndex = input.getAttribute('data-exercise')
+      const file = e.target.files[0]
+      
+      if (!file) return
+      
+      console.log(`[REFERENCE] File selected for exercise ${exerciseIndex}:`, {
+        name: file.name,
+        size: `${(file.size / 1024).toFixed(2)} KB`,
+        type: file.type
+      })
+      
+      try {
+        // Store reference audio
+        await storeReferenceAudio(exerciseIndex, file)
+        
+        // Show success indicator
+        const indicator = document.querySelector(`.reference-indicator[data-exercise="${exerciseIndex}"]`)
+        if (indicator) {
+          indicator.style.display = 'flex'
+        }
+        
+        console.log(`[REFERENCE] ✅ Reference stored for exercise ${exerciseIndex}`)
+      } catch (error) {
+        console.error(`[REFERENCE] ❌ Error storing reference:`, error)
+        alert(`Erreur lors du chargement de la référence: ${error.message}`)
+      }
+    })
+  })
+  
+  console.log(`[REFERENCE] ${uploadButtons.length} upload buttons initialized`)
+}
+
+/**
+ * Store reference audio file
+ * @param {string} exerciseIndex - Exercise index
+ * @param {File} file - Audio file
+ */
+async function storeReferenceAudio(exerciseIndex, file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    
+    reader.onload = (e) => {
+      const audioData = e.target.result // Base64 data URL
+      
+      referenceAudioStore[exerciseIndex] = {
+        filename: file.name,
+        audioData: audioData,
+        size: file.size,
+        type: file.type,
+        uploadDate: new Date().toISOString()
+      }
+      
+      console.log(`[REFERENCE] Stored reference for exercise ${exerciseIndex}:`, {
+        filename: file.name,
+        size: `${(file.size / 1024).toFixed(2)} KB`,
+        dataLength: audioData.length
+      })
+      
+      resolve()
+    }
+    
+    reader.onerror = (error) => {
+      console.error('[REFERENCE] FileReader error:', error)
+      reject(error)
+    }
+    
+    // Read file as Base64 data URL
+    reader.readAsDataURL(file)
+  })
+}
+
+/**
+ * Get reference audio for exercise
+ * @param {string} exerciseIndex - Exercise index
+ * @returns {Object|null} Reference audio data
+ */
+function getReferenceAudio(exerciseIndex) {
+  return referenceAudioStore[exerciseIndex] || null
+}
+
+/**
+ * Remove reference audio for exercise
+ * @param {string} exerciseIndex - Exercise index
+ */
+function removeReferenceAudio(exerciseIndex) {
+  if (referenceAudioStore[exerciseIndex]) {
+    delete referenceAudioStore[exerciseIndex]
+    
+    // Hide indicator
+    const indicator = document.querySelector(`.reference-indicator[data-exercise="${exerciseIndex}"]`)
+    if (indicator) {
+      indicator.style.display = 'none'
+    }
+    
+    console.log(`[REFERENCE] Removed reference for exercise ${exerciseIndex}`)
+  }
+}
+
 /**
  * Initialize template buttons
  */
@@ -1387,6 +1544,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeSessionSave()
   setupDoneCheckboxes()
   initializeTemplateButtons()
+  initializeReferenceUpload()
   console.log('[FOCUS ZONE] Metronome integration active - Exercise index:', currentExerciseIndex)
 })
 

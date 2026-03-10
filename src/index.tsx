@@ -406,7 +406,7 @@ app.get('/', (c) => {
       <div class="zone-practice">
         {/* Column Headers */}
         <div class="exercise-header">
-          <div class="header-cell">REC</div>
+          <div class="header-cell">REC / REF</div>
           <div class="header-cell">EXERCISE</div>
           <div class="header-cell">SUB<br />RYTH</div>
           <div class="header-cell header-tempo">
@@ -521,7 +521,16 @@ function generateExercises() {
 
   return exercises.map((ex, index) => (
     <div class="exercise-row" data-exercise={index}>
-      <button class="rec-button" data-exercise={index}></button>
+      <div class="rec-reference-container">
+        <button class="rec-button" data-exercise={index}></button>
+        <button class="upload-reference-btn" data-exercise={index} title="Upload référence audio">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
+        <input type="file" class="reference-audio-input" data-exercise={index} accept="audio/*" style="display: none;" />
+        <span class="reference-indicator" data-exercise={index} style="display: none;">✅</span>
+      </div>
       <input 
         type="text" 
         class="exercise-name-input" 
