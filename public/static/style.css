@@ -393,8 +393,9 @@ body {
 .rec-reference-container {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   position: relative;
+  min-width: 80px;
 }
 
 /* REC Button - Per Exercise Recording */
@@ -448,32 +449,33 @@ body {
 
 /* Upload Reference Button (trombone icon) */
 .upload-reference-btn {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   border-radius: 4px;
-  background-color: transparent;
-  border: 1px solid #353535;
+  background-color: rgba(59, 130, 246, 0.05);
+  border: 1.5px solid #3b82f6;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
   flex-shrink: 0;
-  color: #666;
+  color: #3b82f6;
   padding: 0;
 }
 
 .upload-reference-btn:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-  border-color: #3b82f6;
-  color: #3b82f6;
-  transform: scale(1.05);
+  background-color: rgba(59, 130, 246, 0.15);
+  border-color: #60a5fa;
+  color: #60a5fa;
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
 }
 
 .upload-reference-btn svg {
-  width: 14px;
-  height: 14px;
-  stroke-width: 2;
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5;
 }
 
 /* Reference Indicator (green checkmark) */
