@@ -752,8 +752,119 @@ function initializeSessionSave() {
   console.log('⚠️  Closing tab with unsaved data will show "Leave site?" warning')
 }
 
+// ============================================================================
+// METRONOME INTEGRATION - Auto-fill Focus Zone
+// ============================================================================
+
+let currentExerciseIndex = 0
+
+/**
+ * Handle postMessage from metronome iframe
+ */
+window.addEventListener('message', (event) => {
+  const { type, payload } = event.data
+  
+  if (type === 'METRONOME_TIMER_START') {
+    console.log('[FOCUS ZONE] Timer démarré:', payload)
+    // Optional: Visual feedback when timer starts
+  }
+  
+  if (type === 'METRONOME_TIMER_COMPLETE') {
+    console.log('[FOCUS ZONE] Timer terminé:', payload)
+    autoFillCurrentExercise(payload)
+  }
+})
+
+/**
+ * Auto-fill current exercise with metronome data
+ */
+function autoFillCurrentExercise(data) {
+  const rows = document.querySelectorAll('.focus-tbody .exercise-row')
+  
+  if (currentExerciseIndex >= rows.length) {
+    console.warn('[FOCUS ZONE] Aucun exercice disponible (index:', currentExerciseIndex, ')')
+    return
+  }
+  
+  const currentRow = rows[currentExerciseIndex]
+  
+  // Fill TEMPS PASSÉ
+  const timeCell = currentRow.querySelector('.duration-cell')
+  if (timeCell) {
+    const select = timeCell.querySelector('select')
+    if (select) {
+      // Check if formatted duration matches a preset
+      const matchingOption = Array.from(select.options).find(
+        opt => opt.value === data.formattedDuration
+      )
+      
+      if (matchingOption) {
+        select.value = data.formattedDuration
+      } else {
+        // Use Custom option
+        const customOption = select.querySelector('option[value="custom"]')
+        if (customOption) {
+          customOption.value = data.formattedDuration
+          customOption.textContent = data.formattedDuration
+          select.value = data.formattedDuration
+        }
+      }
+      
+      // Flash green
+      timeCell.style.backgroundColor = 'rgba(80, 255, 80, 0.2)'
+      setTimeout(() => {
+        timeCell.style.backgroundColor = ''
+      }, 500)
+    }
+  }
+  
+  // Fill TEMPO ATTEINT
+  const tempoCell = currentRow.querySelector('.tempo-cell')
+  if (tempoCell) {
+    const tempoText = data.tempos.join(' → ')
+    tempoCell.textContent = tempoText
+    
+    // Flash green
+    tempoCell.style.backgroundColor = 'rgba(80, 255, 80, 0.2)'
+    setTimeout(() => {
+      tempoCell.style.backgroundColor = ''
+    }, 500)
+  }
+  
+  console.log(`[FOCUS ZONE] ✅ Exercice ${currentExerciseIndex + 1} auto-rempli:`, {
+    temps: data.formattedDuration,
+    tempos: data.tempos.join(' → ')
+  })
+}
+
+/**
+ * Setup DONE checkbox auto-advance
+ */
+function setupDoneCheckboxes() {
+  const checkboxes = document.querySelectorAll('.done-checkbox')
+  
+  checkboxes.forEach((checkbox, index) => {
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked && index === currentExerciseIndex) {
+        // Flash yellow to indicate advancing
+        const row = checkbox.closest('.exercise-row')
+        row.style.backgroundColor = 'rgba(255, 200, 80, 0.15)'
+        setTimeout(() => {
+          row.style.backgroundColor = ''
+        }, 400)
+        
+        // Advance to next exercise
+        currentExerciseIndex++
+        console.log(`[FOCUS ZONE] ➡️  Avancé à l'exercice ${currentExerciseIndex + 1}`)
+      }
+    })
+  })
+}
+
 // Initialize session save on page load
 document.addEventListener('DOMContentLoaded', () => {
   initializeSessionSave()
+  setupDoneCheckboxes()
+  console.log('[FOCUS ZONE] Metronome integration active - Exercise index:', currentExerciseIndex)
 })
 

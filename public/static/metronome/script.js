@@ -28,6 +28,11 @@ let timerSeconds = 0;
 let timerInterval = null;
 let isTimerActive = false;
 
+// SHRED UP INTEGRATION: Timer session tracking (noms uniques pour éviter conflits)
+let timerSessionStart = null;  // Timestamp de début du timer
+let timerTempos = [];          // Liste des tempos joués pendant le timer
+let timerDuration = 0;         // Durée programmée du timer en secondes
+
 // Variables pour SESSION DURATION (chronomètre)
 let sessionStartTime = null;
 let sessionElapsedSeconds = 0;
@@ -539,6 +544,36 @@ function populateNoteModal() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// SHRED UP INTEGRATION: Helper Functions
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Formate une durée en secondes vers MM:SS
+ * @param {number} seconds - Durée en secondes
+ * @returns {string} Format MM:SS
+ */
+function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+/**
+ * Track les changements de tempo pendant la session timer
+ * @param {number} tempo - Le nouveau BPM
+ */
+function trackTempoChange(tempo) {
+    if (!isTimerActive || !timerSessionStart) return;
+    
+    // Éviter les doublons consécutifs
+    const lastTempo = timerTempos[timerTempos.length - 1];
+    if (lastTempo === tempo) return;
+    
+    timerTempos.push(tempo);
+    console.log(`[TIMER SESSION] Tempo changé: ${tempo} BPM (total: ${timerTempos.length} tempos)`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // TIMER (COMPTE À REBOURS)
 // ═══════════════════════════════════════════════════════════════════
 
@@ -559,6 +594,25 @@ function startTimer() {
     
     isTimerActive = true;
     
+    // SHRED UP INTEGRATION: Initialiser le tracking de session
+    timerSessionStart = Date.now();
+    timerDuration = timerMinutes * 60 + timerSeconds;
+    timerTempos = [bpm]; // Commencer avec le tempo actuel
+    
+    // Notifier l'app parente que le timer démarre
+    if (window.parent !== window) {
+        window.parent.postMessage({
+            type: 'METRONOME_TIMER_START',
+            payload: {
+                startTime: timerSessionStart,
+                initialTempo: bpm,
+                durationSeconds: timerDuration
+            }
+        }, '*');
+    }
+    
+    console.log(`[TIMER SESSION] Démarré: ${timerMinutes}:${String(timerSeconds).padStart(2, '0')} @ ${bpm} BPM`);
+    
     timerInterval = setInterval(() => {
         if (timerSeconds > 0) {
             timerSeconds--;
@@ -570,8 +624,35 @@ function startTimer() {
             stopTimer();
             stopMetronome();
             console.log('[TIMER] Compte à rebours terminé - Métronome arrêté');
+            
+            // SHRED UP INTEGRATION: Envoyer les données de session
+            if (timerSessionStart && window.parent !== window) {
+                const elapsedSeconds = Math.round((Date.now() - timerSessionStart) / 1000);
+                const uniqueTempos = [...new Set(timerTempos)];
+                
+                window.parent.postMessage({
+                    type: 'METRONOME_TIMER_COMPLETE',
+                    payload: {
+                        tempos: uniqueTempos,
+                        elapsedSeconds: elapsedSeconds,
+                        formattedDuration: formatDuration(elapsedSeconds),
+                        timestamp: Date.now()
+                    }
+                }, '*');
+                
+                console.log('[TIMER SESSION] Terminé:', {
+                    duration: formatDuration(elapsedSeconds),
+                    tempos: uniqueTempos
+                });
+            }
+            
             // Flash visuel ou notification
             flashTimerNotification();
+            
+            // Reset tracking variables
+            timerSessionStart = null;
+            timerTempos = [];
+            timerDuration = 0;
         }
         
         updateTimerDisplay();
@@ -586,6 +667,9 @@ function stopTimer() {
         timerInterval = null;
     }
     isTimerActive = false;
+    
+    // Note: On ne reset PAS les variables de tracking ici
+    // car elles sont utilisées après l'appel à stopTimer()
 }
 
 function resetTimer() {
@@ -990,6 +1074,7 @@ function handleTapLogic() {
         
         // Mettre à jour le BPM
         bpm = newBPM;
+        trackTempoChange(bpm); // SHRED UP: Track tempo changes during timer
         updateBPMDisplay(bpm);
         const percentage = bpmToSliderPosition(bpm);
         updateVerticalSliderPosition(percentage);
@@ -1067,6 +1152,7 @@ function initVerticalSlider() {
             
             if (newBpm !== bpm) {
                 bpm = newBpm;
+                trackTempoChange(bpm); // SHRED UP: Track tempo changes during timer
                 updateBPMDisplay(bpm);
                 
                 if (isPlaying) {
@@ -1320,6 +1406,7 @@ function initBPMClick() {
             
             if (!isNaN(newBpm) && newBpm !== bpm) {
                 bpm = newBpm;
+                trackTempoChange(bpm); // SHRED UP: Track tempo changes during timer
                 updateBPMDisplay(bpm);
                 const percentage = bpmToSliderPosition(bpm);
                 updateVerticalSliderPosition(percentage);
@@ -1380,6 +1467,7 @@ function initTempoButtons() {
             setTimeout(() => plusBtn.classList.remove('clicking'), 150);
             
             bpm = Math.min(MAX_BPM, bpm + 1);
+            trackTempoChange(bpm); // SHRED UP: Track tempo changes during timer
             updateBPMDisplay(bpm);
             const percentage = bpmToSliderPosition(bpm);
             updateVerticalSliderPosition(percentage);
@@ -1399,6 +1487,7 @@ function initTempoButtons() {
             setTimeout(() => minusBtn.classList.remove('clicking'), 150);
             
             bpm = Math.max(MIN_BPM, bpm - 1);
+            trackTempoChange(bpm); // SHRED UP: Track tempo changes during timer
             updateBPMDisplay(bpm);
             const percentage = bpmToSliderPosition(bpm);
             updateVerticalSliderPosition(percentage);
