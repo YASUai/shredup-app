@@ -955,10 +955,243 @@ function setupDoneCheckboxes() {
   console.log(`[FOCUS ZONE] ${checkboxes.length} checkboxes initialisées`)
 }
 
+// ============================================================================
+// TEMPLATE SYSTEM - Save/Load Session Templates
+// ============================================================================
+
+/**
+ * Collect template data from current session (structure only, no progress data)
+ */
+function collectTemplateData() {
+  const rows = document.querySelectorAll('.exercise-row')
+  const exercises = []
+  
+  rows.forEach((row, index) => {
+    // Get exercise name
+    const nameInput = row.querySelector('.exercise-name-input')
+    const name = nameInput ? nameInput.value.trim() : ''
+    
+    // Skip empty exercises
+    if (!name) return
+    
+    // Get subdivision
+    const subSelect = row.querySelector('.sub-ryth-select')
+    const subdivision = subSelect ? subSelect.value : ''
+    
+    // Get tempo goal
+    const goalInput = row.querySelector('.tempo-goal-input')
+    const tempoGoal = goalInput ? goalInput.value : ''
+    
+    exercises.push({
+      index,
+      name,
+      subdivision,
+      tempoGoal
+    })
+  })
+  
+  return {
+    focusPoints: document.querySelector('.focus-description').value,
+    exercises,
+    timestamp: Date.now(),
+    date: new Date().toISOString()
+  }
+}
+
+/**
+ * Save current session as template
+ */
+function saveTemplate() {
+  const templateData = collectTemplateData()
+  
+  if (templateData.exercises.length === 0) {
+    alert('❌ Aucun exercice à sauvegarder ! Remplis au moins un nom d\'exercice.')
+    return
+  }
+  
+  // Prompt for template name
+  const templateName = prompt('💾 Nom du template:', `Session ${new Date().toLocaleDateString()}`)
+  
+  if (!templateName) {
+    console.log('[TEMPLATE] Sauvegarde annulée')
+    return
+  }
+  
+  // Save to localStorage
+  const templates = JSON.parse(localStorage.getItem('shredupTemplates') || '[]')
+  templates.push({
+    name: templateName,
+    data: templateData,
+    savedAt: new Date().toISOString()
+  })
+  
+  localStorage.setItem('shredupTemplates', JSON.stringify(templates))
+  
+  console.log('[TEMPLATE] ✅ Template sauvegardé:', templateName, templateData)
+  alert(`✅ Template "${templateName}" sauvegardé avec succès !\n\n${templateData.exercises.length} exercices sauvegardés.`)
+}
+
+/**
+ * Load template into current session
+ */
+function loadTemplate() {
+  // Get saved templates
+  const templates = JSON.parse(localStorage.getItem('shredupTemplates') || '[]')
+  
+  if (templates.length === 0) {
+    alert('❌ Aucun template sauvegardé !\n\nUtilise "SAVE TEMPLATE" pour créer un template.')
+    return
+  }
+  
+  // Create template selection dialog
+  let message = '📋 Templates disponibles:\n\n'
+  templates.forEach((template, index) => {
+    const savedDate = new Date(template.savedAt).toLocaleString()
+    message += `${index + 1}. ${template.name}\n   (${template.data.exercises.length} exercices, ${savedDate})\n\n`
+  })
+  message += 'Entre le numéro du template à charger:'
+  
+  const selection = prompt(message)
+  
+  if (!selection) {
+    console.log('[TEMPLATE] Chargement annulé')
+    return
+  }
+  
+  const templateIndex = parseInt(selection) - 1
+  
+  if (templateIndex < 0 || templateIndex >= templates.length) {
+    alert('❌ Numéro invalide !')
+    return
+  }
+  
+  const template = templates[templateIndex]
+  
+  // Confirm overwrite
+  if (!confirm(`⚠️  Charger "${template.name}" ?\n\nCeci va remplacer les exercices actuels (les données de progression seront conservées si tu ne recharges pas la page).`)) {
+    return
+  }
+  
+  // Apply template data
+  applyTemplate(template.data)
+  
+  console.log('[TEMPLATE] ✅ Template chargé:', template.name)
+  alert(`✅ Template "${template.name}" chargé avec succès !\n\n${template.data.exercises.length} exercices restaurés.`)
+}
+
+/**
+ * Apply template data to current session
+ */
+function applyTemplate(templateData) {
+  // Set focus points
+  const focusDescription = document.querySelector('.focus-description')
+  if (focusDescription) {
+    focusDescription.value = templateData.focusPoints
+  }
+  
+  // Set exercises
+  const rows = document.querySelectorAll('.exercise-row')
+  
+  templateData.exercises.forEach((exercise, index) => {
+    if (index >= rows.length) return
+    
+    const row = rows[index]
+    
+    // Set exercise name
+    const nameInput = row.querySelector('.exercise-name-input')
+    if (nameInput) {
+      nameInput.value = exercise.name
+    }
+    
+    // Set subdivision
+    const subSelect = row.querySelector('.sub-ryth-select')
+    if (subSelect) {
+      subSelect.value = exercise.subdivision
+    }
+    
+    // Set tempo goal
+    const goalInput = row.querySelector('.tempo-goal-input')
+    if (goalInput) {
+      goalInput.value = exercise.tempoGoal
+    }
+    
+    // Clear progress data (temps passé, tempos atteints, done checkbox)
+    const tempsSelect = row.querySelector('.temps-passe-select')
+    if (tempsSelect) {
+      tempsSelect.value = ''
+    }
+    
+    const tempoInputs = row.querySelectorAll('.tempo-input')
+    tempoInputs.forEach(input => {
+      input.value = ''
+    })
+    
+    const checkbox = row.querySelector('.exercise-checkbox input[type="checkbox"]')
+    if (checkbox) {
+      checkbox.checked = false
+    }
+  })
+  
+  // Clear remaining rows
+  for (let i = templateData.exercises.length; i < rows.length; i++) {
+    const row = rows[i]
+    
+    const nameInput = row.querySelector('.exercise-name-input')
+    if (nameInput) nameInput.value = ''
+    
+    const subSelect = row.querySelector('.sub-ryth-select')
+    if (subSelect) subSelect.value = ''
+    
+    const goalInput = row.querySelector('.tempo-goal-input')
+    if (goalInput) goalInput.value = ''
+    
+    const tempsSelect = row.querySelector('.temps-passe-select')
+    if (tempsSelect) tempsSelect.value = ''
+    
+    const tempoInputs = row.querySelectorAll('.tempo-input')
+    tempoInputs.forEach(input => {
+      input.value = ''
+    })
+    
+    const checkbox = row.querySelector('.exercise-checkbox input[type="checkbox"]')
+    if (checkbox) checkbox.checked = false
+  }
+  
+  // Reset current exercise index
+  currentExerciseIndex = 0
+  
+  console.log('[TEMPLATE] Template appliqué:', templateData.exercises.length, 'exercices')
+}
+
+/**
+ * Initialize template buttons
+ */
+function initializeTemplateButtons() {
+  const saveBtn = document.getElementById('save-template-btn')
+  const loadBtn = document.getElementById('load-template-btn')
+  
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      console.log('[TEMPLATE] 💾 Save button clicked')
+      saveTemplate()
+    })
+  }
+  
+  if (loadBtn) {
+    loadBtn.addEventListener('click', () => {
+      console.log('[TEMPLATE] 📋 Load button clicked')
+      loadTemplate()
+    })
+  }
+  
+  console.log('[TEMPLATE] Buttons initialized:', { saveBtn: !!saveBtn, loadBtn: !!loadBtn })
+}
+
 // Initialize session save on page load
 document.addEventListener('DOMContentLoaded', () => {
   initializeSessionSave()
   setupDoneCheckboxes()
+  initializeTemplateButtons()
   console.log('[FOCUS ZONE] Metronome integration active - Exercise index:', currentExerciseIndex)
 })
 

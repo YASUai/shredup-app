@@ -379,7 +379,8 @@ app.get('/', (c) => {
           <ul class="menu-list">
             <li class="menu-item">ACCOUNT</li>
             <li class="menu-item">LOGS</li>
-            <li class="menu-item" id="template-menu-item">TEMPLATE</li>
+            <li class="menu-item" id="save-template-btn">SAVE TEMPLATE</li>
+            <li class="menu-item" id="load-template-btn">LOAD TEMPLATE</li>
           </ul>
         </div>
 
