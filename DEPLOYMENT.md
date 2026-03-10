@@ -1,220 +1,176 @@
-# 🚀 SHREDUP - GUIDE DE DÉPLOIEMENT PERMANENT
+# SHRED UP - Deployment Information
 
-## 📦 SAUVEGARDE DU PROJET
+## Phase 4 - Complete Deployment
 
-### **Backup complet (à télécharger)**
-**URL** : https://www.genspark.ai/api/files/s/7jlXTsHq  
-**Taille** : 6.6 MB  
-**Format** : .tar.gz  
-**Contenu** : Code source complet + git history + node_modules
-
-**Restauration** :
-```bash
-# Télécharger et extraire
-cd /home/user
-wget https://www.genspark.ai/api/files/s/7jlXTsHq -O shredup-backup.tar.gz
-tar -xzf shredup-backup.tar.gz
-
-# Le projet est restauré avec le chemin absolu
-cd /home/user/webapp
-npm install  # Si node_modules manquants
-npm run build
-pm2 start ecosystem.config.cjs
-```
+**Date**: 2026-03-10
+**Version**: Phase 4 - Metronome Integration + Templates + Audio Recording
 
 ---
 
-## 🌐 DÉPLOIEMENT CLOUDFLARE PAGES (PERMANENT)
+## 🌐 Live URLs
 
-### **Prérequis**
-1. Compte Cloudflare (gratuit) : https://dash.cloudflare.com/sign-up
-2. API Token Cloudflare configuré dans l'onglet **Deploy** de GenSpark
+### Production Deployment (GenSpark)
+**URL**: https://0b596d24-c79c-4659-a359-785995cb196d.vip.gensparksite.com/
 
-### **Étape 1 : Configuration API (première fois uniquement)**
-```bash
-# Appeler cet outil pour configurer l'environnement
-setup_cloudflare_api_key
-
-# Vérifier que l'API est configurée
-npx wrangler whoami
-```
-
-### **Étape 2 : Lecture du nom de projet**
-```bash
-# Lire le nom de projet existant (ou utiliser par défaut)
-meta_info(action="read", key="cloudflare_project_name")
-# Retourne : "webapp" ou le nom configuré
-```
-
-### **Étape 3 : Build du projet**
-```bash
-cd /home/user/webapp
-npm run build
-# Génère dist/ avec _worker.js et fichiers statiques
-```
-
-### **Étape 4 : Créer le projet Cloudflare Pages (première fois)**
-```bash
-# Utiliser le nom depuis meta_info (ex: shredup-app)
-npx wrangler pages project create shredup-app \
-  --production-branch main \
-  --compatibility-date 2024-01-01
-```
-
-### **Étape 5 : Déployer**
-```bash
-# Déployer dist/ vers Cloudflare Pages
-npx wrangler pages deploy dist --project-name shredup-app
-
-# Vous recevrez 2 URLs :
-# - Production : https://shredup-app.pages.dev
-# - Branch : https://main.shredup-app.pages.dev
-```
-
-### **Étape 6 : Sauvegarder le nom du projet**
-```bash
-# Écrire le nom final dans meta_info pour référence future
-meta_info(action="write", key="cloudflare_project_name", value="shredup-app")
-```
-
-### **Résultat**
-✅ Application accessible 24/7 : https://shredup-app.pages.dev  
-✅ Auto-déploiement : push GitHub → déploiement automatique  
-✅ HTTPS gratuit : certificat SSL automatique  
-✅ CDN global : performance optimale mondiale
+### Development Sandbox
+**URL**: https://3000-idctbiclmksbnv76p5d4y-02b9cc79.sandbox.novita.ai/
 
 ---
 
-## 🔄 DÉPLOIEMENT ULTÉRIEUR (MISES À JOUR)
+## 📦 Project Backup
 
-```bash
-# 1. Build
-cd /home/user/webapp
-npm run build
-
-# 2. Déployer (utiliser le nom depuis meta_info)
-npx wrangler pages deploy dist --project-name shredup-app
-
-# Déploiement en ~30 secondes
-# URL mise à jour instantanément
-```
+**Backup URL**: https://www.genspark.ai/api/files/s/tSKeTc6T
+**Backup Name**: shredup-app-phase4-complete
+**Size**: 7.4 MB
+**Description**: Complete Phase 4 with all features (Metronome integration, Templates, Audio recording system)
 
 ---
 
-## 📂 GITHUB REPOSITORY (CODE SOURCE)
+## 🔗 GitHub Repository
 
-### **Repository actuel**
-https://github.com/YASUai/shredup-app
-
-### **Synchronisation**
-```bash
-# Avant toute opération GitHub
-setup_github_environment
-
-# Commit et push
-cd /home/user/webapp
-git add .
-git commit -m "Your commit message"
-git push origin feature/phase-4-tuner-integration
-
-# Ou push vers main
-git push origin main
-```
+**URL**: https://github.com/YASUai/shredup-app
+**Branch**: feature/phase-4-tuner-integration
+**Latest Commit**: b13c169 - Audio Recording System + Precision Analysis Framework
 
 ---
 
-## 🛠️ COMMANDES UTILES
+## ✨ Features Deployed (Phase 4)
 
-### **Local (Sandbox)**
+### 1. Metronome Integration
+- ✅ Auto-fill TEMPS PASSÉ (cumulative time tracking)
+- ✅ Auto-fill TEMPO ATTEINTS (multi-column system)
+- ✅ Auto-advance to next exercise when DONE checked
+- ✅ postMessage communication metronome → parent
+- ✅ Real-time tempo tracking during timer
+- ✅ Visual feedback (green flash on auto-fill, yellow on advance)
+
+### 2. Template System
+- ✅ SAVE TEMPLATE - Downloads JSON file to computer
+- ✅ LOAD TEMPLATE - File picker for easy selection
+- ✅ Saves: Exercise names, subdivisions, tempo goals, focus points
+- ✅ Does NOT save: Progress data (temps passé, tempos atteints, checkboxes)
+- ✅ No storage limits (files on user's computer)
+- ✅ Easy backup and sharing
+
+### 3. Audio Recording System
+- ✅ REC buttons trigger real microphone recording
+- ✅ High quality: 48kHz, 320kbps, audio/webm (Opus codec)
+- ✅ Automatic file download with naming convention
+- ✅ Format: `ExerciseName_120BPM_2026-03-10_14-30-45.webm`
+- ✅ Visual feedback: Red button when recording
+- ✅ Framework ready for DSP precision analysis
+
+### 4. UI Improvements
+- ✅ Widened columns: SUB RYTH (110px), TEMPS PASSÉ (90px), TEMPO (110px)
+- ✅ Tuner RESET button repositioned (bottom: 22px)
+- ✅ Multi-column tempo system (1-3 columns, auto-expand)
+
+---
+
+## 🎯 Key Commits (Latest)
+
+1. **b13c169** - Audio Recording System + Precision Analysis Framework
+2. **132282e** - File-based template system with file picker
+3. **1280e76** - Full Template System - Save/Load Session Templates
+4. **0be3c04** - Widen columns + Add TEMPLATE menu item
+5. **90d9acf** - Multi-column tempo system correctly implemented
+6. **dce0662** - Cumulative time tracking for same exercise
+7. **c5c9a3a** - Correct DOM selectors for Focus Zone auto-fill
+8. **e0ea952** - Metronome auto-fills Focus Zone (stable implementation)
+
+---
+
+## 🛠️ Technical Stack
+
+- **Framework**: Hono (TypeScript)
+- **Frontend**: Vanilla JS + Tailwind CSS (CDN)
+- **Deployment**: GenSpark Hosted Deployment
+- **Version Control**: Git + GitHub
+- **Build**: Vite (SSR bundle)
+
+---
+
+## 📝 Usage Workflow
+
+### Recording Audio
+1. Click REC button → Authorize microphone
+2. Play exercise with metronome
+3. Click REC again → File downloads automatically
+
+### Using Templates
+1. **Save**: Create session → Click SAVE TEMPLATE → Name it → Downloads .json
+2. **Load**: Click LOAD TEMPLATE → Select .json file → Confirm → Exercises restored
+
+### Practice Session
+1. Set timer on metronome (e.g., 2:30)
+2. Start metronome with Play
+3. Change tempos during practice (optional)
+4. Wait for timer end → Auto-fills TEMPS PASSÉ & TEMPO ATTEINTS
+5. Check DONE → Advances to next exercise
+6. Repeat for all exercises
+7. Click "💾 Sauvegarder Session" → Downloads .txt report
+
+---
+
+## 🎸 Future Enhancements (TODO)
+
+### High Priority
+- [ ] Implement full DSP precision analysis in `analyzePrecision()`
+- [ ] Add UI for displaying precision results
+- [ ] Convert WebM to WAV for analysis
+- [ ] Implement onset detection algorithm
+- [ ] Calculate timing statistics vs metronome grid
+
+### Medium Priority
+- [ ] User authentication system
+- [ ] Session logs history
+- [ ] Progression graphs
+- [ ] Cloud storage for templates
+
+### Low Priority
+- [ ] Custom metronome sounds
+- [ ] Multiple tuning presets
+- [ ] Export session data to PDF
+
+---
+
+## 📊 Project Statistics
+
+- **Total Files**: ~50 modules
+- **Bundle Size**: 82.02 kB (dist/_worker.js)
+- **Exercise Rows**: 15 configurable rows
+- **Supported Subdivisions**: 7 (1/2, 1/4, 1/8, 1/8t, 1/16, 1/16t, 1/32)
+- **BPM Range**: 20-250
+- **Tempo Columns**: 1-3 (auto-expandable)
+
+---
+
+## 🚀 Deployment Commands
+
 ```bash
 # Build
 npm run build
 
-# Démarrer serveur local
-pm2 start ecosystem.config.cjs
+# Deploy (GenSpark)
+# Done automatically via GenSpark deployment interface
 
-# Arrêter
-pm2 delete webapp
+# GitHub Push
+git push origin feature/phase-4-tuner-integration
 
-# Logs
-pm2 logs webapp --nostream
-
-# Redémarrer
-pm2 restart webapp
-```
-
-### **Cloudflare Pages**
-```bash
-# Liste des projets
-npx wrangler pages project list
-
-# Infos projet
-npx wrangler pages project show shredup-app
-
-# Liste des déploiements
-npx wrangler pages deployment list --project-name shredup-app
-
-# Rollback (revenir à un déploiement précédent)
-npx wrangler pages deployment tail --project-name shredup-app
+# Create Backup
+# Done automatically via ProjectBackup tool
 ```
 
 ---
 
-## 📋 CHECKLIST POST-DÉPLOIEMENT
+## 📞 Support & Resources
 
-- [ ] Tester URL production : https://shredup-app.pages.dev
-- [ ] Vérifier page subdivisions : /static/metronome/test-subdivisions.html
-- [ ] Tester enregistreur audio : /static/metronome/test-audio-recorder.html
-- [ ] Vérifier tuner : /
-- [ ] Confirmer métronome visuel : /static/metronome/test-visual-metronome.html
-- [ ] Mettre à jour meta_info avec le nom du projet
+- **GitHub Issues**: https://github.com/YASUai/shredup-app/issues
+- **Documentation**: See README.md in repository
+- **Backup**: https://www.genspark.ai/api/files/s/tSKeTc6T
 
 ---
 
-## 🔐 SECRETS (VARIABLES D'ENVIRONNEMENT)
-
-Si vous avez besoin de secrets (API keys, tokens) :
-
-```bash
-# Ajouter un secret
-npx wrangler pages secret put API_KEY --project-name shredup-app
-
-# Lister les secrets
-npx wrangler pages secret list --project-name shredup-app
-
-# Supprimer un secret
-npx wrangler pages secret delete API_KEY --project-name shredup-app
-```
-
-Les secrets sont accessibles dans votre code via `env.API_KEY`.
-
----
-
-## 📞 SUPPORT
-
-- **Cloudflare Docs** : https://developers.cloudflare.com/pages
-- **Wrangler CLI** : https://developers.cloudflare.com/workers/wrangler
-- **GitHub Issues** : https://github.com/YASUai/shredup-app/issues
-
----
-
-## 🎯 RÉSUMÉ : ACCÈS PERMANENT
-
-### **Sandbox temporaire (développement)**
-- URL : https://3000-{sandbox-id}.sandbox.novita.ai
-- Durée : expire après quelques heures d'inactivité
-- Usage : développement et tests rapides
-
-### **Cloudflare Pages (production)**
-- URL : https://shredup-app.pages.dev
-- Durée : **permanent** (tant que compte Cloudflare actif)
-- Usage : accès 24/7, partage avec utilisateurs
-
-### **GitHub (code source)**
-- URL : https://github.com/YASUai/shredup-app
-- Durée : **permanent**
-- Usage : versioning, collaboration, backup
-
----
-
-**🎸 ShredUp est maintenant accessible en permanence !**
+**Last Updated**: 2026-03-10
+**Status**: ✅ Production Ready
+**Deployed By**: GenSpark Hosted Deployment
