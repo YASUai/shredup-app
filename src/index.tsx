@@ -379,7 +379,7 @@ app.get('/', (c) => {
           <ul class="menu-list">
             <li class="menu-item">ACCOUNT</li>
             <li class="menu-item">LOGS</li>
-            <li class="menu-item">DISTANCE TO LVL</li>
+            <li class="menu-item" id="template-menu-item">TEMPLATE</li>
           </ul>
         </div>
 
