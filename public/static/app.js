@@ -832,7 +832,8 @@ function autoFillCurrentExercise(data) {
     
     console.log('[FOCUS ZONE] ⏱️  Addition des temps:', {
       existant: existingValue,
-      nouveau: data.formattedDuration,
+      existantSeconds: existingSeconds,
+      nouveauSeconds: newSeconds,
       total: totalFormatted
     })
     
@@ -845,10 +846,17 @@ function autoFillCurrentExercise(data) {
       tempsPasseSelect.value = totalFormatted
     } else {
       // Use Custom option and set its value
-      const customOption = tempsPasseSelect.querySelector('option[value="custom"]')
+      let customOption = tempsPasseSelect.querySelector('option[value="custom"]')
       if (customOption) {
         customOption.value = totalFormatted
         customOption.textContent = totalFormatted
+        tempsPasseSelect.value = totalFormatted
+      } else {
+        // Create custom option if doesn't exist
+        customOption = document.createElement('option')
+        customOption.value = totalFormatted
+        customOption.textContent = totalFormatted
+        tempsPasseSelect.appendChild(customOption)
         tempsPasseSelect.value = totalFormatted
       }
     }
@@ -860,39 +868,62 @@ function autoFillCurrentExercise(data) {
     }, 500)
   }
   
-  // Fill TEMPO ATTEINT (input field) - AJOUTER les nouveaux tempos
-  const tempoInput = currentRow.querySelector('.tempo-atteints-input')
-  if (tempoInput) {
-    const existingTempos = tempoInput.value.trim()
-    const newTempos = data.tempos.join(' → ')
+  // Fill TEMPO ATTEINT - Find next empty column or add new one
+  const tempoContainer = currentRow.querySelector('.tempo-columns-container')
+  if (tempoContainer) {
+    // Find all tempo inputs in this container
+    const tempoInputs = tempoContainer.querySelectorAll('.tempo-input')
+    const tempoText = data.tempos.join(' → ')
     
-    let finalTempos
-    if (existingTempos && existingTempos !== '---') {
-      // Ajouter les nouveaux tempos à la suite
-      finalTempos = existingTempos + ' | ' + newTempos
-    } else {
-      // Premier passage
-      finalTempos = newTempos
+    // Find first empty input
+    let targetInput = null
+    for (const input of tempoInputs) {
+      if (!input.value || input.value.trim() === '' || input.value === '---') {
+        targetInput = input
+        break
+      }
     }
     
-    tempoInput.value = finalTempos
+    // If all columns are full, add a new one
+    if (!targetInput) {
+      const currentColumns = parseInt(tempoContainer.getAttribute('data-columns')) || 1
+      
+      if (currentColumns < 3) {
+        // Add new column
+        const newColumn = document.createElement('div')
+        newColumn.className = 'tempo-column'
+        newColumn.innerHTML = '<input type="text" class="tempo-input" placeholder="---" maxlength="3" />'
+        tempoContainer.appendChild(newColumn)
+        tempoContainer.setAttribute('data-columns', currentColumns + 1)
+        
+        targetInput = newColumn.querySelector('.tempo-input')
+        console.log('[FOCUS ZONE] 📊 Nouvelle colonne ajoutée automatiquement')
+      } else {
+        // Max columns reached, use last column
+        targetInput = tempoInputs[tempoInputs.length - 1]
+        console.log('[FOCUS ZONE] ⚠️  Maximum de colonnes atteint, écrasement de la dernière')
+      }
+    }
     
-    console.log('[FOCUS ZONE] 🎵 Addition des tempos:', {
-      existant: existingTempos,
-      nouveau: newTempos,
-      final: finalTempos
-    })
-    
-    // Flash green
-    tempoInput.style.backgroundColor = 'rgba(80, 255, 80, 0.2)'
-    setTimeout(() => {
-      tempoInput.style.backgroundColor = ''
-    }, 500)
+    if (targetInput) {
+      targetInput.value = tempoText
+      
+      console.log('[FOCUS ZONE] 🎵 Tempo ajouté:', {
+        colonne: Array.from(tempoInputs).indexOf(targetInput) + 1,
+        tempo: tempoText
+      })
+      
+      // Flash green
+      targetInput.style.backgroundColor = 'rgba(80, 255, 80, 0.2)'
+      setTimeout(() => {
+        targetInput.style.backgroundColor = ''
+      }, 500)
+    }
   }
   
   console.log(`[FOCUS ZONE] ✅ Exercice ${currentExerciseIndex + 1} auto-rempli (cumulatif):`, {
     tempsTotal: tempsPasseSelect ? tempsPasseSelect.value : 'N/A',
-    temposTotal: tempoInput ? tempoInput.value : 'N/A'
+    colonnesTempos: tempoContainer ? tempoContainer.querySelectorAll('.tempo-input').length : 0
   })
 }
 
