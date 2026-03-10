@@ -999,7 +999,7 @@ function collectTemplateData() {
 }
 
 /**
- * Save current session as template
+ * Save current session as template - Downloads JSON file
  */
 function saveTemplate() {
   const templateData = collectTemplateData()
@@ -1010,73 +1010,86 @@ function saveTemplate() {
   }
   
   // Prompt for template name
-  const templateName = prompt('💾 Nom du template:', `Session ${new Date().toLocaleDateString()}`)
+  const templateName = prompt('💾 Nom du template:', `Session-${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}`)
   
   if (!templateName) {
     console.log('[TEMPLATE] Sauvegarde annulée')
     return
   }
   
-  // Save to localStorage
-  const templates = JSON.parse(localStorage.getItem('shredupTemplates') || '[]')
-  templates.push({
+  // Create template object
+  const template = {
     name: templateName,
     data: templateData,
-    savedAt: new Date().toISOString()
-  })
+    savedAt: new Date().toISOString(),
+    version: '1.0'
+  }
   
-  localStorage.setItem('shredupTemplates', JSON.stringify(templates))
+  // Convert to JSON
+  const jsonString = JSON.stringify(template, null, 2)
+  const blob = new Blob([jsonString], { type: 'application/json' })
   
-  console.log('[TEMPLATE] ✅ Template sauvegardé:', templateName, templateData)
-  alert(`✅ Template "${templateName}" sauvegardé avec succès !\n\n${templateData.exercises.length} exercices sauvegardés.`)
+  // Create download link
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${templateName.replace(/[^a-z0-9]/gi, '_')}.json`
+  
+  // Trigger download
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  
+  console.log('[TEMPLATE] ✅ Template téléchargé:', templateName)
+  alert(`✅ Template "${templateName}" téléchargé avec succès !\n\n${templateData.exercises.length} exercices sauvegardés.\n\nFichier: ${a.download}`)
 }
 
 /**
- * Load template into current session
+ * Load template from file - File picker interface
  */
 function loadTemplate() {
-  // Get saved templates
-  const templates = JSON.parse(localStorage.getItem('shredupTemplates') || '[]')
+  // Create file input
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json,application/json'
   
-  if (templates.length === 0) {
-    alert('❌ Aucun template sauvegardé !\n\nUtilise "SAVE TEMPLATE" pour créer un template.')
-    return
-  }
-  
-  // Create template selection dialog
-  let message = '📋 Templates disponibles:\n\n'
-  templates.forEach((template, index) => {
-    const savedDate = new Date(template.savedAt).toLocaleString()
-    message += `${index + 1}. ${template.name}\n   (${template.data.exercises.length} exercices, ${savedDate})\n\n`
+  input.addEventListener('change', (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    
+    const reader = new FileReader()
+    
+    reader.onload = (event) => {
+      try {
+        const template = JSON.parse(event.target.result)
+        
+        // Validate template structure
+        if (!template.data || !template.data.exercises) {
+          throw new Error('Format de template invalide')
+        }
+        
+        // Confirm overwrite
+        if (!confirm(`⚠️  Charger "${template.name}" ?\n\n${template.data.exercises.length} exercices\n\nCeci va remplacer les exercices actuels.`)) {
+          return
+        }
+        
+        // Apply template data
+        applyTemplate(template.data)
+        
+        console.log('[TEMPLATE] ✅ Template chargé:', template.name)
+        alert(`✅ Template "${template.name}" chargé avec succès !\n\n${template.data.exercises.length} exercices restaurés.`)
+      } catch (error) {
+        console.error('[TEMPLATE] Erreur de chargement:', error)
+        alert(`❌ Erreur lors du chargement du template !\n\n${error.message}`)
+      }
+    }
+    
+    reader.readAsText(file)
   })
-  message += 'Entre le numéro du template à charger:'
   
-  const selection = prompt(message)
-  
-  if (!selection) {
-    console.log('[TEMPLATE] Chargement annulé')
-    return
-  }
-  
-  const templateIndex = parseInt(selection) - 1
-  
-  if (templateIndex < 0 || templateIndex >= templates.length) {
-    alert('❌ Numéro invalide !')
-    return
-  }
-  
-  const template = templates[templateIndex]
-  
-  // Confirm overwrite
-  if (!confirm(`⚠️  Charger "${template.name}" ?\n\nCeci va remplacer les exercices actuels (les données de progression seront conservées si tu ne recharges pas la page).`)) {
-    return
-  }
-  
-  // Apply template data
-  applyTemplate(template.data)
-  
-  console.log('[TEMPLATE] ✅ Template chargé:', template.name)
-  alert(`✅ Template "${template.name}" chargé avec succès !\n\n${template.data.exercises.length} exercices restaurés.`)
+  // Trigger file picker
+  input.click()
 }
 
 /**
