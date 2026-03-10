@@ -399,6 +399,50 @@
       display: none;
     }
 
+    /* Micro Reset Button - Very discreet */
+    .reset-container {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      z-index: 150;
+    }
+    
+    .reset-btn {
+      width: 18px;
+      height: 18px;
+      background: rgba(26, 26, 26, 0.3);
+      border: 1px solid rgba(42, 42, 42, 0.5);
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #444;
+      transition: all 0.2s ease;
+      padding: 0;
+      opacity: 0.4;
+      box-shadow: none;
+    }
+    
+    .reset-btn:hover {
+      opacity: 1;
+      background: rgba(34, 34, 34, 0.6);
+      border-color: rgba(58, 58, 58, 0.8);
+      color: #888;
+      box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+    }
+    
+    .reset-btn:active {
+      transform: scale(0.95);
+      background: rgba(42, 42, 42, 0.7);
+    }
+    
+    .reset-btn svg {
+      width: 10px;
+      height: 10px;
+      stroke-width: 2.5;
+    }
+
   </style>
 </head>
 <body>
@@ -432,6 +476,15 @@
             <span class="toggle-label off">OFF</span>
           </div>
         </div>
+      </div>
+
+      <!-- Micro RESET button (bottom right corner) -->
+      <div class="reset-container">
+        <button class="reset-btn" id="reset-btn" title="Reset tuner">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
+          </svg>
+        </button>
       </div>
 
       <div class="bars-row">
@@ -1084,6 +1137,35 @@
     
     resizeCentsCanvas();
     window.addEventListener('resize', resizeCentsCanvas);
+    
+    // Micro RESET button functionality
+    const resetBtn = document.getElementById('reset-btn');
+    
+    resetBtn.addEventListener('click', () => {
+      console.log('[TUNER] 🔄 Manual reset triggered');
+      
+      // Visual feedback
+      resetBtn.style.color = '#ff5050';
+      resetBtn.style.transform = 'rotate(180deg)';
+      
+      setTimeout(() => {
+        resetBtn.style.color = '#444';
+        resetBtn.style.transform = 'rotate(0deg)';
+      }, 300);
+      
+      // Reset tuner DSP state
+      if (tunerDSP && tunerDSP.resetDetectionState) {
+        tunerDSP.resetDetectionState();
+      }
+      
+      // Reset UI state
+      hasActiveDetection = false;
+      lastDetectedString = null;
+      noDetectionFrames = 0;
+      centsHistory.length = 0;
+      
+      console.log('[TUNER] ✓ Manual reset complete');
+    });
     
     console.log('🎸 SHRED UP Tuner V3 loaded - ' + new Date().toISOString());
   </script>
