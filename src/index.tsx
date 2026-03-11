@@ -524,9 +524,7 @@ function generateExercises() {
       <div class="rec-reference-container">
         <button class="rec-button" data-exercise={index}></button>
         <button class="upload-reference-btn" data-exercise={index} title="Upload référence audio">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-          </svg>
+          <img src="https://www.genspark.ai/api/files/s/sLYbTzv0" alt="Upload" class="upload-icon" />
         </button>
         <input type="file" class="reference-audio-input" data-exercise={index} accept="audio/*" style="display: none;" />
         <span class="reference-indicator" data-exercise={index} style="display: none;">✅</span>
