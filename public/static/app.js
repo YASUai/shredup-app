@@ -852,6 +852,9 @@ function downloadSessionReport() {
   const sessionData = collectSessionData()
   const reportText = formatSessionReport(sessionData)
   
+  // Save to localStorage history
+  saveSessionToLocalStorage(sessionData)
+  
   // Create download link
   const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
@@ -900,6 +903,117 @@ function showSaveConfirmation() {
     btn.classList.remove('saved')
     btn.disabled = false
   }, 3000)
+}
+
+/**
+ * Save session to localStorage for LOGS history
+ */
+function saveSessionToLocalStorage(sessionData) {
+  try {
+    const STORAGE_KEY = 'shredupSessionHistory'
+    const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    
+    // Add session to beginning
+    history.unshift(sessionData)
+    
+    // Keep only last 50 sessions
+    const trimmed = history.slice(0, 50)
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed))
+    
+    console.log(`[LOGS] Session saved to localStorage (${trimmed.length} total)`)
+  } catch (error) {
+    console.error('[LOGS] Error saving to localStorage:', error)
+  }
+}
+
+/**
+ * Display LOGS modal with session history
+ */
+function displaySessionLogs() {
+  try {
+    const STORAGE_KEY = 'shredupSessionHistory'
+    const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    
+    if (history.length === 0) {
+      alert('📋 Aucune session sauvegardée.\n\nUtilise le bouton "💾 Sauvegarder Session" pour enregistrer tes sessions.')
+      return
+    }
+    
+    // Build list
+    let message = '📋 HISTORIQUE DES SESSIONS\n'
+    message += '═══════════════════════════════════════\n\n'
+    
+    history.forEach((session, index) => {
+      message += `${index + 1}. ${session.date} - ${session.time}\n`
+      message += `   Exercices complétés: ${session.exercises.length}\n`
+      if (session.focusPoints) {
+        const preview = session.focusPoints.substring(0, 50)
+        message += `   Focus: ${preview}${session.focusPoints.length > 50 ? '...' : ''}\n`
+      }
+      message += '\n'
+    })
+    
+    message += '═══════════════════════════════════════\n'
+    message += `Total: ${history.length} sessions\n\n`
+    message += 'Tape un numéro pour voir le détail\n'
+    message += 'ou "clear" pour effacer l\'historique'
+    
+    const input = prompt(message)
+    
+    if (!input) return
+    
+    // Clear history
+    if (input.toLowerCase() === 'clear') {
+      if (confirm('⚠️  Effacer TOUT l\'historique ?')) {
+        localStorage.removeItem(STORAGE_KEY)
+        alert('✅ Historique effacé')
+      }
+      return
+    }
+    
+    // Show detail
+    const index = parseInt(input) - 1
+    if (index >= 0 && index < history.length) {
+      const session = history[index]
+      const detail = formatSessionReport(session)
+      
+      // Show with download option
+      const download = confirm(`${detail}\n\n[OK] Fermer\n[Annuler] Télécharger ce rapport`)
+      
+      if (!download) {
+        // Download this session
+        const blob = new Blob([detail], { type: 'text/plain;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        const filename = `shredup-session-${session.date.replace(/\//g, '-')}-${session.time.replace(/:/g, '-')}.txt`
+        link.href = url
+        link.download = filename
+        link.click()
+        URL.revokeObjectURL(url)
+        console.log('[LOGS] Session downloaded:', filename)
+      }
+    } else {
+      alert('❌ Numéro invalide')
+    }
+  } catch (error) {
+    console.error('[LOGS] Error:', error)
+    alert(`❌ Erreur: ${error.message}`)
+  }
+}
+
+/**
+ * Initialize LOGS button
+ */
+function initializeLogsButton() {
+  const btn = document.getElementById('logs-btn')
+  if (btn) {
+    btn.addEventListener('click', () => {
+      console.log('[LOGS] Button clicked')
+      displaySessionLogs()
+    })
+    console.log('[LOGS] Button initialized')
+  }
 }
 
 /**
@@ -1627,6 +1741,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeSessionSave()
   setupDoneCheckboxes()
   initializeTemplateButtons()
+  initializeLogsButton()
   initializeReferenceUpload()
   initializeDragAndDrop()
   console.log('[FOCUS ZONE] Metronome integration active - Exercise index:', currentExerciseIndex)
