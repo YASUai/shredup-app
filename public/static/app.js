@@ -1515,6 +1515,86 @@ function removeReferenceAudio(exerciseIndex) {
   }
 }
 
+// ============================================================================
+// DRAG & DROP REORDERING SYSTEM
+// ============================================================================
+
+let draggedElement = null
+
+/**
+ * Initialize drag & drop for exercise rows
+ */
+function initializeDragAndDrop() {
+  const rows = document.querySelectorAll('.exercise-row')
+  
+  rows.forEach((row) => {
+    // Make row draggable
+    row.setAttribute('draggable', 'true')
+    
+    // Drag start
+    row.addEventListener('dragstart', (e) => {
+      draggedElement = row
+      row.classList.add('dragging')
+      e.dataTransfer.effectAllowed = 'move'
+    })
+    
+    // Drag end
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging')
+      document.querySelectorAll('.exercise-row').forEach(r => r.classList.remove('drag-over'))
+      draggedElement = null
+    })
+    
+    // Drag over
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault()
+      if (draggedElement && draggedElement !== row) {
+        row.classList.add('drag-over')
+      }
+    })
+    
+    // Drag leave
+    row.addEventListener('dragleave', () => {
+      row.classList.remove('drag-over')
+    })
+    
+    // Drop
+    row.addEventListener('drop', (e) => {
+      e.preventDefault()
+      row.classList.remove('drag-over')
+      
+      if (draggedElement && draggedElement !== row) {
+        // Get parent container
+        const container = row.parentNode
+        
+        // Get all current rows
+        const allRows = Array.from(container.querySelectorAll('.exercise-row'))
+        const draggedIndex = allRows.indexOf(draggedElement)
+        const targetIndex = allRows.indexOf(row)
+        
+        // Physical DOM swap - simply move the dragged element
+        if (draggedIndex < targetIndex) {
+          // Moving down: insert after target
+          container.insertBefore(draggedElement, row.nextSibling)
+        } else {
+          // Moving up: insert before target
+          container.insertBefore(draggedElement, row)
+        }
+        
+        console.log(`[DRAG] Moved exercise from position ${draggedIndex} to ${targetIndex}`)
+        
+        // Visual feedback
+        draggedElement.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'
+        setTimeout(() => {
+          draggedElement.style.backgroundColor = ''
+        }, 300)
+      }
+    })
+  })
+  
+  console.log(`[DRAG] ${rows.length} rows initialized for drag & drop`)
+}
+
 /**
  * Initialize template buttons
  */
@@ -1545,6 +1625,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDoneCheckboxes()
   initializeTemplateButtons()
   initializeReferenceUpload()
+  initializeDragAndDrop()
   console.log('[FOCUS ZONE] Metronome integration active - Exercise index:', currentExerciseIndex)
 })
 
