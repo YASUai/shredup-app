@@ -437,9 +437,12 @@ function initializeDateTime() {
     const seconds = String(now.getSeconds()).padStart(2, '0')
     timeElement.textContent = `${hours}:${minutes}:${seconds}`
     
-    // Update day
-    const dayName = days[now.getDay()]
-    dayElement.textContent = dayName
+    // Update day with date (format: "THURSDAY 12/03/2026")
+    const dayName = days[now.getDay()].toUpperCase()
+    const day = String(now.getDate()).padStart(2, '0')
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const year = now.getFullYear()
+    dayElement.textContent = `${dayName} ${day}/${month}/${year}`
   }
   
   // Initialize session number (could be retrieved from localStorage)
