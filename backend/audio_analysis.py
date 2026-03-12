@@ -10,7 +10,7 @@ from scipy import signal
 from dtaidistance import dtw
 import io
 from typing import Dict, List, Tuple, Any
-import aubio
+# import aubio  # Removed - deployment issues, using Librosa instead
 
 # Analysis parameters
 SR = 22050  # Sample rate for analysis
@@ -157,11 +157,11 @@ def analyze_tempo(user_y: np.ndarray, ref_y: np.ndarray) -> Dict[str, Any]:
 def analyze_onsets(user_y: np.ndarray, ref_y: np.ndarray) -> Dict[str, Any]:
     """
     Detect note onsets with high precision (±1-2ms target)
-    Uses both Librosa and Aubio for maximum accuracy
+    Using Librosa onset detection (Aubio removed for deployment compatibility)
     """
     
-    # Librosa onset detection
-    user_onsets_lib = librosa.onset.onset_detect(
+    # Librosa onset detection with optimized parameters
+    user_onsets = librosa.onset.onset_detect(
         y=user_y,
         sr=SR,
         hop_length=HOP_LENGTH,
@@ -169,21 +169,13 @@ def analyze_onsets(user_y: np.ndarray, ref_y: np.ndarray) -> Dict[str, Any]:
         units='time'
     )
     
-    ref_onsets_lib = librosa.onset.onset_detect(
+    ref_onsets = librosa.onset.onset_detect(
         y=ref_y,
         sr=SR,
         hop_length=HOP_LENGTH,
         backtrack=True,
         units='time'
     )
-    
-    # Aubio onset detection (more precise)
-    user_onsets_aubio = detect_onsets_aubio(user_y, SR)
-    ref_onsets_aubio = detect_onsets_aubio(ref_y, SR)
-    
-    # Use Aubio results (more precise)
-    user_onsets = user_onsets_aubio
-    ref_onsets = ref_onsets_aubio
     
     # Calculate timing precision
     timing_errors = calculate_timing_errors(user_onsets, ref_onsets)
@@ -201,33 +193,17 @@ def analyze_onsets(user_y: np.ndarray, ref_y: np.ndarray) -> Dict[str, Any]:
 
 def detect_onsets_aubio(y: np.ndarray, sr: int) -> np.ndarray:
     """
-    Detect onsets using Aubio (higher precision)
+    DEPRECATED - Aubio removed for deployment compatibility
+    Using Librosa onset detection instead
     """
-    
-    # Aubio parameters
-    win_s = 1024  # Window size
-    hop_s = win_s // 4  # Hop size
-    
-    # Create onset detector
-    onset_detector = aubio.onset("default", win_s, hop_s, sr)
-    onset_detector.set_threshold(0.3)
-    
-    # Detect onsets
-    onsets = []
-    
-    # Process in chunks
-    for i in range(0, len(y) - hop_s, hop_s):
-        chunk = y[i:i + win_s]
-        if len(chunk) < win_s:
-            chunk = np.pad(chunk, (0, win_s - len(chunk)))
-        
-        chunk = chunk.astype(np.float32)
-        
-        if onset_detector(chunk):
-            onset_time = onset_detector.get_last() / sr
-            onsets.append(i / sr + onset_time)
-    
-    return np.array(onsets)
+    # Use Librosa instead
+    onset_frames = librosa.onset.onset_detect(
+        y=y,
+        sr=sr,
+        hop_length=HOP_LENGTH,
+        backtrack=True
+    )
+    return librosa.frames_to_time(onset_frames, sr=sr, hop_length=HOP_LENGTH)
 
 def calculate_timing_errors(user_onsets: np.ndarray, ref_onsets: np.ndarray) -> List[float]:
     """

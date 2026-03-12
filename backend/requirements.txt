@@ -7,7 +7,7 @@ python-multipart==0.0.6
 
 # Audio Analysis Libraries
 librosa==0.10.1
-aubio==0.4.9
+# aubio==0.4.9  # Removed - deployment issues, using Librosa onset detection instead
 soundfile==0.12.1
 numpy==1.24.3
 scipy==1.11.4

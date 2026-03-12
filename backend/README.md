@@ -5,10 +5,12 @@ Backend service pour l'analyse de précision audio avec comparaison tempo-agnost
 ## 🎯 Fonctionnalités
 
 - **Analyse tempo** : Détection BPM avec Librosa
-- **Détection d'onsets** : Précision ±1-2ms avec Aubio
+- **Détection d'onsets** : Précision onset timing avec Librosa
 - **Analyse pitch** : Précision ±1-2 cents avec pYIN
 - **Comparaison rythmique tempo-agnostic** : DTW pour comparer patterns indépendamment du tempo
 - **Score global** : Métriques pondérées avec feedback détaillé
+
+**Note :** Aubio a été retiré pour faciliter le déploiement. Librosa fournit une précision suffisante pour la détection d'onsets.
 
 ## 📦 Installation locale
 
@@ -23,11 +25,6 @@ Backend service pour l'analyse de précision audio avec comparaison tempo-agnost
 cd backend
 pip install -r requirements.txt
 ```
-
-**Note:** L'installation de `aubio` peut nécessiter des outils de compilation sur Windows. Alternatives :
-- Utiliser WSL (Windows Subsystem for Linux)
-- Installer via conda : `conda install -c conda-forge aubio`
-- Utiliser Docker (voir section Docker)
 
 ## 🚀 Lancement local
 
