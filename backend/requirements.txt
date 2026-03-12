@@ -15,8 +15,8 @@ scipy==1.11.4
 # DTW for tempo-agnostic comparison (removed - compilation issues on Railway)
 # dtaidistance==2.3.10
 
-# Pitch detection
-crepe==0.0.13
+# Pitch detection (Crepe removed - use Librosa pyin instead)
+# crepe==0.0.13
 
 # Utilities
 pydantic==2.5.3
