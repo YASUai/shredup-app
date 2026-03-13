@@ -1,171 +1,101 @@
-"""
-SHRED UP - Backend Python FastAPI
-Audio Analysis Service for Precision Practice Feedback
-"""
-
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-import uvicorn
-from typing import Optional
+from pydantic import BaseModel
+import librosa
+import numpy as np
+import soundfile as sf
+import io
 import os
-from datetime import datetime
+from typing import Optional
 
-# Import analysis functions (will be created next)
-from audio_analysis import analyze_with_reference
+app = FastAPI(title="ShredUp Audio Analysis API")
 
-app = FastAPI(
-    title="SHRED UP Audio Analysis API",
-    description="Precision analysis for music practice with tempo-agnostic comparison",
-    version="1.0.0"
-)
+# CORS Configuration
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", FRONTEND_URL).split(",")
 
-# CORS configuration - allow frontend to call backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "https://*.pages.dev",
-        "https://*.gensparksite.com",
-        "*"  # Allow all origins for development
-    ],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def root():
-    """Health check endpoint"""
-    return {
-        "status": "online",
-        "service": "SHRED UP Audio Analysis API",
-        "version": "1.0.0",
-        "timestamp": datetime.utcnow().isoformat()
-    }
+class BPMResponse(BaseModel):
+    bpm: float
+    confidence: float
+
+class PitchResponse(BaseModel):
+    note: str
+    frequency: float
+    confidence: float
 
 @app.get("/health")
 async def health_check():
-    """Detailed health check with library versions"""
-    try:
-        import librosa
-        import aubio
-        import numpy as np
-        import scipy
-        
-        return {
-            "status": "healthy",
-            "libraries": {
-                "librosa": librosa.__version__,
-                "numpy": np.__version__,
-                "scipy": scipy.__version__,
-                "aubio": "0.4.9"
-            },
-            "timestamp": datetime.utcnow().isoformat()
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
-        }
+    return {"status": "ok"}
 
-@app.post("/api/analyze-with-reference")
-async def analyze_audio(
-    user_audio: UploadFile = File(..., description="User's recorded audio (MP3/WAV/FLAC)"),
-    reference_audio: UploadFile = File(..., description="Reference audio (MP3/WAV/FLAC)"),
-    exercise_name: Optional[str] = None
-):
-    """
-    Analyze user audio against reference audio
-    
-    Returns:
-    - Tempo analysis (BPM detection)
-    - Onset detection (timing precision ±1-2ms)
-    - Pitch analysis (±1-2 cents precision)
-    - Rhythmic pattern comparison (tempo-agnostic with DTW)
-    - Overall score and detailed metrics
-    """
-    
+@app.post("/api/audio/analyze-bpm", response_model=BPMResponse)
+async def analyze_bpm(file: UploadFile = File(...)):
+    """Analyze BPM using Librosa onset detection"""
     try:
-        # Validate file types
-        allowed_extensions = ['.mp3', '.wav', '.flac', '.ogg', '.m4a']
-        user_ext = os.path.splitext(user_audio.filename)[1].lower()
-        ref_ext = os.path.splitext(reference_audio.filename)[1].lower()
-        
-        if user_ext not in allowed_extensions or ref_ext not in allowed_extensions:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid file format. Allowed: {', '.join(allowed_extensions)}"
-            )
-        
-        # Read audio files
-        user_audio_data = await user_audio.read()
-        reference_audio_data = await reference_audio.read()
-        
-        # Perform analysis
-        results = await analyze_with_reference(
-            user_audio_data=user_audio_data,
-            reference_audio_data=reference_audio_data,
-            exercise_name=exercise_name or "Unnamed Exercise"
-        )
-        
-        return JSONResponse(content=results)
-    
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Analysis failed: {str(e)}"
-        )
-
-@app.post("/api/analyze-solo")
-async def analyze_solo_audio(
-    audio: UploadFile = File(..., description="Audio file to analyze (MP3/WAV/FLAC)")
-):
-    """
-    Analyze audio without reference (basic metrics only)
-    
-    Returns:
-    - Detected tempo (BPM)
-    - Note onsets
-    - Pitch contour
-    - Duration
-    """
-    
-    try:
-        # Validate file type
-        allowed_extensions = ['.mp3', '.wav', '.flac', '.ogg', '.m4a']
-        file_ext = os.path.splitext(audio.filename)[1].lower()
-        
-        if file_ext not in allowed_extensions:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid file format. Allowed: {', '.join(allowed_extensions)}"
-            )
-        
         # Read audio file
-        audio_data = await audio.read()
+        audio_data = await file.read()
+        y, sr = librosa.load(io.BytesIO(audio_data), sr=None)
         
-        # Basic analysis (will implement in audio_analysis.py)
-        from audio_analysis import analyze_solo
-        results = await analyze_solo(audio_data)
+        # Onset detection
+        onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+        tempo, _ = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
         
-        return JSONResponse(content=results)
-    
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Analysis failed: {str(e)}"
+        # Convert numpy types to Python native types
+        bpm = float(tempo) if isinstance(tempo, np.ndarray) else float(tempo)
+        
+        return BPMResponse(
+            bpm=round(bpm, 2),
+            confidence=0.85  # Librosa doesn't provide confidence, use fixed value
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"BPM analysis failed: {str(e)}")
+
+@app.post("/api/audio/analyze-pitch", response_model=PitchResponse)
+async def analyze_pitch(file: UploadFile = File(...)):
+    """Analyze pitch using Librosa pyin algorithm"""
+    try:
+        # Read audio file
+        audio_data = await file.read()
+        y, sr = librosa.load(io.BytesIO(audio_data), sr=None, mono=True)
+        
+        # Pitch detection using pyin
+        f0, voiced_flag, voiced_probs = librosa.pyin(
+            y,
+            fmin=librosa.note_to_hz('C2'),
+            fmax=librosa.note_to_hz('C7'),
+            sr=sr
+        )
+        
+        # Filter out unvoiced frames and get median frequency
+        voiced_frequencies = f0[voiced_flag]
+        
+        if len(voiced_frequencies) == 0:
+            raise HTTPException(status_code=400, detail="No pitch detected in audio")
+        
+        frequency = float(np.median(voiced_frequencies))
+        confidence = float(np.mean(voiced_probs[voiced_flag]))
+        
+        # Convert frequency to note
+        note = librosa.hz_to_note(frequency)
+        
+        return PitchResponse(
+            note=note,
+            frequency=round(frequency, 2),
+            confidence=round(confidence, 2)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Pitch analysis failed: {str(e)}")
 
 if __name__ == "__main__":
-    # Run with: python main.py
-    # Or: uvicorn main:app --reload --host 0.0.0.0 --port 8000
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
