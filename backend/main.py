@@ -1,9 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import librosa
-import numpy as np
-import soundfile as sf
 import io
 import os
 from typing import Optional
@@ -39,7 +36,8 @@ async def health_check():
 async def analyze_bpm(file: UploadFile = File(...)):
     """Analyze BPM using Librosa onset detection"""
     try:
-        # Read audio file
+        import librosa
+        import numpy as np
         audio_data = await file.read()
         y, sr = librosa.load(io.BytesIO(audio_data), sr=None)
         
@@ -61,7 +59,8 @@ async def analyze_bpm(file: UploadFile = File(...)):
 async def analyze_pitch(file: UploadFile = File(...)):
     """Analyze pitch using Librosa pyin algorithm"""
     try:
-        # Read audio file
+        import librosa
+        import numpy as np
         audio_data = await file.read()
         y, sr = librosa.load(io.BytesIO(audio_data), sr=None, mono=True)
         
