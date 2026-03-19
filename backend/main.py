@@ -76,9 +76,9 @@ async def analyze_pitch(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Pitch analysis failed: {str(e)}")
 
 class CompareResponse(BaseModel):
-    timing: float       # 0-100 : per-note deviation vs reference
-    articulation: float # 0-100 : % of reference notes detected in recording
-    accuracy: float     # 0-100 : mean(timing, articulation)
+    timing: float
+    articulation: float
+    accuracy: float
     exercise_name: str
     feedback: str
 
@@ -90,13 +90,16 @@ async def compare_audio(
     bpm: float = Form(default=120.0)
 ):
     """
-    Reference-based comparison:
-      - Timing    : per-note deviation between recording onsets and aligned reference onsets
-      - Articulation : coverage — fraction of reference notes detected in recording
+    Option A — Metronome clicks as timing grid:
+      - Extract metronome clicks (900-2500 Hz band) from recording
+      - Extract musical notes (low-pass < 900 Hz) from recording
+      - TIMING    : deviation of each note from nearest beat subdivision (via clicks)
+      - ARTICULATION : coverage of reference notes in recording
     """
     try:
         import librosa
         import numpy as np
+        from scipy import signal as scipy_signal
 
         ref_data = await reference.read()
         rec_data = await recorded.read()
@@ -117,47 +120,48 @@ async def compare_audio(
         y_ref, sr = load_audio(ref_data, ref_ext)
         y_rec, _  = load_audio(rec_data, rec_ext)
 
-        # ── Low-pass filter for recording only ────────────────────────────────
-        # Metronome clicks use ~1200-1800 Hz sine tones; guitar/bass fundamentals
-        # are mostly below 1000 Hz.  Filtering removes click transients from the
-        # recording's onset detection WITHOUT touching the reference (which has no
-        # clicks).  We keep y_rec intact for any other use.
-        try:
-            from scipy import signal as scipy_signal
-            cutoff_hz = 1000.0
-            nyq = sr / 2.0
-            b, a = scipy_signal.butter(4, cutoff_hz / nyq, btype='low')
-            y_rec_lp = scipy_signal.filtfilt(b, a, y_rec)
-            print(f"[FILTER] Low-pass {cutoff_hz:.0f}Hz applied to recording (sr={sr})", flush=True)
-        except Exception as _fe:
-            y_rec_lp = y_rec
-            print(f"[FILTER] Low-pass unavailable: {_fe}", flush=True)
+        beat_s      = 60.0 / max(bpm, 40)
+        countdown_s = 8.0 * beat_s          # 2 measures × 4 beats
+        search_from = max(0.0, countdown_s - 2.0 * beat_s)
 
-        hop_length  = 256                                        # 11.6ms resolution at 22050Hz (was 512=23.2ms)
-        cluster_gap = min(0.05, (60.0 / max(bpm, 60)) / 8)   # ≤ 50ms, ≤ ½ 16th note
-        peak_win    = max(2, int(sr * 0.09 / hop_length))      # 90ms window
+        hop_length = 256   # 11.6ms resolution at 22050Hz
 
-        # ── Shared onset pipeline ──────────────────────────────────────────────
-        def get_onsets(y):
-            # Restrict spectral flux to 0-1000 Hz band to further suppress clicks
-            n_fft   = 2048
-            fmax_hz = 1000.0
-            fmax_bin = int(np.round(fmax_hz * n_fft / sr)) + 1
-            S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
-            S_low = S[:fmax_bin, :]
-            env = librosa.onset.onset_strength(S=librosa.amplitude_to_db(S_low, ref=np.max),
-                                               sr=sr, hop_length=hop_length)
+        # ── Frequency separation ─────────────────────────────────────────────
+        # Metronome: pure sine tones at ~1200 Hz (click) and ~1800 Hz (accent)
+        # Guitar/bass fundamentals: mostly below 900 Hz
+        nyq = sr / 2.0
 
+        # Band-pass 900-2500 Hz → isolates metronome clicks
+        b_bp, a_bp = scipy_signal.butter(4, [900.0/nyq, 2500.0/nyq], btype='band')
+        y_rec_bp   = scipy_signal.filtfilt(b_bp, a_bp, y_rec)
+
+        # Low-pass < 900 Hz → isolates musical notes
+        b_lp, a_lp = scipy_signal.butter(4, 900.0/nyq, btype='low')
+        y_rec_lp   = scipy_signal.filtfilt(b_lp, a_lp, y_rec)
+
+        print(f"[INPUT] bpm={bpm:.1f} exercise='{exercise_name}'", flush=True)
+
+        # ── Onset detection ──────────────────────────────────────────────────
+        def get_note_onsets(y):
+            """Detect musical note onsets from low-passed recording or reference."""
+            n_fft    = 2048
+            fmax_bin = int(np.round(900.0 * n_fft / sr)) + 1
+            S        = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+            S_low    = S[:fmax_bin, :]
+            env      = librosa.onset.onset_strength(
+                S=librosa.amplitude_to_db(S_low, ref=np.max),
+                sr=sr, hop_length=hop_length
+            )
             raw = librosa.onset.onset_detect(
                 y=y, sr=sr, units='time',
                 onset_envelope=env, backtrack=True,
                 pre_max=3, post_max=3, pre_avg=3, post_avg=5,
-                delta=0.07, wait=4
+                delta=0.07, wait=4, hop_length=hop_length
             )
-
-            # Cluster nearby onsets
             if len(raw) == 0:
-                return np.array([]), env
+                return np.array([])
+            # Cluster within cluster_gap
+            cluster_gap = min(0.05, beat_s / 8)
             clusters = [[raw[0]]]
             for t in raw[1:]:
                 if t - clusters[-1][-1] < cluster_gap:
@@ -165,9 +169,9 @@ async def compare_audio(
                 else:
                     clusters.append([t])
             times_c = np.array([float(np.mean(c)) for c in clusters])
-
-            # Measure onset strength at each onset
-            frames = np.clip(
+            # Strength filter
+            peak_win = max(2, int(sr * 0.09 / hop_length))
+            frames   = np.clip(
                 librosa.time_to_frames(times_c, sr=sr, hop_length=hop_length),
                 0, len(env) - 1
             ).astype(int)
@@ -175,93 +179,121 @@ async def compare_audio(
                 float(np.max(env[f:min(len(env), f + peak_win)])) if f < len(env) else 0.0
                 for f in frames
             ])
+            if len(strengths) >= 4:
+                env_noise = float(np.percentile(env, 10))
+                iqr       = float(np.percentile(strengths, 75) - np.percentile(strengths, 25))
+                thresh    = env_noise + 0.3 * max(iqr, 0.1)
+                times_c   = times_c[strengths >= thresh]
+            return times_c
 
-            # Filter false-positives: noise + 0.3 × IQR of onset strengths
-            env_noise = float(np.percentile(env, 10))
-            iqr = float(np.percentile(strengths, 75) - np.percentile(strengths, 25)) \
-                  if len(strengths) >= 4 else 0.5
-            thresh = env_noise + 0.3 * max(iqr, 0.1)
-            mask = strengths >= thresh
+        def get_click_onsets(y_bp, beat_s):
+            """Detect metronome click onsets from band-passed recording."""
+            env = librosa.onset.onset_strength(y=y_bp, sr=sr, hop_length=hop_length)
+            # Clicks are sharp, use tight window and generous delta
+            min_wait = max(2, int(beat_s * 0.6 * sr / hop_length))
+            raw = librosa.onset.onset_detect(
+                y=y_bp, sr=sr, units='time',
+                onset_envelope=env, backtrack=False,
+                pre_max=1, post_max=1, pre_avg=1, post_avg=3,
+                delta=0.15, wait=min_wait, hop_length=hop_length
+            )
+            return raw
 
-            return times_c[mask], env
+        onset_times_ref = get_note_onsets(y_ref)
+        onset_times_rec = get_note_onsets(y_rec_lp)
+        click_onsets    = get_click_onsets(y_rec_bp, beat_s)
 
-        onset_times_ref, onset_env_ref = get_onsets(y_ref)
-        onset_times_rec, onset_env_rec = get_onsets(y_rec_lp)
+        # Post-countdown subsets
+        rec_post    = onset_times_rec[onset_times_rec >= search_from]
+        click_post  = click_onsets[click_onsets >= max(0.0, countdown_s - 4.0 * beat_s)]
 
-        print(f"[INPUT] bpm={bpm:.1f} exercise='{exercise_name}'", flush=True)
-        print(f"[DETECT] ref={len(onset_times_ref)}, rec={len(onset_times_rec)}", flush=True)
+        print(f"[DETECT] ref={len(onset_times_ref)}, rec={len(onset_times_rec)}, "
+              f"clicks={len(click_post)} (post-countdown)", flush=True)
 
-        # ── Temporal alignment: first-note anchor (no cross-correlation) ─────────
-        # The recording always starts with a 2-measure (8-beat) countdown at the
-        # chosen BPM, then the exercise begins.  We find the first recording onset
-        # that falls AFTER the countdown ends and align it to the first reference note.
-        # This is deterministic and immune to false correlation peaks caused by the
-        # countdown clicks having the same BPM as the exercise.
-        beat_s      = 60.0 / max(bpm, 40)
-        countdown_s = 8.0 * beat_s          # 2 measures × 4 beats
-
-        # Allow the user to start up to 2 beats early (slight anticipation)
-        search_from = max(0.0, countdown_s - 2.0 * beat_s)
-
-        offset = countdown_s               # fallback: nominal countdown duration
+        # ── Align reference to recording (for articulation) ──────────────────
+        offset = countdown_s
         onset_times_ref_aligned = onset_times_ref.copy()
 
-        if len(onset_times_ref) > 0 and len(onset_times_rec) > 0:
-            rec_post = onset_times_rec[onset_times_rec >= search_from]
-            if len(rec_post) > 0:
-                # Initial estimate from first note
-                initial_offset = float(rec_post[0]) - float(onset_times_ref[0])
+        if len(onset_times_ref) > 0 and len(rec_post) > 0:
+            initial_offset = float(rec_post[0]) - float(onset_times_ref[0])
+            refined = []
+            for i in range(min(8, len(onset_times_ref))):
+                expected = float(onset_times_ref[i]) + initial_offset
+                nearby   = onset_times_rec[np.abs(onset_times_rec - expected) < beat_s * 0.5]
+                if len(nearby) > 0:
+                    nearest = float(nearby[np.argmin(np.abs(nearby - expected))])
+                    refined.append(nearest - float(onset_times_ref[i]))
+            offset = float(np.median(refined)) if refined else initial_offset
+            onset_times_ref_aligned = onset_times_ref + offset
 
-                # Refine: median over first min(8, N) anchor pairs
-                # Each reference note is matched to its nearest recording note
-                # near the expected position → reduces single-note detection noise
-                refined = []
-                for i in range(min(8, len(onset_times_ref))):
-                    expected = float(onset_times_ref[i]) + initial_offset
-                    nearby = onset_times_rec[np.abs(onset_times_rec - expected) < beat_s * 0.5]
-                    if len(nearby) > 0:
-                        nearest = float(nearby[np.argmin(np.abs(nearby - expected))])
-                        refined.append(nearest - float(onset_times_ref[i]))
-
-                offset = float(np.median(refined)) if refined else initial_offset
-                onset_times_ref_aligned = onset_times_ref + offset
-
-        print(f"[ALIGN] countdown={countdown_s:.2f}s | offset={offset:.3f}s | "
+        print(f"[ALIGN] offset={offset:.3f}s | "
               f"ref[0]→{float(onset_times_ref_aligned[0]) if len(onset_times_ref_aligned)>0 else '?':.3f}s "
-              f"| rec_post[0]={float(onset_times_rec[onset_times_rec>=search_from][0]) if len(onset_times_rec[onset_times_rec>=search_from])>0 else '?':.3f}s",
+              f"| rec[0]={float(rec_post[0]) if len(rec_post)>0 else '?':.3f}s",
               flush=True)
 
-        # ── 1. TIMING — rhythmic regularity via Inter-Onset Intervals (IOI) ──────
-        # Musical timing = consistency of the rhythm, NOT matching a reference recording.
-        # We measure whether each gap between consecutive played notes matches a valid
-        # musical subdivision of the beat (8th, 16th, triplet, etc.).
-        # Gaussian sigma=20ms: tight enough to reward precision, forgiving of mic latency.
-        # This is immune to missed-note detection artefacts and alignment errors.
+        # ── 1. TIMING ────────────────────────────────────────────────────────
+        # Option A: each note's position relative to surrounding clicks → deviation
+        # from nearest valid musical subdivision (0, 1/4, 1/3, 1/2, 2/3, 3/4 beat).
+        # Option B fallback (no clicks): IOI consistency vs BPM grid.
         SIGMA_TIMING_MS = 20.0
-        timing_score    = 50.0   # default if no data
+        timing_score    = 50.0
 
-        beat_s_timing = 60.0 / max(bpm, 40)
-        subdivisions  = [1/8, 1/6, 1/4, 1/3, 3/8, 1/2, 2/3, 3/4, 1, 4/3, 3/2, 2, 3, 4]
+        # Valid subdivisions within one beat (fractions)
+        valid_fracs = [0.0, 1/8, 1/6, 1/4, 1/3, 3/8, 1/2, 5/8, 2/3, 3/4, 5/6, 7/8]
 
-        # Use only post-countdown onsets for IOI (ignore countdown clicks)
-        rec_post = onset_times_rec[onset_times_rec >= search_from]
+        MIN_CLICKS = 4
 
-        if len(rec_post) >= 2:
-            iois = np.diff(rec_post)
-            ioi_scores = []
-            for ioi in iois:
-                min_dev_ms = min(abs(ioi - s * beat_s_timing) * 1000 for s in subdivisions)
-                ioi_scores.append(100.0 * float(np.exp(-(min_dev_ms ** 2) / (2 * SIGMA_TIMING_MS ** 2))))
-            timing_score = float(np.mean(ioi_scores))
-            sample_iois  = [round(float(v) * 1000, 1) for v in iois[:8]]
-            print(f"[TIMING][IOI] {len(iois)} intervals | "
-                  f"sample_iois(ms): {sample_iois} | score: {timing_score:.1f}%", flush=True)
+        if len(click_post) >= MIN_CLICKS and len(rec_post) >= 2:
+            # ── Option A ────────────────────────────────────────────────────
+            devs_ms = []
+            for note_t in rec_post:
+                before = click_post[click_post <= note_t]
+                after  = click_post[click_post >  note_t]
+                if len(before) == 0 or len(after) == 0:
+                    continue
+                prev_click   = float(before[-1])
+                next_click   = float(after[0])
+                beat_interval = next_click - prev_click
+                if beat_interval <= 0 or beat_interval > beat_s * 2.5:
+                    # Skip if interval looks wrong (missed click etc.)
+                    continue
+                # Note's fractional position in the beat
+                frac = (note_t - prev_click) / beat_interval
+                # Nearest valid subdivision
+                min_dev_frac = min(abs(frac - f) for f in valid_fracs)
+                devs_ms.append(min_dev_frac * beat_interval * 1000)
 
-        # ── 2. ARTICULATION — note coverage vs reference ───────────────────────
-        # "Did you play every note in the reference?"
-        # Window = ½ beat (generous): covers natural timing variation and slight
-        # tempo drift between player and reference recording.
-        MATCH_WINDOW_MS = min(120.0, (60.0 / max(bpm, 40)) * 1000 / 2)   # ≤ 120ms, ≤ ½ beat
+            if len(devs_ms) >= 2:
+                t_scores     = [100.0 * float(np.exp(-(d**2) / (2 * SIGMA_TIMING_MS**2)))
+                                for d in devs_ms]
+                timing_score = float(np.mean(t_scores))
+                print(f"[TIMING][CLICKS] {len(devs_ms)} notes vs {len(click_post)} clicks | "
+                      f"devs(ms): {[round(d,1) for d in devs_ms[:8]]} | score: {timing_score:.1f}%",
+                      flush=True)
+            else:
+                print(f"[TIMING][CLICKS] not enough valid note-click pairs ({len(devs_ms)}), "
+                      f"falling back to IOI", flush=True)
+                click_post = np.array([])  # force IOI fallback
+
+        if len(click_post) < MIN_CLICKS or len(rec_post) < 2:
+            # ── Option B fallback: IOI ───────────────────────────────────────
+            if len(rec_post) >= 2:
+                iois = np.diff(rec_post)
+                subdivisions_ioi = [1/8, 1/6, 1/4, 1/3, 3/8, 1/2, 2/3, 3/4, 1,
+                                    4/3, 3/2, 2, 3, 4]
+                ioi_scores = []
+                for ioi in iois:
+                    min_dev_ms = min(abs(ioi - s * beat_s) * 1000 for s in subdivisions_ioi)
+                    ioi_scores.append(100.0 * float(np.exp(
+                        -(min_dev_ms**2) / (2 * SIGMA_TIMING_MS**2))))
+                timing_score = float(np.mean(ioi_scores))
+                sample_iois  = [round(float(v) * 1000, 1) for v in iois[:8]]
+                print(f"[TIMING][IOI] {len(iois)} intervals | "
+                      f"sample_iois(ms): {sample_iois} | score: {timing_score:.1f}%", flush=True)
+
+        # ── 2. ARTICULATION — note coverage vs reference ─────────────────────
+        # Window: up to 1/2 beat, max 120ms
+        MATCH_WINDOW_MS = min(120.0, beat_s * 1000 / 2)
 
         matched = 0
         if len(onset_times_ref_aligned) > 0 and len(onset_times_rec) > 0:
@@ -271,17 +303,17 @@ async def compare_audio(
             )
             articulation_score = float(matched / len(onset_times_ref_aligned) * 100)
         elif len(onset_times_rec) > 0:
-            articulation_score = 75.0   # no reference — neutral
+            articulation_score = 75.0
         else:
             articulation_score = 0.0
 
         print(f"[ARTICU] {matched}/{len(onset_times_ref_aligned)} ref notes matched "
               f"(window={MATCH_WINDOW_MS:.0f}ms) | score: {articulation_score:.1f}%", flush=True)
 
-        # ── 3. ACCURACY ───────────────────────────────────────────────────────
+        # ── 3. ACCURACY ──────────────────────────────────────────────────────
         accuracy_score = round((timing_score + articulation_score) / 2, 1)
 
-        # ── 4. FEEDBACK ───────────────────────────────────────────────────────
+        # ── 4. FEEDBACK ──────────────────────────────────────────────────────
         def make_feedback(t, a, acc):
             issues = []
             if t < 70: issues.append("travaille le rythme")
@@ -300,6 +332,8 @@ async def compare_audio(
         )
 
     except Exception as e:
+        import traceback
+        print(f"[ERROR] {traceback.format_exc()}", flush=True)
         raise HTTPException(status_code=500, detail=f"Audio comparison failed: {str(e)}")
 
 
