@@ -133,7 +133,7 @@ async def compare_audio(
             y_rec_lp = y_rec
             print(f"[FILTER] Low-pass unavailable: {_fe}", flush=True)
 
-        hop_length  = 512
+        hop_length  = 256                                        # 11.6ms resolution at 22050Hz (was 512=23.2ms)
         cluster_gap = min(0.05, (60.0 / max(bpm, 60)) / 8)   # ≤ 50ms, ≤ ½ 16th note
         peak_win    = max(2, int(sr * 0.09 / hop_length))      # 90ms window
 
@@ -232,8 +232,9 @@ async def compare_audio(
               flush=True)
 
         # ── 1. TIMING — per-note deviation from aligned reference ─────────────
-        # Gaussian: 5ms→99%  10ms→95%  20ms→80%  30ms→61%  60ms→13%
-        SIGMA_MS  = 30.0
+        # Gaussian: 5ms→99%  10ms→97%  20ms→88%  30ms→75%  40ms→60%  60ms→30%
+        # sigma=40ms accounts for hop_length=256 quantization (11.6ms) + human natural spread
+        SIGMA_MS  = 40.0
         timing_score = 50.0   # default if no data
 
         if len(onset_times_ref_aligned) > 0 and len(onset_times_rec) > 0:
