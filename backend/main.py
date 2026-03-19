@@ -231,45 +231,37 @@ async def compare_audio(
               f"| rec_post[0]={float(onset_times_rec[onset_times_rec>=search_from][0]) if len(onset_times_rec[onset_times_rec>=search_from])>0 else '?':.3f}s",
               flush=True)
 
-        # ── 1. TIMING — per-note deviation from aligned reference ─────────────
-        # Gaussian: 5ms→99%  10ms→97%  20ms→88%  30ms→75%  40ms→60%  60ms→30%
-        # sigma=40ms accounts for hop_length=256 quantization (11.6ms) + human natural spread
-        SIGMA_MS  = 40.0
-        timing_score = 50.0   # default if no data
+        # ── 1. TIMING — rhythmic regularity via Inter-Onset Intervals (IOI) ──────
+        # Musical timing = consistency of the rhythm, NOT matching a reference recording.
+        # We measure whether each gap between consecutive played notes matches a valid
+        # musical subdivision of the beat (8th, 16th, triplet, etc.).
+        # Gaussian sigma=20ms: tight enough to reward precision, forgiving of mic latency.
+        # This is immune to missed-note detection artefacts and alignment errors.
+        SIGMA_TIMING_MS = 20.0
+        timing_score    = 50.0   # default if no data
 
-        if len(onset_times_ref_aligned) > 0 and len(onset_times_rec) > 0:
-            t_scores = []
-            for ref_t in onset_times_ref_aligned:
-                diffs_ms = np.abs(onset_times_rec - ref_t) * 1000
-                min_diff = float(np.min(diffs_ms))
-                t_scores.append(100.0 * float(np.exp(-(min_diff ** 2) / (2 * SIGMA_MS ** 2))))
-            timing_score = float(np.mean(t_scores))
+        beat_s_timing = 60.0 / max(bpm, 40)
+        subdivisions  = [1/8, 1/6, 1/4, 1/3, 3/8, 1/2, 2/3, 3/4, 1, 4/3, 3/2, 2, 3, 4]
 
-            devs = [
-                round(float(np.min(np.abs(onset_times_rec - ref_t) * 1000)), 1)
-                for ref_t in onset_times_ref_aligned[:8]
-            ]
-            print(f"[TIMING] {len(onset_times_ref_aligned)} ref notes | "
-                  f"devs(ms): {devs} | score: {timing_score:.1f}%", flush=True)
+        # Use only post-countdown onsets for IOI (ignore countdown clicks)
+        rec_post = onset_times_rec[onset_times_rec >= search_from]
 
-        elif len(onset_times_rec) >= 2 and bpm > 0:
-            # Fallback: IOI method (no reference available)
-            beat_s       = 60.0 / bpm
-            subdivisions = [1/6, 1/4, 1/3, 1/2, 2/3, 3/4, 1, 3/2, 2, 3, 4]
-            iois         = np.diff(onset_times_rec)
-            f_scores     = []
+        if len(rec_post) >= 2:
+            iois = np.diff(rec_post)
+            ioi_scores = []
             for ioi in iois:
-                min_dev = min(abs(ioi - s * beat_s) * 1000 for s in subdivisions)
-                f_scores.append(100.0 * float(np.exp(-(min_dev ** 2) / (2 * SIGMA_MS ** 2))))
-            timing_score = float(np.mean(f_scores))
-            print(f"[TIMING][IOI-fallback] score: {timing_score:.1f}%", flush=True)
+                min_dev_ms = min(abs(ioi - s * beat_s_timing) * 1000 for s in subdivisions)
+                ioi_scores.append(100.0 * float(np.exp(-(min_dev_ms ** 2) / (2 * SIGMA_TIMING_MS ** 2))))
+            timing_score = float(np.mean(ioi_scores))
+            sample_iois  = [round(float(v) * 1000, 1) for v in iois[:8]]
+            print(f"[TIMING][IOI] {len(iois)} intervals | "
+                  f"sample_iois(ms): {sample_iois} | score: {timing_score:.1f}%", flush=True)
 
-        # ── 2. ARTICULATION — note coverage ───────────────────────────────────
+        # ── 2. ARTICULATION — note coverage vs reference ───────────────────────
         # "Did you play every note in the reference?"
-        # Each reference note is matched if a recording onset falls within ±WINDOW_MS.
-        # A perfectly articulated performance → 100 %.
-        # Missing / inaudible notes lower the score proportionally.
-        MATCH_WINDOW_MS = min(80.0, (60.0 / bpm) * 1000 / 3)   # ≤ 80 ms, ≤ ⅓ beat
+        # Window = ½ beat (generous): covers natural timing variation and slight
+        # tempo drift between player and reference recording.
+        MATCH_WINDOW_MS = min(120.0, (60.0 / max(bpm, 40)) * 1000 / 2)   # ≤ 120ms, ≤ ½ beat
 
         matched = 0
         if len(onset_times_ref_aligned) > 0 and len(onset_times_rec) > 0:
