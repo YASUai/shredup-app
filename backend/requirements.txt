@@ -1,0 +1,23 @@
+# Backend Python - Audio Analysis Dependencies
+
+# Core Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Audio Analysis Libraries
+librosa==0.10.1
+# aubio==0.4.9  # Removed - deployment issues, using Librosa onset detection instead
+soundfile==0.12.1
+numpy==1.24.3
+scipy==1.11.4
+
+# DTW for tempo-agnostic comparison (removed - compilation issues on Railway)
+# dtaidistance==2.3.10
+
+# Pitch detection (Crepe removed - use Librosa pyin instead)
+# crepe==0.0.13
+
+# Utilities
+pydantic==2.5.3
+python-dotenv==1.0.0
