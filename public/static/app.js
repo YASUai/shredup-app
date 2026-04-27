@@ -32,13 +32,15 @@ const recordingState = {
 async function getMetronomeBPM() {
   try {
     const metronomeIframe = document.querySelector('.metronome-iframe')
-    if (!metronomeIframe || !metronomeIframe.contentWindow) {
+    if (!metronomeIframe?.contentDocument) {
       console.warn('[RECORDING] Métronome iframe not accessible')
-      return 120 // Default BPM
+      return 120
     }
-    
-    // Try to access BPM from metronome iframe
-    const bpm = metronomeIframe.contentWindow.bpm || 120
+    // The metronome uses a custom div-based slider (no <input type="range">).
+    // The current BPM is always shown as text inside .bpm-display.
+    const bpmDisplay = metronomeIframe.contentDocument.querySelector('.bpm-display')
+    const bpm = bpmDisplay ? (parseInt(bpmDisplay.textContent) || 120) : 120
+    console.log('[RECORDING] BPM lu depuis .bpm-display :', bpm)
     return bpm
   } catch (error) {
     console.warn('[RECORDING] Cannot access metronome BPM:', error)
@@ -60,27 +62,109 @@ function initializeRecordButtons() {
       const exerciseIndex = parseInt(button.dataset.exercise)
       
       if (!isRecording) {
-        // Start recording
+        // Countdown then start recording
         try {
+          button.classList.add('countdown')
+          button.disabled = true
+          const bpm = await getMetronomeBPM()
+          await playCountdown(bpm, button)
+          button.classList.remove('countdown')
+          button.disabled = false
           await startRecording(exerciseIndex, button)
           isRecording = true
           button.classList.add('recording')
           console.log(`[RECORDING] ✅ Started for exercise ${exerciseIndex}`)
         } catch (error) {
+          button.classList.remove('countdown')
+          button.disabled = false
           console.error('[RECORDING] ❌ Failed to start:', error)
           alert(`❌ Erreur d'enregistrement !\n\n${error.message}\n\nVérifie les permissions du microphone.`)
         }
       } else {
-        // Stop recording
+        // Stop recording + stop metronome
         await stopRecording(button)
         isRecording = false
         button.classList.remove('recording')
         console.log(`[RECORDING] ⏹️  Stopped for exercise ${exerciseIndex}`)
+        try {
+          const metronomeIframe = document.querySelector('.metronome-iframe')
+          if (metronomeIframe && metronomeIframe.contentWindow) {
+            metronomeIframe.contentWindow.postMessage({ type: 'METRONOME_COMMAND', action: 'stop' }, '*')
+            console.log('[RECORDING] ⏹️ Métronome stoppé via postMessage')
+          }
+        } catch (e) {
+          console.warn('[RECORDING] Impossible de stopper le métronome:', e)
+        }
       }
     })
   })
   
   console.log(`[RECORDING] ${recButtons.length} boutons REC initialisés`)
+}
+
+/**
+ * Play 2-measure countdown before recording
+ * Accent on beat 1, normal click on beats 2-3-4
+ * Slightly higher pitch than the metronome to distinguish
+ */
+async function playCountdown(bpm, button) {
+  const beatDuration = 60.0 / bpm  // seconds per beat
+  const beatsPerMeasure = 4
+  const totalBeats = beatsPerMeasure * 2  // 2 measures
+  const ctx = new AudioContext()
+
+  return new Promise((resolve) => {
+    let beatCount = 0
+
+    function playClick(isAccent) {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = isAccent ? 1800 : 1200
+      osc.type = 'sine'
+      const now = ctx.currentTime
+      gain.gain.setValueAtTime(isAccent ? 0.7 : 0.4, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
+      osc.start(now)
+      osc.stop(now + 0.08)
+    }
+
+    function tick() {
+      const isAccent = (beatCount % beatsPerMeasure) === 0
+      playClick(isAccent)
+
+      if (button) {
+        const measure = Math.floor(beatCount / beatsPerMeasure) + 1
+        const beat = (beatCount % beatsPerMeasure) + 1
+        button.setAttribute('data-countdown', `${measure}.${beat}`)
+      }
+
+      beatCount++
+
+      if (beatCount < totalBeats) {
+        setTimeout(tick, beatDuration * 1000)
+      } else {
+        // Countdown done — start metronome THEN resolve to begin recording
+        setTimeout(async () => {
+          if (button) button.removeAttribute('data-countdown')
+          ctx.close()
+          try {
+            const metronomeIframe = document.querySelector('.metronome-iframe')
+            if (metronomeIframe && metronomeIframe.contentWindow) {
+              metronomeIframe.contentWindow.postMessage({ type: 'METRONOME_COMMAND', action: 'start' }, '*')
+              console.log('[COUNTDOWN] ▶️ Métronome démarré après décompte via postMessage')
+            }
+          } catch (e) {
+            console.warn('[COUNTDOWN] Impossible de démarrer le métronome:', e)
+          }
+          resolve()
+        }, beatDuration * 1000)
+      }
+    }
+
+    tick()
+  })
 }
 
 /**
@@ -178,8 +262,8 @@ async function processRecording() {
   // Download file
   downloadAudioFile(audioBlob, filename)
   
-  // Analyze precision (async, non-blocking)
-  analyzePrecision(audioBlob, bpm, exerciseName).catch(error => {
+  // Analyze precision (async, non-blocking) — pass BPM for grid-based timing
+  analyzePrecision(audioBlob, bpm, exerciseName, exerciseIndex).catch(error => {
     console.error('[ANALYSIS] ❌ Erreur:', error)
   })
 }
@@ -203,23 +287,114 @@ function downloadAudioFile(blob, filename) {
 }
 
 /**
- * Analyze recording precision vs metronome
- * This is a placeholder - will be implemented with proper DSP analysis
+ * Analyze recording precision vs reference audio
+ * Sends both files to Railway backend (/api/audio/compare)
+ * and displays results in SESSION SUMMARY
  */
-async function analyzePrecision(audioBlob, targetBPM, exerciseName) {
-  console.log('[ANALYSIS] 🔍 Starting precision analysis...')
-  console.log('[ANALYSIS] Target BPM:', targetBPM)
-  console.log('[ANALYSIS] Exercise:', exerciseName)
-  
-  // TODO: Implement DSP analysis
-  // 1. Convert WebM to WAV
-  // 2. Detect onsets (note attacks)
-  // 3. Calculate timing deviation from metronome grid
-  // 4. Compute precision score (% of notes within tolerance)
-  // 5. Display results to user
-  
-  console.log('[ANALYSIS] ⚠️  Full DSP analysis not yet implemented')
-  console.log('[ANALYSIS] 📝 Placeholder: Would analyze audio against', targetBPM, 'BPM grid')
+async function analyzePrecision(audioBlob, targetBPM, exerciseName, exerciseIndex) {
+  const API_BASE_URL = 'https://npx-railwaycli-up-production.up.railway.app'
+
+  console.log('[ANALYSIS] 🔍 Starting precision analysis for:', exerciseName)
+
+  // Check if reference audio exists for this exercise
+  const reference = getReferenceAudio(exerciseIndex)
+  if (!reference) {
+    console.warn('[ANALYSIS] ⚠️ No reference audio for exercise', exerciseIndex, '— skipping comparison')
+    displayAnalysisResults(null, exerciseName, '⚠️ Pas de référence audio. Uploade un fichier via le bouton 📎 pour activer la comparaison.')
+    return
+  }
+
+  // Show loading state in SESSION SUMMARY
+  displayAnalysisResults('loading', exerciseName, '⏳ Analyse en cours...')
+
+  try {
+    // Convert Base64 reference to Blob
+    const base64Data = reference.audioData.split(',')[1]
+    const byteCharacters = atob(base64Data)
+    const byteArray = new Uint8Array(byteCharacters.length)
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteArray[i] = byteCharacters.charCodeAt(i)
+    }
+    const referenceBlob = new Blob([byteArray], { type: reference.type || 'audio/webm' })
+
+    // Build FormData with both files + BPM for grid-based timing
+    const formData = new FormData()
+    formData.append('reference', referenceBlob, reference.filename || 'reference.webm')
+    formData.append('recorded', audioBlob, 'recorded.webm')
+    formData.append('exercise_name', exerciseName || `Exercise-${exerciseIndex + 1}`)
+    formData.append('bpm', String(targetBPM || 120))
+
+    console.log('[ANALYSIS] 📡 Sending to backend...')
+    const response = await fetch(`${API_BASE_URL}/api/audio/compare`, {
+      method: 'POST',
+      body: formData
+    })
+
+    if (!response.ok) {
+      const err = await response.text()
+      throw new Error(`Backend error ${response.status}: ${err}`)
+    }
+
+    const results = await response.json()
+    console.log('[ANALYSIS] ✅ Results received:', results)
+    displayAnalysisResults(results, exerciseName, results.feedback)
+
+  } catch (error) {
+    console.error('[ANALYSIS] ❌ Error:', error)
+    displayAnalysisResults(null, exerciseName, `❌ Erreur d'analyse: ${error.message}`)
+  }
+}
+
+/**
+ * Display analysis results in SESSION SUMMARY zone
+ */
+function displayAnalysisResults(results, exerciseName, feedback) {
+  const summaryZone = document.querySelector('.zone-session-summary-bottom')
+  if (!summaryZone) return
+
+  if (!results || results === null) {
+    // Error or no reference — show message
+    summaryZone.innerHTML = `
+      <div class="block-title">SESSION<br />SUMMARY</div>
+      <div class="summary-message">${feedback}</div>
+    `
+    return
+  }
+
+  if (results === 'loading') {
+    summaryZone.innerHTML = `
+      <div class="block-title">SESSION<br />SUMMARY</div>
+      <div class="summary-message">${feedback}</div>
+    `
+    return
+  }
+
+  // Build score bars
+  function scoreBar(label, value) {
+    const pct = Math.round(value)
+    const color = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444'
+    return `
+      <div class="summary-score-row">
+        <span class="summary-score-label">${label}</span>
+        <div class="summary-bar-bg">
+          <div class="summary-bar-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <span class="summary-score-value" style="color:${color}">${pct}%</span>
+      </div>
+    `
+  }
+
+  summaryZone.innerHTML = `
+    <div class="block-title">SESSION<br />SUMMARY</div>
+    <div class="summary-exercise-name">${exerciseName}</div>
+    <div class="summary-scores">
+      ${scoreBar('Timing', results.timing)}
+      ${scoreBar('Articulation', results.articulation)}
+      <div class="summary-divider"></div>
+      ${scoreBar('Accuracy', results.accuracy)}
+    </div>
+    <div class="summary-feedback">${results.feedback}</div>
+  `
 }
 
 /**
@@ -1228,6 +1403,34 @@ function autoFillCurrentExercise(data) {
 }
 
 /**
+ * Select an exercise row by index — highlights it and updates currentExerciseIndex
+ */
+function selectExercise(index) {
+  const rows = document.querySelectorAll('.exercise-row')
+  rows.forEach((r, i) => {
+    r.classList.toggle('exercise-selected', i === index)
+  })
+  currentExerciseIndex = index
+  console.log(`[FOCUS ZONE] 🎯 Exercice sélectionné: ${index + 1}`)
+}
+
+/**
+ * Setup click handlers on exercise rows for manual selection
+ */
+function setupExerciseSelection() {
+  const rows = document.querySelectorAll('.exercise-row')
+  rows.forEach((row, index) => {
+    row.addEventListener('click', (e) => {
+      // Don't hijack clicks on interactive elements
+      if (e.target.closest('input, select, button, label, .drag-handle')) return
+      selectExercise(index)
+    })
+  })
+  // Select first row by default
+  if (rows.length > 0) selectExercise(0)
+}
+
+/**
  * Setup DONE checkbox auto-advance
  */
 function setupDoneCheckboxes() {
@@ -1235,19 +1438,31 @@ function setupDoneCheckboxes() {
   
   checkboxes.forEach((checkbox, index) => {
     checkbox.addEventListener('change', () => {
-      if (checkbox.checked && index === currentExerciseIndex) {
-        // Flash yellow to indicate advancing
+      if (checkbox.checked) {
         const row = checkbox.closest('.exercise-row')
-        if (row) {
-          row.style.backgroundColor = 'rgba(255, 200, 80, 0.15)'
-          setTimeout(() => {
-            row.style.backgroundColor = ''
-          }, 400)
+
+        // Inject exercise name into notepad
+        const exerciseName = row?.querySelector('.exercise-name-input')?.value?.trim()
+        if (exerciseName) {
+          const notepad = document.querySelector('.notepad-textarea')
+          if (notepad) {
+            const current = notepad.value
+            const prefix = current && !current.endsWith('\n') ? '\n' : ''
+            notepad.value = current + prefix + '• ' + exerciseName + ':\n'
+          }
         }
-        
-        // Advance to next exercise
-        currentExerciseIndex++
-        console.log(`[FOCUS ZONE] ➡️  Avancé à l'exercice ${currentExerciseIndex + 1}`)
+
+        // Flash yellow and advance to next exercise
+        if (index === currentExerciseIndex) {
+          if (row) {
+            row.style.backgroundColor = 'rgba(255, 200, 80, 0.15)'
+            setTimeout(() => {
+              row.style.backgroundColor = ''
+            }, 400)
+          }
+          currentExerciseIndex++
+          console.log(`[FOCUS ZONE] ➡️  Avancé à l'exercice ${currentExerciseIndex + 1}`)
+        }
       }
     })
   })
@@ -1736,14 +1951,115 @@ function initializeTemplateButtons() {
   console.log('[TEMPLATE] Buttons initialized:', { saveBtn: !!saveBtn, loadBtn: !!loadBtn })
 }
 
+// ============================================================================
+// COLLAPSIBLE PANELS
+// ============================================================================
+
+function initializeCollapsiblePanels() {
+  const container = document.querySelector('.app-container')
+  if (!container) return
+
+  const zoneLeft = document.querySelector('.zone-left')
+  const zoneRight = document.querySelector('.zone-right-top')
+
+  // Create left toggle button
+  if (zoneLeft && !zoneLeft.querySelector('.panel-collapse-btn')) {
+    const btnLeft = document.createElement('button')
+    btnLeft.className = 'panel-collapse-btn panel-collapse-btn-left'
+    btnLeft.title = 'Masquer le panneau gauche'
+    zoneLeft.appendChild(btnLeft)
+
+    btnLeft.addEventListener('click', () => {
+      const collapsed = container.classList.toggle('left-collapsed')
+      btnLeft.textContent = collapsed ? '›' : '‹'
+      btnLeft.title = collapsed ? 'Afficher le panneau gauche' : 'Masquer le panneau gauche'
+      localStorage.setItem('panel-left-collapsed', collapsed ? '1' : '0')
+    })
+  }
+
+  // Create right toggle button
+  if (zoneRight && !zoneRight.querySelector('.panel-collapse-btn')) {
+    const btnRight = document.createElement('button')
+    btnRight.className = 'panel-collapse-btn panel-collapse-btn-right'
+    btnRight.title = 'Masquer le panneau droit'
+    zoneRight.appendChild(btnRight)
+
+    btnRight.addEventListener('click', () => {
+      const collapsed = container.classList.toggle('right-collapsed')
+      btnRight.textContent = collapsed ? '‹' : '›'
+      btnRight.title = collapsed ? 'Afficher le panneau droit' : 'Masquer le panneau droit'
+      localStorage.setItem('panel-right-collapsed', collapsed ? '1' : '0')
+    })
+  }
+
+  // Restore saved state
+  const leftCollapsed = localStorage.getItem('panel-left-collapsed') === '1'
+  const rightCollapsed = localStorage.getItem('panel-right-collapsed') === '1'
+
+  if (leftCollapsed) {
+    container.classList.add('left-collapsed')
+    const btn = zoneLeft && zoneLeft.querySelector('.panel-collapse-btn')
+    if (btn) btn.textContent = '›'
+  }
+  if (rightCollapsed) {
+    container.classList.add('right-collapsed')
+    const btn = zoneRight && zoneRight.querySelector('.panel-collapse-btn')
+    if (btn) btn.textContent = '‹'
+  }
+
+  // Set default arrow direction for non-collapsed state
+  const btnL = zoneLeft && zoneLeft.querySelector('.panel-collapse-btn')
+  const btnR = zoneRight && zoneRight.querySelector('.panel-collapse-btn')
+  if (btnL && !leftCollapsed) btnL.textContent = '‹'
+  if (btnR && !rightCollapsed) btnR.textContent = '›'
+}
+
+/**
+ * Theme toggle — dark/light
+ */
+function broadcastTheme(theme) {
+  const msg = { type: 'THEME_CHANGE', theme }
+  const metronomeIframe = document.querySelector('.metronome-iframe')
+  const tunerIframe = document.querySelector('.tuner-iframe-right')
+  if (metronomeIframe?.contentWindow) metronomeIframe.contentWindow.postMessage(msg, '*')
+  if (tunerIframe?.contentWindow) tunerIframe.contentWindow.postMessage(msg, '*')
+}
+
+function initializeThemeToggle() {
+  const btn = document.createElement('button')
+  btn.className = 'theme-toggle-btn'
+  btn.title = 'Toggle dark/light theme'
+
+  const saved = localStorage.getItem('shred-up-theme')
+  const isLight = saved === 'light'
+  if (isLight) {
+    document.body.classList.add('light-theme')
+    // Broadcast once iframes are loaded
+    window.addEventListener('load', () => broadcastTheme('light'), { once: true })
+  }
+  btn.textContent = isLight ? '🌙' : '☀️'
+
+  btn.addEventListener('click', () => {
+    const light = document.body.classList.toggle('light-theme')
+    btn.textContent = light ? '🌙' : '☀️'
+    localStorage.setItem('shred-up-theme', light ? 'light' : 'dark')
+    broadcastTheme(light ? 'light' : 'dark')
+  })
+
+  document.body.appendChild(btn)
+}
+
 // Initialize session save on page load
 document.addEventListener('DOMContentLoaded', () => {
   initializeSessionSave()
   setupDoneCheckboxes()
+  setupExerciseSelection()
   initializeTemplateButtons()
   initializeLogsButton()
   initializeReferenceUpload()
   initializeDragAndDrop()
+  initializeCollapsiblePanels()
+  initializeThemeToggle()
   console.log('[FOCUS ZONE] Metronome integration active - Exercise index:', currentExerciseIndex)
 })
 

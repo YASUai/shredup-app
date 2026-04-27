@@ -18,14 +18,14 @@
   --color-bg-secondary: #141414; /* ✅ RETOUR: #1a1a1a → #141414 (original) */
   --color-bg-tertiary: #1e1e1e;
   --color-bg-elevated: #252525;
-  
+
   --color-text-primary: #e8e8e8;
   --color-text-secondary: #a0a0a0;
   --color-text-tertiary: #6a6a6a;
-  
+
   --color-accent-red: #ef4444;
   --color-accent-red-hover: #dc2626;
-  
+
   --color-border: #2a2a2a;
   --color-border-subtle: #1a1a1a;
   
@@ -56,7 +56,6 @@ body {
   font-family: var(--font-sans);
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
-  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -74,7 +73,7 @@ body {
    ================================================ */
 
 body {
-  overflow-x: hidden; /* No horizontal scroll needed */
+  overflow-x: auto;
   overflow-y: auto;
   width: 100vw;
 }
@@ -85,8 +84,9 @@ body {
 
 .app-container {
   width: 100%; /* Responsive width */
-  min-width: 1600px; /* Minimum: 300+500+400+400 = 1600px + gaps */
-  height: 100vh;
+  min-width: 900px; /* Reduced to support 13" laptops with collapsed panels */
+  min-height: 100vh;
+  height: auto;
   margin: 0 auto;
   display: grid;
   /* Zone 1 (300px) | Zone 2 (min 500px, flexible) | Zone 3 (400px fixed) | Zone 4 (400px fixed) */
@@ -95,7 +95,68 @@ body {
   gap: 8px;
   background-color: var(--color-bg-primary);
   padding: 8px;
+  transition: grid-template-columns 0.25s ease;
 }
+
+/* ── Collapsible panels ── */
+.app-container.left-collapsed {
+  grid-template-columns: 32px minmax(500px, 1fr) 400px 400px;
+}
+.app-container.right-collapsed {
+  grid-template-columns: 300px minmax(500px, 1fr) 400px 32px;
+}
+.app-container.left-collapsed.right-collapsed {
+  grid-template-columns: 32px minmax(500px, 1fr) 400px 32px;
+}
+
+.zone-left,
+.zone-right-top {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+/* Hide panel content when collapsed */
+.app-container.left-collapsed .zone-left .left-block,
+.app-container.right-collapsed .zone-right-top .right-block,
+.app-container.right-collapsed .zone-right-top .datetime-container,
+.app-container.right-collapsed .zone-right-top .tuner-block,
+.app-container.right-collapsed .zone-right-top .notepad-block,
+.app-container.right-collapsed .zone-right-top .session-save-block {
+  display: none;
+}
+
+/* Collapse toggle button */
+.panel-collapse-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 20px;
+  height: 40px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  font-size: 9px;
+  transition: color 0.15s, background 0.15s;
+  padding: 0;
+}
+.panel-collapse-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-elevated);
+  border-color: #555;
+}
+.zone-left .panel-collapse-btn  { right: -10px; }
+.zone-right-top .panel-collapse-btn { left: -10px; }
+
+/* When collapsed, center the button */
+.app-container.left-collapsed .zone-left .panel-collapse-btn { right: 6px; }
+.app-container.right-collapsed .zone-right-top .panel-collapse-btn { left: 6px; }
 
 /* ================================================
    TOP BANNER - Full Width Row 1
@@ -389,6 +450,13 @@ body {
   border-color: var(--color-text-tertiary);
 }
 
+/* Selected exercise row */
+.exercise-row.exercise-selected {
+  border-color: #888;
+  border-width: 2px;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
 /* Drag & Drop States */
 .exercise-row[draggable="true"] {
   cursor: move;
@@ -447,10 +515,21 @@ body {
   transform: scale(1.05);
 }
 
+.rec-button.countdown {
+  border-color: #f59e0b;
+  animation: pulse-yellow 0.3s infinite;
+  cursor: not-allowed;
+}
+
+@keyframes pulse-yellow {
+  0%, 100% { border-color: #f59e0b; opacity: 1; }
+  50% { border-color: #fbbf24; opacity: 0.5; }
+}
+
 .rec-button.recording {
   animation: pulse 1.5s infinite;
-  background-color: #141414;  /* ✅ Fond reste #141414 en mode ON */
-  border-color: #ef4444;  /* ✅ Bordure rouge en mode ON */
+  background-color: #141414;
+  border-color: #ef4444;
 }
 
 .rec-button.recording::before {
@@ -1118,6 +1197,87 @@ body {
   line-height: 1.5;
 }
 
+/* SESSION SUMMARY — Analysis Results */
+.summary-message {
+  font-size: 0.72rem;
+  color: var(--color-text-tertiary);
+  font-style: italic;
+  text-align: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  line-height: 1.5;
+}
+
+.summary-exercise-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.summary-score-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.summary-score-label {
+  font-size: 0.65rem;
+  color: var(--color-text-tertiary);
+  width: 70px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summary-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.summary-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.summary-score-value {
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.summary-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 2px 0;
+}
+
+.summary-feedback {
+  font-size: 0.68rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  line-height: 1.4;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border);
+}
+
 /* Notepad Block */
 .notepad-textarea {
   width: 100%;
@@ -1287,4 +1447,125 @@ body {
     height: 60px;
     font-size: 1.5rem;
   }
+}
+
+/* ================================================
+   LIGHT THEME OVERRIDE
+   Applied via .light-theme on <body>
+   ================================================ */
+
+body.light-theme {
+  --color-bg-primary: #f0f2f5;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f5f7fa;
+  --color-bg-elevated: #e8ebef;
+
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #555555;
+  --color-text-tertiary: #888888;
+
+  --color-border: #d8dce2;
+  --color-border-subtle: #ebebeb;
+}
+
+/* Hardcoded dark values overridden in light theme */
+body.light-theme .tempo-subdivide-btn,
+body.light-theme .tempo-reduce-btn {
+  background-color: #ffffff;
+  border-color: #c8ccd4;
+  color: #666666;
+}
+
+body.light-theme .tempo-subdivide-btn:hover,
+body.light-theme .tempo-reduce-btn:hover {
+  background-color: #ffffff;
+}
+
+body.light-theme .rec-button {
+  background-color: #ffffff;
+  border-color: #c8ccd4;
+}
+
+body.light-theme .rec-button::before {
+  background-color: #999999;
+}
+
+body.light-theme .rec-button:hover {
+  background-color: #ffffff;
+}
+
+body.light-theme .rec-button.recording {
+  background-color: #ffffff;
+}
+
+body.light-theme .reference-indicator {
+  background-color: #ffffff;
+}
+
+body.light-theme .save-session-btn-neumorph {
+  background: linear-gradient(145deg, #e8ebef 0%, #ffffff 100%);
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.12), -1px -1px 4px rgba(255,255,255,0.9);
+  color: rgba(80, 80, 80, 0.8);
+  border-color: rgba(0,0,0,0.08);
+}
+
+body.light-theme .save-session-btn-neumorph:hover {
+  box-shadow: 4px 4px 10px rgba(0,0,0,0.14), -1px -1px 4px rgba(255,255,255,0.9);
+}
+
+body.light-theme .save-session-btn-neumorph:active {
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.12);
+}
+
+body.light-theme .focus-description:focus {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+body.light-theme .tempo-goal-input:hover,
+body.light-theme .temps-passe-select:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+body.light-theme .exercise-row.exercise-selected {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+body.light-theme .upload-reference-btn {
+  color: #555555;
+}
+
+/* Theme toggle button */
+.theme-toggle-btn {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Metronome frame — white background, full iframe height for equal padding all around */
+body.light-theme .zone-metronome {
+  background-color: #ffffff;
+  border-color: var(--color-border);
+  height: 800px;
+}
+
+body.light-theme .zone-metronome-tuner {
+  grid-template-rows: 800px auto;
 }

@@ -1873,6 +1873,33 @@ console.log('🎹 Metronome: keyboard shortcuts handled by parent (work globally
 // ============================================================================
 // SERVICE WORKER POUR PWA (Progressive Web App)
 // ============================================================================
+// POSTMESSAGE COMMAND LISTENER — receives commands from parent app
+// ============================================================================
+window.addEventListener('message', (event) => {
+    if (!event.data) return;
+
+    if (event.data.type === 'METRONOME_COMMAND') {
+        const action = event.data.action;
+        if (action === 'stop' && isPlaying) {
+            stopMetronome();
+            const playBtn = document.querySelector('.play-btn');
+            if (playBtn) playBtn.classList.remove('active');
+            console.log('[METRONOME] ⏹️ Stopped via postMessage');
+        } else if (action === 'start' && !isPlaying) {
+            startMetronome();
+            const playBtn = document.querySelector('.play-btn');
+            if (playBtn) playBtn.classList.add('active');
+            console.log('[METRONOME] ▶️ Started via postMessage');
+        }
+    }
+
+    if (event.data.type === 'THEME_CHANGE') {
+        document.body.classList.toggle('light-theme', event.data.theme === 'light');
+        console.log('[METRONOME] 🎨 Theme:', event.data.theme);
+    }
+});
+
+// ============================================================================
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
