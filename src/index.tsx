@@ -430,7 +430,7 @@ app.get('/', (c) => {
         {/* METRONOME - Top */}
         <div class="zone-metronome">
           <iframe 
-            src="/static/metronome/index.html" 
+            src="/static/metronome/index.html?v=2"
             class="metronome-iframe"
             title="SHRED-UP Metronome"
             scrolling="no"
